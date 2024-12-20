@@ -1,0 +1,23 @@
+edition = "2023";
+
+import "google/protobuf/go_features.proto";
+option features.(pb.go).api_level = API_OPAQUE;
+option go_package = "github.com/bdwalton/gosh/protos/client";
+
+message ClientAction {
+  repeated Action action = 1;
+}
+
+message Action {
+  Input keys = 1;
+  Resize size = 2;
+}
+
+message Input {
+  bytes keys = 1;
+}
+
+message Resize {
+  int32 width = 1;
+  int32 height = 2;
+}
