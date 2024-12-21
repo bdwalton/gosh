@@ -18,7 +18,7 @@ const (
 	MTU       = 1024
 )
 
-type gConn struct {
+type GConn struct {
 	c        *net.UDPConn
 	shutdown bool
 	quitCh   chan struct{}
@@ -42,7 +42,7 @@ func initAEAD(key []byte) (cipher.AEAD, error) {
 	return gcm, nil
 }
 
-func NewClient(addr, key string) (*gConn, error) {
+func NewClient(addr, key string) (*GConn, error) {
 	a, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't resolve udp address %q: %v", addr, err)
@@ -63,7 +63,7 @@ func NewClient(addr, key string) (*gConn, error) {
 		return nil, fmt.Errorf("couldn't initialize AEAD: %v", err)
 	}
 
-	gc := &gConn{
+	gc := &GConn{
 		c:      c,
 		key:    dkey,
 		aead:   aead,
@@ -73,9 +73,9 @@ func NewClient(addr, key string) (*gConn, error) {
 	return gc, nil
 }
 
-// NewServer takes a port range "n:m" and returns a gConn object
+// NewServer takes a port range "n:m" and returns a GConn object
 // listening to a port in that range or an error if it can't listen.
-func NewServer(prng string) (*gConn, error) {
+func NewServer(prng string) (*GConn, error) {
 	var pr [2]uint16
 	for i, ns := range strings.SplitN(prng, ":", 2) {
 		n, err := strconv.ParseUint(ns, 10, 16)
@@ -99,7 +99,7 @@ func NewServer(prng string) (*gConn, error) {
 		return nil, fmt.Errorf("couldn't initialize AEAD: %v", err)
 	}
 
-	gc := &gConn{
+	gc := &GConn{
 		key:    key,
 		quitCh: make(chan struct{}),
 		aead:   aead,
@@ -117,21 +117,21 @@ func NewServer(prng string) (*gConn, error) {
 	return nil, fmt.Errorf("couldn't bind a port in the port range %q", prng)
 }
 
-func (gc *gConn) Base64Key() string {
+func (gc *GConn) Base64Key() string {
 	// For compatibility with Mosh, we trim the == here
 	return strings.TrimRight(base64.StdEncoding.EncodeToString(gc.key), "==")
 }
 
-func (gc *gConn) LocalPort() int {
+func (gc *GConn) LocalPort() int {
 	return gc.c.LocalAddr().(*net.UDPAddr).Port
 }
 
-func (gc *gConn) Shutdown() {
+func (gc *GConn) Shutdown() {
 	gc.quitCh <- struct{}{}
 	<-gc.quitCh
 }
 
-func (gc *gConn) WriteRemote(msg []byte) error {
+func (gc *GConn) WriteRemote(msg []byte) error {
 	nce := gc.ln.toGCMNonce()
 
 	sealed := gc.aead.Seal(nil, nce, msg, nil)
@@ -149,7 +149,7 @@ func (gc *gConn) WriteRemote(msg []byte) error {
 	return nil
 }
 
-func (gc *gConn) ReadRemote() {
+func (gc *GConn) ReadRemote() {
 	gc.wg.Add(1)
 	defer gc.wg.Done()
 
@@ -179,7 +179,7 @@ func (gc *gConn) ReadRemote() {
 	}
 }
 
-func (gc *gConn) RunServer() {
+func (gc *GConn) RunServer() {
 	defer close(gc.quitCh)
 
 	go gc.ReadRemote()
