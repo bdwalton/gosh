@@ -9,7 +9,6 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -21,11 +20,10 @@ const (
 type GConn struct {
 	c        *net.UDPConn
 	shutdown bool
-	quitCh   chan struct{}
-	wg       sync.WaitGroup
 	key      []byte
 	aead     cipher.AEAD
 	ln, rn   nonce
+	remote   string
 }
 
 func initAEAD(key []byte) (cipher.AEAD, error) {
@@ -64,10 +62,9 @@ func NewClient(addr, key string) (*GConn, error) {
 	}
 
 	gc := &GConn{
-		c:      c,
-		key:    dkey,
-		aead:   aead,
-		quitCh: make(chan struct{}),
+		c:    c,
+		key:  dkey,
+		aead: aead,
 	}
 
 	return gc, nil
@@ -100,9 +97,8 @@ func NewServer(prng string) (*GConn, error) {
 	}
 
 	gc := &GConn{
-		key:    key,
-		quitCh: make(chan struct{}),
-		aead:   aead,
+		key:  key,
+		aead: aead,
 	}
 
 	ua := &net.UDPAddr{Port: 0}
@@ -126,13 +122,15 @@ func (gc *GConn) LocalPort() int {
 	return gc.c.LocalAddr().(*net.UDPAddr).Port
 }
 
-func (gc *GConn) Shutdown() {
-	gc.quitCh <- struct{}{}
-	<-gc.quitCh
+func (gc *GConn) Close() {
+	gc.c.Close()
 }
 
-func (gc *GConn) WriteRemote(msg []byte) error {
+func (gc *GConn) Write(msg []byte) (int, error) {
 	nce := gc.ln.toGCMNonce()
+	// Never reuse a nonce value, increment regardless
+	// of what happens to the Write attempt.
+	gc.ln += 1
 
 	sealed := gc.aead.Seal(nil, nce, msg, nil)
 
@@ -140,54 +138,41 @@ func (gc *GConn) WriteRemote(msg []byte) error {
 
 	n, err := gc.c.Write(m)
 	if n != len(msg) || err != nil {
-		return fmt.Errorf("failed to write %d bytes: %v", len(msg), err)
+		return 0, fmt.Errorf("failed to write %d bytes: %v", len(msg), err)
 	}
 
-	gc.ln += 1
-
-	return nil
+	return n, err
 }
 
-func (gc *GConn) ReadRemote() {
-	gc.wg.Add(1)
-	defer gc.wg.Done()
-
+func (gc *GConn) Read(extbuf []byte) (int, error) {
 	buf := make([]byte, MTU, MTU)
-	for {
-		gc.c.SetReadDeadline(time.Now().Add(1 * time.Second))
-		n, remote, err := gc.c.ReadFromUDP(buf[:MTU])
+
+	gc.c.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+	n, remote, err := gc.c.ReadFromUDP(buf[:MTU])
+	if err != nil {
+		if e, ok := err.(net.Error); !ok || !e.Timeout() {
+			// handle error, it's not a timeout
+		}
+		return 0, fmt.Errorf("failed to ReadFromUDP(): %v", err)
+	} else {
+		nce := buf[0:12]
+		m := buf[12:n]
+
+		unsealed, err := gc.aead.Open(nil, nce, m, nil)
 		if err != nil {
-			if e, ok := err.(net.Error); !ok || !e.Timeout() {
-				// handle error, it's not a timeout
-			}
-		} else {
-			nce := buf[0:12]
-			m := buf[12:n]
-
-			unsealed, err := gc.aead.Open(nil, nce, m, nil)
-			if err != nil {
-				continue
-			}
-
-			fmt.Println(remote, string(unsealed))
+			return 0, fmt.Errorf("failed to unseal data: %v", err)
 		}
 
-		if gc.shutdown {
-			return
+		if rs := remote.String(); rs != gc.remote {
+			fmt.Printf("remote changed from %q to %q\n", gc.remote, rs)
+			gc.remote = rs
 		}
+
+		n := copy(extbuf, unsealed)
+		if n != len(unsealed) {
+			return 0, fmt.Errorf("couldn't copy buffers (%d, %d): %v", n, len(unsealed), err)
+		}
+
+		return n, nil
 	}
-}
-
-func (gc *GConn) RunServer() {
-	defer close(gc.quitCh)
-
-	go gc.ReadRemote()
-
-	<-gc.quitCh
-
-	gc.shutdown = true
-
-	gc.wg.Wait()
-
-	gc.c.Close()
 }

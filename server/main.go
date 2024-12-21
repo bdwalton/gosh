@@ -3,10 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/bdwalton/gosh/network"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/bdwalton/gosh/network"
+	"github.com/bdwalton/gosh/stm"
+	// "github.com/bdwalton/gosh/terminal"
 )
 
 var (
@@ -21,9 +24,16 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	fmt.Printf("GOSH CONNECT %d %s\n", gc.LocalPort(), gc.Base64Key())
 
-	go gc.RunServer()
+	s, err := stm.NewServer(gc)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	go s.RunServer()
+
+	fmt.Printf("GOSH CONNECT %d %s\n", gc.LocalPort(), gc.Base64Key())
 
 	sigQuit := make(chan os.Signal, 1)
 	signal.Notify(sigQuit, syscall.SIGINT, syscall.SIGTERM)
@@ -31,7 +41,7 @@ func main() {
 	for {
 		select {
 		case <-sigQuit:
-			gc.Shutdown()
+			s.ServerShutdown()
 			os.Exit(0)
 		}
 	}
