@@ -5,10 +5,6 @@ option features.(pb.go).api_level = API_OPAQUE;
 option go_package = "github.com/bdwalton/gosh/protos/client";
 
 message ClientAction {
-  repeated Action action = 1;
-}
-
-message Action {
   bytes keys = 1;
   Resize size = 2;
 }
