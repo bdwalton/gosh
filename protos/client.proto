@@ -9,12 +9,8 @@ message ClientAction {
 }
 
 message Action {
-  Input keys = 1;
-  Resize size = 2;
-}
-
-message Input {
   bytes keys = 1;
+  Resize size = 2;
 }
 
 message Resize {
