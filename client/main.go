@@ -3,9 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/bdwalton/gosh/network"
 	"os"
-	"time"
+
+	"github.com/bdwalton/gosh/network"
+	"github.com/bdwalton/gosh/stm"
 )
 
 var (
@@ -22,10 +23,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	var i int
-	for {
-		gc.WriteRemote([]byte(fmt.Sprintf("hello %d", i)))
-		i += 1
-		time.Sleep(time.Duration(1 * time.Second))
+	c, err := stm.NewClient(gc)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
+
+	c.RunClient()
 }
