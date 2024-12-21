@@ -137,7 +137,6 @@ func (gc *GConn) WriteRemote(msg []byte) error {
 	sealed := gc.aead.Seal(nil, nce, msg, nil)
 
 	m := []byte(string(nce) + string(sealed))
-	fmt.Println("send:", m[12:], uint64(nonceFromBytes(nce)))
 
 	n, err := gc.c.Write(m)
 	if n != len(msg) || err != nil {
