@@ -29,5 +29,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	c.RunClient()
+	c.Run()
 }

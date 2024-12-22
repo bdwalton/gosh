@@ -31,18 +31,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	go s.RunServer()
-
 	fmt.Printf("GOSH CONNECT %d %s\n", gc.LocalPort(), gc.Base64Key())
 
-	sigQuit := make(chan os.Signal, 1)
-	signal.Notify(sigQuit, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sigQuit := make(chan os.Signal, 1)
+		signal.Notify(sigQuit, syscall.SIGINT, syscall.SIGTERM)
 
-	for {
-		select {
-		case <-sigQuit:
-			s.ServerShutdown()
-			os.Exit(0)
+		for {
+			select {
+			case <-sigQuit:
+				s.Shutdown()
+			}
 		}
-	}
+	}()
+
+	s.Run()
 }
