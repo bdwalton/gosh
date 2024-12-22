@@ -64,8 +64,7 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Start a login shell with a pty.
-	// TODO: Use environmet when we're through testing
-	shell := "/bin/bash" /* os.Getenv("SHELL") */
+	shell := os.Getenv("SHELL")
 	cmd := exec.CommandContext(ctx, shell, "-l")
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
