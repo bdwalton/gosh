@@ -29,6 +29,7 @@ type stmObj struct {
 
 	ctx       context.Context
 	ptmx      *os.File
+	cmd       *exec.Cmd
 	cancelPty context.CancelFunc
 
 	st         uint8
@@ -65,7 +66,8 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 	// Start a login shell with a pty.
 	// TODO: Use environmet when we're through testing
 	shell := "/bin/bash" /* os.Getenv("SHELL") */
-	ptmx, err := pty.Start(exec.CommandContext(ctx, shell, "-l"))
+	cmd := exec.CommandContext(ctx, shell, "-l")
+	ptmx, err := pty.Start(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't start pty: %v", err)
 	}
@@ -87,6 +89,7 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 		ptmx:      ptmx,
 		cancelPty: cancel,
 		st:        SERVER,
+		cmd:       cmd,
 	}
 
 	return s, nil
@@ -128,8 +131,14 @@ func (s *stmObj) Run() {
 			s.wg.Done()
 		}()
 	case SERVER:
-		// We defer handlePtyOutput until we're pinged by the
-		// client, so this is just a placeholder for now.
+		s.wg.Add(1)
+		go func() {
+			// If the process in the pty dies, we need to
+			// shut down.
+			s.cmd.Wait()
+			s.Shutdown()
+			s.wg.Done()
+		}()
 	}
 
 	s.wg.Wait()
@@ -138,9 +147,10 @@ func (s *stmObj) Run() {
 func (s *stmObj) Shutdown() {
 	s.shutdown = true
 
+	s.sendPayload(s.buildPayload(transport.PayloadType_SHUTDOWN.Enum()))
+
 	switch s.st {
 	case CLIENT:
-		s.sendPayload(s.buildPayload(transport.PayloadType_SHUTDOWN.Enum()))
 		if err := term.Restore(int(os.Stdin.Fd()), s.os); err != nil {
 			// TODO: Log error messages
 		}
