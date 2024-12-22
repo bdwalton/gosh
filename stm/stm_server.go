@@ -79,10 +79,7 @@ func (s *stmObj) handlePtyOutput() {
 		}
 
 		msg := s.buildPayload(transport.PayloadType_SERVER_OUTPUT.Enum())
-		out := transport.PtyOutput_builder{
-			Output: buf[:n],
-		}.Build()
-		msg.SetOutput(out)
+		msg.SetPtyOutput(buf[:n])
 
 		b, err := proto.Marshal(msg)
 		if err != nil {
@@ -116,18 +113,15 @@ func (s *stmObj) handleRemoteInput() {
 			continue
 		}
 
-		ca := msg.GetAction()
-
-		if ca.HasSize() {
-			sz := ca.GetSize()
-			pty.Setsize(s.ptmx, &pty.Winsize{Rows: uint16(sz.GetHeight()), Cols: uint16(sz.GetWidth())})
-		}
-
-		if ca.HasKeys() {
-			keys := ca.GetKeys()
+		switch msg.GetType() {
+		case transport.PayloadType_CLIENT_INPUT:
+			keys := msg.GetInput()
 			if n, err := s.ptmx.Write(keys); err != nil || n != len(keys) {
 				// TODO log this
 			}
+		case transport.PayloadType_WINDOW_RESIZE:
+			sz := msg.GetSize()
+			pty.Setsize(s.ptmx, &pty.Winsize{Rows: uint16(sz.GetHeight()), Cols: uint16(sz.GetWidth())})
 		}
 	}
 }

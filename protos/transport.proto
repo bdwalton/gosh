@@ -15,8 +15,9 @@ message Fragment {
 enum PayloadType {
   UNKNOWN = 0;
   PING = 1;
-  CLIENT_ACTION = 2;
+  CLIENT_INPUT = 2;
   SERVER_OUTPUT = 3;
+  WINDOW_RESIZE = 4;
 }
 
 message Payload {
@@ -26,20 +27,12 @@ message Payload {
 
   PayloadType type = 4;
 
-  ClientAction action = 5;
-  PtyOutput output = 6;
-}
-
-message ClientAction {
-  bytes keys = 1;
-  Resize size = 2;
+  bytes input = 5;
+  bytes pty_output = 6;
+  Resize size = 7;
 }
 
 message Resize {
   int32 width = 1;
   int32 height = 2;
-}
-
-message PtyOutput {
-  bytes output = 1;
 }

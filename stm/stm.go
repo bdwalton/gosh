@@ -79,15 +79,12 @@ func (s *stmObj) handleWinCh() {
 				continue
 			}
 
-			ca := transport.ClientAction_builder{
-				Size: transport.Resize_builder{
-					Width:  proto.Int32(int32(w)),
-					Height: proto.Int32(int32(h)),
-				}.Build(),
+			sz := transport.Resize_builder{
+				Width:  proto.Int32(int32(w)),
+				Height: proto.Int32(int32(h)),
 			}.Build()
-
-			msg := s.buildPayload(transport.PayloadType_CLIENT_ACTION.Enum())
-			msg.SetAction(ca)
+			msg := s.buildPayload(transport.PayloadType_WINDOW_RESIZE.Enum())
+			msg.SetSize(sz)
 
 			p, err := proto.Marshal(msg)
 			if err != nil {
@@ -118,7 +115,8 @@ func (s *stmObj) handleInput() {
 	var inEsc bool
 
 	char := make([]byte, 1)
-	var ca transport.ClientAction
+
+	msg := s.buildPayload(transport.PayloadType_CLIENT_INPUT.Enum())
 
 	for {
 		_, err := os.Stdin.Read(char)
@@ -133,20 +131,17 @@ func (s *stmObj) handleInput() {
 				s.clientShutdown()
 				return
 			default:
-				ca.SetKeys(append(ca.GetKeys(), char...))
+				msg.SetInput(append(msg.GetInput(), char...))
 				inEsc = false
 			}
 		} else {
-			ca.SetKeys(char)
+			msg.SetInput(char)
 			switch char[0] {
 			case '\x1e':
 				inEsc = true
 				continue // Don't immediately send this
 			}
 		}
-
-		msg := s.buildPayload(transport.PayloadType_CLIENT_ACTION.Enum())
-		msg.SetAction(&ca)
 
 		b, err := proto.Marshal(msg)
 		if err != nil {
@@ -194,8 +189,8 @@ func (s *stmObj) handleRemotePty() {
 			continue
 		}
 
-		if msg.HasOutput() {
-			o := msg.GetOutput().GetOutput()
+		if msg.HasPtyOutput() {
+			o := msg.GetPtyOutput()
 			l := len(o)
 			for {
 				n, err := os.Stdout.Write(o)
