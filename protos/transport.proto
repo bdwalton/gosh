@@ -29,9 +29,8 @@ message Payload {
 
   PayloadType type = 4;
 
-  bytes input = 5;
-  bytes pty_output = 6;
-  Resize size = 7;
+  bytes data = 5;
+  Resize size = 6;
 }
 
 message Resize {

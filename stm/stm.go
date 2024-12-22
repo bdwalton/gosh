@@ -221,11 +221,11 @@ func (s *stmObj) handleInput() {
 				s.Shutdown()
 				return
 			default:
-				msg.SetInput(append(msg.GetInput(), char...))
+				msg.SetData(append(msg.GetData(), char...))
 				inEsc = false
 			}
 		} else {
-			msg.SetInput(char)
+			msg.SetData(char)
 			switch char[0] {
 			case '\x1e':
 				inEsc = true
@@ -281,7 +281,7 @@ func (s *stmObj) handleRemote() {
 		case transport.PayloadType_SHUTDOWN:
 			s.Shutdown()
 		case transport.PayloadType_CLIENT_INPUT:
-			keys := msg.GetInput()
+			keys := msg.GetData()
 			if n, err := s.ptmx.Write(keys); err != nil || n != len(keys) {
 				// TODO log this
 			}
@@ -300,7 +300,7 @@ func (s *stmObj) handleRemote() {
 				// TODO log this
 			}
 		case transport.PayloadType_SERVER_OUTPUT:
-			o := msg.GetPtyOutput()
+			o := msg.GetData()
 			l := len(o)
 			for {
 				n, err := os.Stdout.Write(o)
@@ -343,7 +343,7 @@ func (s *stmObj) handlePtyOutput() {
 		}
 
 		msg := s.buildPayload(transport.PayloadType_SERVER_OUTPUT.Enum())
-		msg.SetPtyOutput(buf[:n])
+		msg.SetData(buf[:n])
 		s.sendPayload(msg)
 	}
 }
