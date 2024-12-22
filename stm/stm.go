@@ -7,12 +7,13 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/bdwalton/gosh/network"
 	"github.com/bdwalton/gosh/protos/transport"
-
 	"golang.org/x/term"
 	"google.golang.org/protobuf/proto"
+	tspb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type stmObj struct {
@@ -77,12 +78,17 @@ func (s *stmObj) handleWinCh() {
 				// TODO: Add error logging here
 				continue
 			}
-			msg := transport.ClientAction_builder{
+
+			ca := transport.ClientAction_builder{
 				Size: transport.Resize_builder{
 					Width:  proto.Int32(int32(w)),
 					Height: proto.Int32(int32(h)),
 				}.Build(),
 			}.Build()
+
+			msg := s.buildPayload(transport.PayloadType_CLIENT_ACTION.Enum())
+			msg.SetAction(ca)
+
 			p, err := proto.Marshal(msg)
 			if err != nil {
 				// TODO: Log error messages
@@ -112,7 +118,7 @@ func (s *stmObj) handleInput() {
 	var inEsc bool
 
 	char := make([]byte, 1)
-	var msg *transport.ClientAction
+	var ca transport.ClientAction
 
 	for {
 		_, err := os.Stdin.Read(char)
@@ -127,20 +133,20 @@ func (s *stmObj) handleInput() {
 				s.clientShutdown()
 				return
 			default:
-				msg.SetKeys(append(msg.GetKeys(), char...))
+				ca.SetKeys(append(ca.GetKeys(), char...))
 				inEsc = false
 			}
 		} else {
-			msg = transport.ClientAction_builder{
-				Keys: char,
-			}.Build()
-
+			ca.SetKeys(char)
 			switch char[0] {
 			case '\x1e':
 				inEsc = true
 				continue // Don't immediately send this
 			}
 		}
+
+		msg := s.buildPayload(transport.PayloadType_CLIENT_ACTION.Enum())
+		msg.SetAction(&ca)
 
 		b, err := proto.Marshal(msg)
 		if err != nil {
@@ -152,6 +158,19 @@ func (s *stmObj) handleInput() {
 			continue
 		}
 	}
+}
+
+// buildPayload returns a transport.Payload object populated with
+// various basic fields. The actual payload should be added by the
+// caller to make the message complete
+func (s *stmObj) buildPayload(t *transport.PayloadType) *transport.Payload {
+	// TODO: Make id and ack fields useful
+	return transport.Payload_builder{
+		Sent: tspb.New(time.Now()),
+		Id:   proto.Int32(1),
+		Ack:  proto.Int32(1),
+		Type: t,
+	}.Build()
 }
 
 func (s *stmObj) handleRemotePty() {
@@ -168,7 +187,7 @@ func (s *stmObj) handleRemotePty() {
 			continue
 		}
 
-		var msg transport.PtyOutput
+		var msg transport.Payload
 		if err = proto.Unmarshal(buf[:n], &msg); err != nil {
 			// TODO log this
 			fmt.Println(err)
@@ -176,7 +195,7 @@ func (s *stmObj) handleRemotePty() {
 		}
 
 		if msg.HasOutput() {
-			o := msg.GetOutput()
+			o := msg.GetOutput().GetOutput()
 			l := len(o)
 			for {
 				n, err := os.Stdout.Write(o)

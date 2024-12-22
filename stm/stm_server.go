@@ -78,9 +78,11 @@ func (s *stmObj) handlePtyOutput() {
 			continue
 		}
 
-		msg := transport.PtyOutput_builder{
+		msg := s.buildPayload(transport.PayloadType_SERVER_OUTPUT.Enum())
+		out := transport.PtyOutput_builder{
 			Output: buf[:n],
 		}.Build()
+		msg.SetOutput(out)
 
 		b, err := proto.Marshal(msg)
 		if err != nil {
@@ -108,19 +110,21 @@ func (s *stmObj) handleRemoteInput() {
 			continue
 		}
 
-		var msg transport.ClientAction
+		var msg transport.Payload
 		if err = proto.Unmarshal(buf[:n], &msg); err != nil {
 			// TODO log this
 			continue
 		}
 
-		if msg.HasSize() {
-			sz := msg.GetSize()
+		ca := msg.GetAction()
+
+		if ca.HasSize() {
+			sz := ca.GetSize()
 			pty.Setsize(s.ptmx, &pty.Winsize{Rows: uint16(sz.GetHeight()), Cols: uint16(sz.GetWidth())})
 		}
 
-		if msg.HasKeys() {
-			keys := msg.GetKeys()
+		if ca.HasKeys() {
+			keys := ca.GetKeys()
 			if n, err := s.ptmx.Write(keys); err != nil || n != len(keys) {
 				// TODO log this
 			}
