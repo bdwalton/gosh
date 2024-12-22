@@ -9,8 +9,7 @@ import (
 	"syscall"
 
 	"github.com/bdwalton/gosh/network"
-	"github.com/bdwalton/gosh/protos/client"
-	"github.com/bdwalton/gosh/protos/server"
+	"github.com/bdwalton/gosh/protos/transport"
 
 	"golang.org/x/term"
 	"google.golang.org/protobuf/proto"
@@ -78,8 +77,8 @@ func (s *stmObj) handleWinCh() {
 				// TODO: Add error logging here
 				continue
 			}
-			msg := client.ClientAction_builder{
-				Size: client.Resize_builder{
+			msg := transport.ClientAction_builder{
+				Size: transport.Resize_builder{
 					Width:  proto.Int32(int32(w)),
 					Height: proto.Int32(int32(h)),
 				}.Build(),
@@ -113,7 +112,7 @@ func (s *stmObj) handleInput() {
 	var inEsc bool
 
 	char := make([]byte, 1)
-	var msg *client.ClientAction
+	var msg *transport.ClientAction
 
 	for {
 		_, err := os.Stdin.Read(char)
@@ -132,7 +131,7 @@ func (s *stmObj) handleInput() {
 				inEsc = false
 			}
 		} else {
-			msg = client.ClientAction_builder{
+			msg = transport.ClientAction_builder{
 				Keys: char,
 			}.Build()
 
@@ -169,7 +168,7 @@ func (s *stmObj) handleRemotePty() {
 			continue
 		}
 
-		var msg server.PtyOutput
+		var msg transport.PtyOutput
 		if err = proto.Unmarshal(buf[:n], &msg); err != nil {
 			// TODO log this
 			fmt.Println(err)

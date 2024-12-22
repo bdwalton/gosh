@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"github.com/bdwalton/gosh/network"
-	"github.com/bdwalton/gosh/protos/client"
-	"github.com/bdwalton/gosh/protos/server"
+	"github.com/bdwalton/gosh/protos/transport"
 	"github.com/creack/pty"
 	"google.golang.org/protobuf/proto"
 	"syscall"
@@ -79,7 +78,7 @@ func (s *stmObj) handlePtyOutput() {
 			continue
 		}
 
-		msg := server.PtyOutput_builder{
+		msg := transport.PtyOutput_builder{
 			Output: buf[:n],
 		}.Build()
 
@@ -109,7 +108,7 @@ func (s *stmObj) handleRemoteInput() {
 			continue
 		}
 
-		var msg client.ClientAction
+		var msg transport.ClientAction
 		if err = proto.Unmarshal(buf[:n], &msg); err != nil {
 			// TODO log this
 			continue

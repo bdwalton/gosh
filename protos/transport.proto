@@ -1,0 +1,45 @@
+edition = "2023";
+
+import "google/protobuf/go_features.proto";
+import "google/protobuf/timestamp.proto";
+option features.(pb.go).api_level = API_OPAQUE;
+option go_package = "github.com/bdwalton/gosh/protos/transport";
+
+message Fragment {
+  int32 id = 1;
+  int32 expected = 2; // id of expected
+  bool final = 3;
+  bytes data = 4;
+}
+
+enum PayloadType {
+  UNKNOWN = 0;
+  PING = 1;
+  CLIENT_ACTION = 2;
+  SERVER_OUTPUT = 3;
+}
+
+message Payload {
+  google.protobuf.Timestamp sent = 1;
+  int32 id = 2;
+  int32 ack = 3;
+
+  PayloadType type = 4;
+
+  ClientAction action = 5;
+  PtyOutput output = 6;
+}
+
+message ClientAction {
+  bytes keys = 1;
+  Resize size = 2;
+}
+
+message Resize {
+  int32 width = 1;
+  int32 height = 2;
+}
+
+message PtyOutput {
+  bytes output = 1;
+}
