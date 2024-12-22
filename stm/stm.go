@@ -91,6 +91,18 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 	return s, nil
 }
 
+func (s *stmObj) sendPayload(msg *transport.Payload) {
+	p, err := proto.Marshal(msg)
+	if err != nil {
+		// TODO: Log error messages
+		return
+	}
+	_, err = s.gc.Write(p)
+	if err != nil {
+		// TODO: Log error messages
+	}
+}
+
 func (s *stmObj) Run() {
 	s.wg.Add(1)
 	go func() {
@@ -163,15 +175,7 @@ func (s *stmObj) handleWinCh() {
 			msg := s.buildPayload(transport.PayloadType_WINDOW_RESIZE.Enum())
 			msg.SetSize(sz)
 
-			p, err := proto.Marshal(msg)
-			if err != nil {
-				// TODO: Log error messages
-				continue
-			}
-			_, err = s.gc.Write(p)
-			if err != nil {
-				// TODO: Log error messages
-			}
+			s.sendPayload(msg)
 		case <-t.C:
 			// Just a catch to ensure we don't block
 			// forever on the WINCH signal and get a
@@ -212,16 +216,7 @@ func (s *stmObj) handleInput() {
 				continue // Don't immediately send this
 			}
 		}
-
-		b, err := proto.Marshal(msg)
-		if err != nil {
-			// TODO: Log errors
-			continue
-		}
-		if _, err = s.gc.Write(b); err != nil {
-			// TODO log errors
-			continue
-		}
+		s.sendPayload(msg)
 	}
 }
 
@@ -315,15 +310,6 @@ func (s *stmObj) handlePtyOutput() {
 
 		msg := s.buildPayload(transport.PayloadType_SERVER_OUTPUT.Enum())
 		msg.SetPtyOutput(buf[:n])
-
-		b, err := proto.Marshal(msg)
-		if err != nil {
-			// TODO: Log this
-			continue
-		}
-
-		if m, err := s.gc.Write(b); m != n || err != nil {
-			// TODO: Log error.
-		}
+		s.sendPayload(msg)
 	}
 }
