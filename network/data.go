@@ -135,10 +135,8 @@ func (gc *GConn) Close() {
 }
 
 func (gc *GConn) Write(msg []byte) (int, error) {
-	nce := gc.ln.toGCMNonce()
-	// Never reuse a nonce value, increment regardless
-	// of what happens to the Write attempt.
-	gc.ln += 1
+	// panics if we overflow 32bits of nonce usage
+	nce := gc.ln.nextGCMNonce()
 
 	sealed := gc.aead.Seal(nil, nce, msg, nil)
 
@@ -177,6 +175,9 @@ func (gc *GConn) Read(extbuf []byte) (int, error) {
 		return 0, fmt.Errorf("failed to ReadFromUDP(): %v", err)
 	} else {
 		nce := buf[0:12]
+		// Will panic if the nonce exceeds a 32-bit uint
+		gc.rn = nonceFromBytes(nce)
+
 		m := buf[12:n]
 
 		unsealed, err := gc.aead.Open(nil, nce, m, nil)
