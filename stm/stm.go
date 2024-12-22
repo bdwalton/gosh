@@ -140,6 +140,7 @@ func (s *stmObj) Shutdown() {
 
 	switch s.st {
 	case CLIENT:
+		s.sendPayload(s.buildPayload(transport.PayloadType_SHUTDOWN.Enum()))
 		if err := term.Restore(int(os.Stdin.Fd()), s.os); err != nil {
 			// TODO: Log error messages
 		}
@@ -265,6 +266,8 @@ func (s *stmObj) handleRemote() {
 				}()
 				s.ptyRunning = true
 			}
+		case transport.PayloadType_SHUTDOWN:
+			s.Shutdown()
 		case transport.PayloadType_CLIENT_INPUT:
 			keys := msg.GetInput()
 			if n, err := s.ptmx.Write(keys); err != nil || n != len(keys) {

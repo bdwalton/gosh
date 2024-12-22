@@ -14,10 +14,12 @@ message Fragment {
 
 enum PayloadType {
   UNKNOWN = 0;
-  PING = 1;
-  CLIENT_INPUT = 2;
-  SERVER_OUTPUT = 3;
-  WINDOW_RESIZE = 4;
+  PING = 1; // no other data
+  SHUTDOWN = 2; // no other data
+  CLIENT_INPUT = 3;
+  SERVER_OUTPUT = 4;
+  WINDOW_RESIZE = 5;
+
 }
 
 message Payload {
