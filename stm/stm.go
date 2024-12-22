@@ -204,9 +204,12 @@ func (s *stmObj) handleInput() {
 
 	char := make([]byte, 1)
 
-	msg := s.buildPayload(transport.PayloadType_CLIENT_INPUT.Enum())
-
 	for {
+		if s.shutdown {
+			return
+		}
+
+		msg := s.buildPayload(transport.PayloadType_CLIENT_INPUT.Enum())
 		_, err := os.Stdin.Read(char)
 		if err != nil {
 			// TODO: Log this?
