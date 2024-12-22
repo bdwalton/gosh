@@ -17,13 +17,19 @@ const (
 	MTU       = 1024
 )
 
+const (
+	CLIENT = iota
+	SERVER
+)
+
 type GConn struct {
 	c        *net.UDPConn
+	remote   *net.UDPAddr
 	shutdown bool
 	key      []byte
 	aead     cipher.AEAD
 	ln, rn   nonce
-	remote   string
+	cType    uint8
 }
 
 func initAEAD(key []byte) (cipher.AEAD, error) {
@@ -62,9 +68,10 @@ func NewClient(addr, key string) (*GConn, error) {
 	}
 
 	gc := &GConn{
-		c:    c,
-		key:  dkey,
-		aead: aead,
+		c:     c,
+		key:   dkey,
+		aead:  aead,
+		cType: CLIENT,
 	}
 
 	return gc, nil
@@ -97,8 +104,9 @@ func NewServer(prng string) (*GConn, error) {
 	}
 
 	gc := &GConn{
-		key:  key,
-		aead: aead,
+		key:   key,
+		aead:  aead,
+		cType: SERVER,
 	}
 
 	ua := &net.UDPAddr{Port: 0}
@@ -136,12 +144,31 @@ func (gc *GConn) Write(msg []byte) (int, error) {
 
 	m := []byte(string(nce) + string(sealed))
 
-	n, err := gc.c.Write(m)
-	if n != len(msg) || err != nil {
-		return 0, fmt.Errorf("failed to write %d bytes: %v", len(msg), err)
+	var n int
+	var err error
+
+	switch gc.cType {
+	case CLIENT:
+		n, err = gc.c.Write(m)
+		if err != nil {
+			fmt.Println("client write error:", err)
+		}
+	case SERVER:
+		n, err = gc.c.WriteToUDP(m, gc.remote)
+		if err != nil {
+			fmt.Println("server write error:", err, m, gc.remote)
+		}
+	}
+
+	if n != len(m) || err != nil {
+		return 0, fmt.Errorf("wrote %d of %d bytes: %v", n, len(m), err)
 	}
 
 	return n, err
+}
+
+func (gc *GConn) Connected() bool {
+	return gc.remote != nil
 }
 
 func (gc *GConn) Read(extbuf []byte) (int, error) {
@@ -163,9 +190,8 @@ func (gc *GConn) Read(extbuf []byte) (int, error) {
 			return 0, fmt.Errorf("failed to unseal data: %v", err)
 		}
 
-		if rs := remote.String(); rs != gc.remote {
-			fmt.Printf("remote changed from %q to %q\n", gc.remote, rs)
-			gc.remote = rs
+		if ors, rs := gc.remote.String(), remote.String(); rs != ors {
+			gc.remote = remote
 		}
 
 		n := copy(extbuf, unsealed)
