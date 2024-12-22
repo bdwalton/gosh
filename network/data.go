@@ -14,7 +14,7 @@ import (
 
 const (
 	KEY_BYTES = 16
-	MTU       = 1024
+	MTU       = 1280
 )
 
 const (
