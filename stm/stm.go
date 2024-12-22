@@ -277,6 +277,13 @@ func (s *stmObj) handleRemote() {
 				Cols: uint16(sz.GetWidth()),
 			}
 			pty.Setsize(s.ptmx, pts)
+			// Any use of Fd(), including in the InheritSize call above,
+			// will set the descriptor non-blocking, so we need to change
+			// that here.
+			pfd := int(s.ptmx.Fd())
+			if err := syscall.SetNonblock(pfd, true); err != nil {
+				// TODO log this
+			}
 		case transport.PayloadType_SERVER_OUTPUT:
 			o := msg.GetPtyOutput()
 			l := len(o)
