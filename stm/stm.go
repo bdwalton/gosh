@@ -31,9 +31,10 @@ type stmObj struct {
 	ptmx      *os.File
 	cancelPty context.CancelFunc
 
-	st       uint8
-	shutdown bool
-	wg       sync.WaitGroup
+	st         uint8
+	shutdown   bool
+	ptyRunning bool
+	wg         sync.WaitGroup
 }
 
 func NewClient(gc *network.GConn) (*stmObj, error) {
@@ -103,6 +104,10 @@ func (s *stmObj) sendPayload(msg *transport.Payload) {
 	}
 }
 
+func (s *stmObj) ping() {
+	s.sendPayload(s.buildPayload(transport.PayloadType_PING.Enum()))
+}
+
 func (s *stmObj) Run() {
 	s.wg.Add(1)
 	go func() {
@@ -112,6 +117,7 @@ func (s *stmObj) Run() {
 
 	switch s.st {
 	case CLIENT:
+		s.ping()
 		s.wg.Add(2)
 		go func() {
 			s.handleWinCh()
@@ -122,11 +128,8 @@ func (s *stmObj) Run() {
 			s.wg.Done()
 		}()
 	case SERVER:
-		s.wg.Add(1)
-		go func() {
-			s.handlePtyOutput()
-			s.wg.Done()
-		}()
+		// We defer handlePtyOutput until we're pinged by the
+		// client, so this is just a placeholder for now.
 	}
 
 	s.wg.Wait()
@@ -253,6 +256,15 @@ func (s *stmObj) handleRemote() {
 		}
 
 		switch msg.GetType() {
+		case transport.PayloadType_PING:
+			if s.st == SERVER && !s.ptyRunning {
+				s.wg.Add(1)
+				go func() {
+					s.handlePtyOutput()
+					s.wg.Done()
+				}()
+				s.ptyRunning = true
+			}
 		case transport.PayloadType_CLIENT_INPUT:
 			keys := msg.GetInput()
 			if n, err := s.ptmx.Write(keys); err != nil || n != len(keys) {
