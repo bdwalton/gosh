@@ -150,14 +150,8 @@ func (gc *GConn) Write(msg []byte) (int, error) {
 	switch gc.cType {
 	case CLIENT:
 		n, err = gc.c.Write(m)
-		if err != nil {
-			fmt.Println("client write error:", err)
-		}
 	case SERVER:
 		n, err = gc.c.WriteToUDP(m, gc.remote)
-		if err != nil {
-			fmt.Println("server write error:", err, m, gc.remote)
-		}
 	}
 
 	if n != len(m) || err != nil {

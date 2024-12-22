@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/signal"
 	"sync"
 	"syscall"
 
 	"github.com/bdwalton/gosh/network"
 	"github.com/bdwalton/gosh/protos/client"
-	"github.com/creack/pty"
+	"github.com/bdwalton/gosh/protos/server"
+
 	"golang.org/x/term"
 	"google.golang.org/protobuf/proto"
 )
@@ -30,9 +30,16 @@ type stmObj struct {
 }
 
 func NewClient(gc *network.GConn) (*stmObj, error) {
-	os, err := term.MakeRaw(int(os.Stdin.Fd()))
+	fd := int(os.Stdin.Fd())
+	os, err := term.MakeRaw(fd)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't make terminal raw: %v", err)
+	}
+
+	// Any use of Fd() will set the descriptor non-blocking, so we
+	// need to change that here.NewClient
+	if err := syscall.SetNonblock(fd, true); err != nil {
+		return nil, fmt.Errorf("couldn't set ptmx non-blocking: %v", err)
 	}
 
 	s := &stmObj{
@@ -44,28 +51,17 @@ func NewClient(gc *network.GConn) (*stmObj, error) {
 	return s, nil
 }
 
-func NewServer(gc *network.GConn) (*stmObj, error) {
-	ctx, cancel := context.WithCancel(context.Background())
+func (s *stmObj) RunClient() {
+	go s.handleWinCh()
+	go s.handleInput()
+	go s.handleRemotePty()
 
-	// Start a login shell with a pty.
-	// TODO: Use environmet when we're through testing
-	shell := "/bin/bash" /* os.Getenv("SHELL") */
-	ptmx, err := pty.Start(exec.CommandContext(ctx, shell, "-l"))
-	if err != nil {
-		return nil, fmt.Errorf("couldn't start pty: %v", err)
+	for {
+		select {
+		case <-s.quitCh:
+			return
+		}
 	}
-
-	if err := pty.InheritSize(os.Stdin, ptmx); err != nil {
-		return nil, fmt.Errorf("couldn't inherit window size: %v", err)
-	}
-
-	s := &stmObj{
-		gc:        gc,
-		ptmx:      ptmx,
-		cancelPty: cancel,
-	}
-
-	return s, nil
 }
 
 func (s *stmObj) handleWinCh() {
@@ -96,19 +92,11 @@ func (s *stmObj) handleWinCh() {
 			_, err = s.gc.Write(p)
 			if err != nil {
 				// TODO: Log error messages
-				fmt.Println(err)
 			}
 		case <-s.quitCh:
 			return
 		}
 	}
-}
-
-func (s *stmObj) ServerShutdown() {
-	s.shutdown = true
-	s.wg.Wait()
-	s.ptmx.Close()
-	s.gc.Close()
 }
 
 func (s *stmObj) clientShutdown() {
@@ -130,7 +118,7 @@ func (s *stmObj) handleInput() {
 	for {
 		_, err := os.Stdin.Read(char)
 		if err != nil {
-			fmt.Printf("Error on os.Stdin.Read(): %v\n", err)
+			// TODO: Log this?
 			continue
 		}
 
@@ -164,64 +152,46 @@ func (s *stmObj) handleInput() {
 			// TODO log errors
 			continue
 		}
-
 	}
 }
 
-func (s *stmObj) RunClient() {
-	go s.handleWinCh()
-	go s.handleInput()
-
-	for {
-		select {
-		case <-s.quitCh:
-			return
-		}
-	}
-}
-
-func (s *stmObj) handleRemoteInput() {
-	s.wg.Add(1)
-	defer s.wg.Done()
+func (s *stmObj) handleRemotePty() {
 	for {
 		if s.shutdown {
 			return
 		}
+
 		buf := make([]byte, 1024)
+
 		n, err := s.gc.Read(buf)
 		if err != nil {
 			// TODO: Log this
 			continue
 		}
 
-		var msg client.ClientAction
+		var msg server.PtyOutput
 		if err = proto.Unmarshal(buf[:n], &msg); err != nil {
 			// TODO log this
 			fmt.Println(err)
 			continue
 		}
 
-		if msg.HasSize() {
-			sz := msg.GetSize()
-			pty.Setsize(s.ptmx, &pty.Winsize{Rows: uint16(sz.GetHeight()), Cols: uint16(sz.GetWidth())})
-		}
+		if msg.HasOutput() {
+			o := msg.GetOutput()
+			l := len(o)
+			for {
+				n, err := os.Stdout.Write(o)
+				if err != nil {
+					// TODO: Log this
+					break
+				}
+				l -= n
 
-		if msg.HasKeys() {
-			keys := msg.GetKeys()
-			if n, err := s.ptmx.Write(keys); err != nil || n != len(keys) {
-				// TODO log this
+				if l == 0 {
+					break
+				}
 			}
 		}
-	}
-}
 
-func (s *stmObj) RunServer() {
-	go s.handleRemoteInput()
-
-	for {
-		select {
-		case <-s.quitCh:
-			return
-		}
 	}
 }
