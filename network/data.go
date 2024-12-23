@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"net"
 	"strconv"
 	"strings"
@@ -170,7 +171,7 @@ func (gc *GConn) Read(extbuf []byte) (int, error) {
 	n, remote, err := gc.c.ReadFromUDP(buf[:MTU])
 	if err != nil {
 		if e, ok := err.(net.Error); !ok || !e.Timeout() {
-			// handle error, it's not a timeout
+			slog.Error("non-timeout error reading from remote", "err", err)
 		}
 		return 0, fmt.Errorf("failed to ReadFromUDP(): %v", err)
 	} else {
