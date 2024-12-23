@@ -3,10 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"syscall"
 
+	"github.com/bdwalton/gosh/logging"
 	"github.com/bdwalton/gosh/network"
 	"github.com/bdwalton/gosh/stm"
 )
@@ -14,6 +16,7 @@ import (
 var (
 	detached  = flag.Bool("detached", false, "For use gosh-server to setup a detached version")
 	portRange = flag.String("port_range", "61000:61999", "Port range")
+	logfile   = flag.String("logfile", "", "If set, logs will be written to this file.")
 )
 
 func main() {
@@ -37,25 +40,35 @@ func main() {
 		os.Exit(0)
 	}
 
-	gc, err := network.NewServer(*portRange)
+	err := logging.Setup(*logfile)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	gc, err := network.NewServer(*portRange)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Couldn't setup network connection", "err", err))
 		os.Exit(1)
 	}
 
 	s, err := stm.NewServer(gc)
 	if err != nil {
-		fmt.Println(err)
+		slog.Error(fmt.Sprintf("Couldn't setup STM server", "err", err))
 		os.Exit(1)
 	}
 
-	fmt.Printf("GOSH CONNECT %d %s (pid: %d)\n", gc.LocalPort(), gc.Base64Key(), os.Getpid())
+	port, pid := gc.LocalPort(), os.Getpid()
+	slog.Info("Running", "port", port, "pid", pid)
+	fmt.Println("GOSH CONNECT", port, gc.Base64Key(), "pid =", pid)
 
 	os.Stdin.Close()
 	os.Stdout.Close()
 	os.Stderr.Close()
 
 	s.Run()
+
+	slog.Info("Shutting down")
 }
 
 func runDetached() error {
