@@ -27,7 +27,12 @@ func Setup(logfile string) error {
 			return fmt.Errorf("couldn't open logfile %q: %v", logfile, err)
 		}
 
-		l = slog.New(slog.NewTextHandler(f, nil))
+		h := slog.NewTextHandler(f, nil)
+		attrs := []slog.Attr{
+			slog.Any("pid", os.Getpid()),
+			slog.Any("binary", os.Args[0]),
+		}
+		l = slog.New(h.WithAttrs(attrs))
 	} else {
 		l = slog.New(&discardHandler{})
 	}

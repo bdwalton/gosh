@@ -59,7 +59,7 @@ func main() {
 	}
 
 	port, pid := gc.LocalPort(), os.Getpid()
-	slog.Info("Running", "port", port, "pid", pid)
+	slog.Info("Running", "port", port)
 	fmt.Println("GOSH CONNECT", port, gc.Base64Key(), "pid =", pid)
 
 	os.Stdin.Close()
