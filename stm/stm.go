@@ -71,13 +71,13 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 		return nil, fmt.Errorf("couldn't start pty: %v", err)
 	}
 
-	if err := pty.InheritSize(os.Stdin, ptmx); err != nil {
-		return nil, fmt.Errorf("couldn't inherit window size: %v", err)
+	if err := pty.Setsize(ptmx, &pty.Winsize{Rows: 24, Cols: 80}); err != nil {
+		return nil, fmt.Errorf("couldn't set default window size: %v", err)
 	}
 
-	// Any use of Fd(), including in the InheritSize call above,
-	// will set the descriptor non-blocking, so we need to change
-	// that here.
+	// Any use of Fd(), including indirectly via the Setsize call
+	// above, will set the descriptor non-blocking, so we need to
+	// change that here.
 	pfd := int(ptmx.Fd())
 	if err := syscall.SetNonblock(pfd, true); err != nil {
 		return nil, fmt.Errorf("couldn't set ptmx non-blocking: %v", err)
