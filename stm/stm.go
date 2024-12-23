@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"sync"
 	"syscall"
 	"time"
@@ -66,7 +67,9 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 
 	// Start a login shell with a pty.
 	shell := os.Getenv("SHELL")
-	cmd := exec.CommandContext(ctx, shell, "-l")
+	lshell := "-" + filepath.Base(shell)
+	cmd := exec.CommandContext(ctx, shell)
+	cmd.Args = []string{lshell}
 	// TODO: We should probably clean this a bit, but for now,
 	// just pass it all through.
 	cmd.Env = os.Environ()
