@@ -66,6 +66,9 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 	// Start a login shell with a pty.
 	shell := os.Getenv("SHELL")
 	cmd := exec.CommandContext(ctx, shell, "-l")
+	// TODO: We should probably clean this a bit, but for now,
+	// just pass it all through.
+	cmd.Env = os.Environ()
 	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: 24, Cols: 80})
 	if err != nil {
 		return nil, fmt.Errorf("couldn't start pty: %v", err)
