@@ -17,4 +17,4 @@ protos:
 	@(cd protos; make)
 
 clean:
-	@rm gosh-server gosh-client
+	@rm gosh gosh-server gosh-client
