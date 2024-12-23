@@ -1,3 +1,4 @@
 *.pb.go
 /gosh-client
 /gosh-server
+/gosh
