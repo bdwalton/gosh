@@ -167,6 +167,10 @@ func (s *stmObj) handleWinCh() {
 	sig := make(chan os.Signal, 10)
 	signal.Notify(sig, syscall.SIGWINCH)
 
+	// won't block as we have buffer, done to ensure we always
+	// send the peer our current size at startup.
+	sig <- syscall.SIGWINCH
+
 	t := time.NewTicker(100 * time.Millisecond)
 
 	for {
