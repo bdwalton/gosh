@@ -91,6 +91,5 @@ func runDetached() error {
 		return fmt.Errorf("couldn't start detached server: %v", err)
 	}
 
-	fmt.Println("releasing")
 	return cmd.Process.Release()
 }
