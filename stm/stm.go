@@ -289,9 +289,10 @@ func (s *stmObj) handleRemote() {
 			}
 		case transport.PayloadType_WINDOW_RESIZE:
 			sz := msg.GetSize()
+			h, w := sz.GetHeight(), sz.GetWidth()
 			pts := &pty.Winsize{
-				Rows: uint16(sz.GetHeight()),
-				Cols: uint16(sz.GetWidth()),
+				Rows: uint16(h),
+				Cols: uint16(w),
 			}
 			if err := pty.Setsize(s.ptmx, pts); err != nil {
 				slog.Error("couldn't set size on pty", "err", err)
@@ -303,6 +304,7 @@ func (s *stmObj) handleRemote() {
 			if err := syscall.SetNonblock(pfd, true); err != nil {
 				slog.Error("couldn't set pty to nonblocking", "err", err)
 			}
+			slog.Info("changed window size", "rows", h, "cols", w)
 		case transport.PayloadType_SERVER_OUTPUT:
 			o := msg.GetData()
 			l := len(o)
