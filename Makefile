@@ -1,4 +1,8 @@
-all: protos gosh-client gosh-server
+all: protos gosh gosh-client gosh-server
+
+gosh: gosh.go
+	@echo Building $<
+	@go build $<
 
 gosh-client: client/gosh-client.go
 	@echo Building $<
