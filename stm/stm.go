@@ -3,6 +3,7 @@ package stm
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -96,12 +97,12 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 func (s *stmObj) sendPayload(msg *transport.Payload) {
 	p, err := proto.Marshal(msg)
 	if err != nil {
-		// TODO: Log error messages
+		slog.Error("couldn't marshal message")
 		return
 	}
 	_, err = s.gc.Write(p)
 	if err != nil {
-		// TODO: Log error messages
+		slog.Error("couldn't write to network", "err", err)
 	}
 }
 
@@ -146,11 +147,12 @@ func (s *stmObj) Shutdown() {
 	s.shutdown = true
 
 	s.sendPayload(s.buildPayload(transport.PayloadType_SHUTDOWN.Enum()))
+	slog.Info("sending shutdown to remote peer")
 
 	switch s.st {
 	case CLIENT:
 		if err := term.Restore(int(os.Stdin.Fd()), s.os); err != nil {
-			// TODO: Log error messages
+			slog.Error("couldn't restore terminal mode", "err", err)
 		}
 	}
 
@@ -176,7 +178,7 @@ func (s *stmObj) handleWinCh() {
 		case <-sig:
 			w, h, err := term.GetSize(int(os.Stdin.Fd()))
 			if err != nil {
-				// TODO: Add error logging here
+				slog.Error("couldn't get terminal size", "err", err)
 				continue
 			}
 
@@ -188,6 +190,7 @@ func (s *stmObj) handleWinCh() {
 			msg.SetSize(sz)
 
 			s.sendPayload(msg)
+			slog.Info("change window size", "rows", sz.GetHeight(), "cols", sz.GetWidth())
 		case <-t.C:
 			// Just a catch to ensure we don't block
 			// forever on the WINCH signal and get a
@@ -210,7 +213,7 @@ func (s *stmObj) handleInput() {
 		msg := s.buildPayload(transport.PayloadType_CLIENT_INPUT.Enum())
 		_, err := os.Stdin.Read(char)
 		if err != nil {
-			// TODO: Log this?
+			slog.Error("couldn't read stdin", "err", err)
 			continue
 		}
 
@@ -263,7 +266,7 @@ func (s *stmObj) handleRemote() {
 
 		var msg transport.Payload
 		if err = proto.Unmarshal(buf[:n], &msg); err != nil {
-			// TODO log this
+			slog.Error("couldn't unmarshal proto", "err", err)
 			continue
 		}
 
@@ -282,7 +285,7 @@ func (s *stmObj) handleRemote() {
 		case transport.PayloadType_CLIENT_INPUT:
 			keys := msg.GetData()
 			if n, err := s.ptmx.Write(keys); err != nil || n != len(keys) {
-				// TODO log this
+				slog.Error("couldn't write to pty", "n", n, "len(keys)", len(keys), "err", err)
 			}
 		case transport.PayloadType_WINDOW_RESIZE:
 			sz := msg.GetSize()
@@ -290,13 +293,15 @@ func (s *stmObj) handleRemote() {
 				Rows: uint16(sz.GetHeight()),
 				Cols: uint16(sz.GetWidth()),
 			}
-			pty.Setsize(s.ptmx, pts)
+			if err := pty.Setsize(s.ptmx, pts); err != nil {
+				slog.Error("couldn't set size on pty", "err", err)
+			}
 			// Any use of Fd(), including in the InheritSize call above,
 			// will set the descriptor non-blocking, so we need to change
 			// that here.
 			pfd := int(s.ptmx.Fd())
 			if err := syscall.SetNonblock(pfd, true); err != nil {
-				// TODO log this
+				slog.Error("couldn't set pty to nonblocking", "err", err)
 			}
 		case transport.PayloadType_SERVER_OUTPUT:
 			o := msg.GetData()
@@ -304,7 +309,7 @@ func (s *stmObj) handleRemote() {
 			for {
 				n, err := os.Stdout.Write(o)
 				if err != nil {
-					// TODO: Log this
+					slog.Error("couldn't write to stdout", "err", err)
 					break
 				}
 				l -= n
