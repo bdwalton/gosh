@@ -262,12 +262,12 @@ func (s *stmObj) buildPayload(t *transport.PayloadType) *transport.Payload {
 }
 
 func (s *stmObj) handleRemote() {
+	buf := make([]byte, 2048)
 	for {
 		if s.shutdown {
 			return
 		}
 
-		buf := make([]byte, 1024)
 		n, err := s.gc.Read(buf)
 		if err != nil {
 			// TODO: Log this
@@ -329,13 +329,13 @@ func (s *stmObj) handleRemote() {
 func (s *stmObj) handlePtyOutput() {
 	defer s.cancelPty()
 
+	buf := make([]byte, 1024)
+
 	for {
 		if s.shutdown {
 			break
 		}
 
-
-		buf := make([]byte, 1024)
 		s.ptmx.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
 		n, err := s.ptmx.Read(buf)
 		if err != nil {
