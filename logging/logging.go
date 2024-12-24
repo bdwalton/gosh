@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 )
 
 // See https://github.com/golang/go/issues/62005 for details about why
@@ -30,7 +31,7 @@ func Setup(logfile string) error {
 		h := slog.NewTextHandler(f, nil)
 		attrs := []slog.Attr{
 			slog.Any("pid", os.Getpid()),
-			slog.Any("binary", os.Args[0]),
+			slog.Any("binary", filepath.Base(os.Args[0])),
 		}
 		l = slog.New(h.WithAttrs(attrs))
 	} else {
