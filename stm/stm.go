@@ -314,18 +314,10 @@ func (s *stmObj) handleRemote() {
 			slog.Info("changed window size", "rows", h, "cols", w)
 		case transport.PayloadType_SERVER_OUTPUT:
 			o := msg.GetData()
-			l := len(o)
-			for {
-				n, err := os.Stdout.Write(o)
-				if err != nil {
-					slog.Error("couldn't write to stdout", "err", err)
-					break
-				}
-				l -= n
-
-				if l == 0 {
-					break
-				}
+			_, err := os.Stdout.Write(o)
+			if err != nil || n != len(o) {
+				slog.Error("couldn't write to stdout", "err", err)
+				break
 			}
 		}
 	}
