@@ -334,9 +334,6 @@ func (s *stmObj) handlePtyOutput() {
 			break
 		}
 
-		// if !s.gc.Connected() {
-		// 	continue
-		// }
 
 		buf := make([]byte, 1024)
 		s.ptmx.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
