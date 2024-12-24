@@ -6,10 +6,11 @@ option features.(pb.go).api_level = API_OPAQUE;
 option go_package = "github.com/bdwalton/gosh/protos/transport";
 
 message Fragment {
-  int32 id = 1;
-  int32 expected = 2; // id of expected
-  bool final = 3;
-  bytes data = 4;
+  uint32 id = 1;
+  uint32 this_frag = 2;
+  uint32 total_frags  = 3;
+  bool compressed = 4;
+  bytes data = 5;
 }
 
 enum PayloadType {
