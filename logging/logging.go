@@ -19,7 +19,7 @@ func (d *discardHandler) Enabled(context.Context, slog.Level) bool {
 	return false
 }
 
-func Setup(logfile string) error {
+func Setup(logfile string, debug bool) error {
 	var l *slog.Logger
 
 	if logfile != "" {
@@ -28,7 +28,11 @@ func Setup(logfile string) error {
 			return fmt.Errorf("couldn't open logfile %q: %v", logfile, err)
 		}
 
-		h := slog.NewTextHandler(f, nil)
+		opts := &slog.HandlerOptions{}
+		if debug {
+			opts.Level = slog.LevelDebug
+		}
+		h := slog.NewTextHandler(f, opts)
 		attrs := []slog.Attr{
 			slog.Any("pid", os.Getpid()),
 			slog.Any("binary", filepath.Base(os.Args[0])),

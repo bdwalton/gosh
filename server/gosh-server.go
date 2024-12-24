@@ -14,6 +14,7 @@ import (
 )
 
 var (
+	debug     = flag.Bool("debug", false, "If true, enable DEBUG log level for verbose log output")
 	detached  = flag.Bool("detached", false, "For use gosh-server to setup a detached version")
 	portRange = flag.String("port_range", "61000:61999", "Port range")
 	logfile   = flag.String("logfile", "", "If set, logs will be written to this file.")
@@ -40,7 +41,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	err := logging.Setup(*logfile)
+	err := logging.Setup(*logfile, *debug)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

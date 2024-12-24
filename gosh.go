@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	debug      = flag.Bool("debug", false, "If true, enable DEBUG log level for verbose log output")
 	goshClient = flag.String("gosh_client", "gosh-client", "The path to the gosh-client executable on the local system.")
 	goshSrv    = flag.String("gosh_server", "gosh-server", "The path to the gosh-server executable on the remote system.")
 	logfile    = flag.String("logfile", "", "If set, client logs will be written to this file.")
@@ -31,6 +32,10 @@ func main() {
 	args = append(args, *goshSrv)
 	if *remLog != "" {
 		args = append(args, fmt.Sprintf("--logfile=%q", *remLog))
+	}
+
+	if *debug {
+		args = append(args, "--debug")
 	}
 
 	cmd := exec.Command("ssh", args...)
