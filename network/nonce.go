@@ -20,7 +20,9 @@ func (n *nonce) nextGCMNonce(dir uint8) []byte {
 	return b
 }
 
-func nonceFromBytes(b []byte) nonce {
+// nonceFromBytes returns a nonce value and the "direction" of the
+// nonce, which should match either CLIENT or SERVER
+func nonceFromBytes(b []byte) (nonce, uint8) {
 	if len(b) != 12 {
 		panic("invalid nonce bytes passed in")
 	}
@@ -28,5 +30,5 @@ func nonceFromBytes(b []byte) nonce {
 	if n > uint64(math.MaxUint32) {
 		panic(fmt.Sprintf("nonce pool exceeded %d", n))
 	}
-	return nonce(n)
+	return nonce(n), uint8(b[0])
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -177,7 +178,11 @@ func (gc *GConn) Read(extbuf []byte) (int, error) {
 	} else {
 		nce := buf[0:12]
 		// Will panic if the nonce exceeds a 32-bit uint
-		gc.rn = nonceFromBytes(nce)
+		rn, dir := nonceFromBytes(nce)
+		if dir == gc.cType {
+			slog.Error("received nonce with our own 'direction'")
+			return 0, errors.New("invalid nonce received - bad directionality")
+		}
 
 		m := buf[12:n]
 
@@ -186,8 +191,14 @@ func (gc *GConn) Read(extbuf []byte) (int, error) {
 			return 0, fmt.Errorf("failed to unseal data: %v", err)
 		}
 
-		if ors, rs := gc.remote.String(), remote.String(); rs != ors {
+		// Only update our remote if the nonce sequence has
+		// increased from our last known good remote nonce.
+		if ors, rs := gc.remote.String(), remote.String(); rs != ors && rn > gc.rn {
 			gc.remote = remote
+		}
+
+		if rn > gc.rn {
+			gc.rn = rn
 		}
 
 		n := copy(extbuf, unsealed)

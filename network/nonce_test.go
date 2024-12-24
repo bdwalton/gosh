@@ -89,17 +89,18 @@ func TestNonceFromBytesPanic32BitsServer(t *testing.T) {
 
 func TestNonceFromBytes(t *testing.T) {
 	cases := []struct {
-		bytes []byte
-		want  nonce
+		bytes   []byte
+		want    nonce
+		wantDir uint8
 	}{
-		{[]byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, nonce(0)},
-		{[]byte{1, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0}, nonce(255)},
+		{[]byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, nonce(0), SERVER},
+		{[]byte{0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0}, nonce(255), CLIENT},
 	}
 
 	for i, c := range cases {
-		got := nonceFromBytes(c.bytes)
-		if got != c.want {
-			t.Errorf("%d: Got %d, wanted %d", i, got, c.want)
+		got, dir := nonceFromBytes(c.bytes)
+		if got != c.want || dir != c.wantDir {
+			t.Errorf("%d: Got %d/%d, wanted %d/%d", i, got, dir, c.want, c.wantDir)
 		}
 	}
 }
