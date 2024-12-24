@@ -220,7 +220,10 @@ func (s *stmObj) handleInput() {
 		msg := s.buildPayload(transport.PayloadType_CLIENT_INPUT.Enum())
 		_, err := os.Stdin.Read(char)
 		if err != nil {
-			slog.Error("couldn't read stdin", "err", err)
+			// This is a constant stream as Read returns
+			// EAGAIN.  Figure out a nicer approach
+			// here. Can we use syscall.RawConn elegantly
+			// for this somehow?
 			continue
 		}
 
