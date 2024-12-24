@@ -137,7 +137,7 @@ func (gc *GConn) Close() {
 
 func (gc *GConn) Write(msg []byte) (int, error) {
 	// panics if we overflow 32bits of nonce usage
-	nce := gc.ln.nextGCMNonce()
+	nce := gc.ln.nextGCMNonce(gc.cType)
 
 	sealed := gc.aead.Seal(nil, nce, msg, nil)
 
