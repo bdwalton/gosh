@@ -2,6 +2,7 @@ package stm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -336,14 +337,14 @@ func (s *stmObj) handlePtyOutput() {
 			break
 		}
 
-		s.ptmx.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+		if err := s.ptmx.SetReadDeadline(time.Now().Add(1 * time.Second)); err != nil {
+			slog.Error("failed to set ptmx read deadline", "err", err)
+		}
 		n, err := s.ptmx.Read(buf)
 		if err != nil {
-			// TODO: Log this
-			// Handle timeout errors here
-			// if e,ok := err.(io.Er) !ok || !e.Timeout() {
-			// 	// handle error, it's not a timeout
-			// }
+			if !errors.Is(err, os.ErrDeadlineExceeded) {
+				slog.Error("ptmx read", "n", n, "err", err)
+			}
 			continue
 		}
 
