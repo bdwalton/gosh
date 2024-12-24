@@ -70,10 +70,11 @@ func NewClient(addr, key string) (*GConn, error) {
 	}
 
 	gc := &GConn{
-		c:     c,
-		key:   dkey,
-		aead:  aead,
-		cType: CLIENT,
+		c:      c,
+		key:    dkey,
+		aead:   aead,
+		cType:  CLIENT,
+		remote: a,
 	}
 
 	return gc, nil
