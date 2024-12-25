@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/bdwalton/gosh/network"
-	"github.com/bdwalton/gosh/protos/transport"
+	"github.com/bdwalton/gosh/protos/goshpb"
 	"github.com/creack/pty"
 	"golang.org/x/term"
 	"google.golang.org/protobuf/proto"
@@ -98,7 +98,7 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 	return s, nil
 }
 
-func (s *stmObj) sendPayload(msg *transport.Payload) {
+func (s *stmObj) sendPayload(msg *goshpb.Payload) {
 	p, err := proto.Marshal(msg)
 	if err != nil {
 		slog.Error("couldn't marshal message")
@@ -111,7 +111,7 @@ func (s *stmObj) sendPayload(msg *transport.Payload) {
 }
 
 func (s *stmObj) ping() {
-	s.sendPayload(s.buildPayload(transport.PayloadType_PING.Enum()))
+	s.sendPayload(s.buildPayload(goshpb.PayloadType_PING.Enum()))
 }
 
 func (s *stmObj) Run() {
@@ -150,7 +150,7 @@ func (s *stmObj) Run() {
 func (s *stmObj) Shutdown() {
 	s.shutdown = true
 
-	s.sendPayload(s.buildPayload(transport.PayloadType_SHUTDOWN.Enum()))
+	s.sendPayload(s.buildPayload(goshpb.PayloadType_SHUTDOWN.Enum()))
 	slog.Info("sending shutdown to remote peer")
 
 	switch s.st {
@@ -190,11 +190,11 @@ func (s *stmObj) handleWinCh() {
 				continue
 			}
 
-			sz := transport.Resize_builder{
+			sz := goshpb.Resize_builder{
 				Width:  proto.Int32(int32(w)),
 				Height: proto.Int32(int32(h)),
 			}.Build()
-			msg := s.buildPayload(transport.PayloadType_WINDOW_RESIZE.Enum())
+			msg := s.buildPayload(goshpb.PayloadType_WINDOW_RESIZE.Enum())
 			msg.SetSize(sz)
 
 			s.sendPayload(msg)
@@ -218,7 +218,7 @@ func (s *stmObj) handleInput() {
 			return
 		}
 
-		msg := s.buildPayload(transport.PayloadType_CLIENT_INPUT.Enum())
+		msg := s.buildPayload(goshpb.PayloadType_CLIENT_INPUT.Enum())
 		_, err := os.Stdin.Read(char)
 		if err != nil {
 			// This is a constant stream as Read returns
@@ -249,12 +249,12 @@ func (s *stmObj) handleInput() {
 	}
 }
 
-// buildPayload returns a transport.Payload object populated with
+// buildPayload returns a goshpb.Payload object populated with
 // various basic fields. The actual payload should be added by the
 // caller to make the message complete
-func (s *stmObj) buildPayload(t *transport.PayloadType) *transport.Payload {
+func (s *stmObj) buildPayload(t *goshpb.PayloadType) *goshpb.Payload {
 	// TODO: Make id and ack fields useful
-	return transport.Payload_builder{
+	return goshpb.Payload_builder{
 		Sent: tspb.New(time.Now()),
 		Id:   proto.Int32(1),
 		Ack:  proto.Int32(1),
@@ -275,14 +275,14 @@ func (s *stmObj) handleRemote() {
 			continue
 		}
 
-		var msg transport.Payload
+		var msg goshpb.Payload
 		if err = proto.Unmarshal(buf[:n], &msg); err != nil {
 			slog.Error("couldn't unmarshal proto", "err", err)
 			continue
 		}
 
 		switch msg.GetType() {
-		case transport.PayloadType_PING:
+		case goshpb.PayloadType_PING:
 			if s.st == SERVER && !s.ptyRunning {
 				s.wg.Add(1)
 				go func() {
@@ -291,14 +291,14 @@ func (s *stmObj) handleRemote() {
 				}()
 				s.ptyRunning = true
 			}
-		case transport.PayloadType_SHUTDOWN:
+		case goshpb.PayloadType_SHUTDOWN:
 			s.Shutdown()
-		case transport.PayloadType_CLIENT_INPUT:
+		case goshpb.PayloadType_CLIENT_INPUT:
 			keys := msg.GetData()
 			if n, err := s.ptmx.Write(keys); err != nil || n != len(keys) {
 				slog.Error("couldn't write to pty", "n", n, "len(keys)", len(keys), "err", err)
 			}
-		case transport.PayloadType_WINDOW_RESIZE:
+		case goshpb.PayloadType_WINDOW_RESIZE:
 			sz := msg.GetSize()
 			h, w := sz.GetHeight(), sz.GetWidth()
 			pts := &pty.Winsize{
@@ -316,7 +316,7 @@ func (s *stmObj) handleRemote() {
 				slog.Error("couldn't set pty to nonblocking", "err", err)
 			}
 			slog.Info("changed window size", "rows", h, "cols", w)
-		case transport.PayloadType_SERVER_OUTPUT:
+		case goshpb.PayloadType_SERVER_OUTPUT:
 			o := msg.GetData()
 			n, err := os.Stdout.Write(o)
 			if err != nil || n != len(o) {
@@ -348,7 +348,7 @@ func (s *stmObj) handlePtyOutput() {
 			continue
 		}
 
-		msg := s.buildPayload(transport.PayloadType_SERVER_OUTPUT.Enum())
+		msg := s.buildPayload(goshpb.PayloadType_SERVER_OUTPUT.Enum())
 		msg.SetData(buf[:n])
 		s.sendPayload(msg)
 	}

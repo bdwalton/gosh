@@ -8,7 +8,7 @@ import (
 	"math"
 	"sync"
 
-	"github.com/bdwalton/gosh/protos/transport"
+	"github.com/bdwalton/gosh/protos/goshpb"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -46,7 +46,7 @@ func compress(buf []byte) ([]byte, error) {
 	return gbuf.Bytes(), nil
 }
 
-func (f *fragmenter) CreateFragments(buf []byte) ([]*transport.Fragment, error) {
+func (f *fragmenter) CreateFragments(buf []byte) ([]*goshpb.Fragment, error) {
 	fcomp := len(buf) > COMPRESS_THRESHOLD
 
 	var err error
@@ -60,9 +60,9 @@ func (f *fragmenter) CreateFragments(buf []byte) ([]*transport.Fragment, error) 
 
 	frid := f.getUniqueId()
 	total := int(math.Ceil(float64(len(payload)) / float64(f.size)))
-	fragments := make([]*transport.Fragment, total)
+	fragments := make([]*goshpb.Fragment, total)
 	for i := 0; i < total; i++ {
-		fragments[i] = transport.Fragment_builder{
+		fragments[i] = goshpb.Fragment_builder{
 			Id:         proto.Uint32(frid),
 			ThisFrag:   proto.Uint32(uint32(i)),
 			TotalFrags: proto.Uint32(uint32(total)),
