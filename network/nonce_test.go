@@ -13,14 +13,14 @@ func TestNextGCMNonceDifferentServerClient(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		n1, n2 := nonce(c), nonce(c)
+		n1, n2 := &nonce{n: c}, &nonce{n: c}
 		s1, s2 := n1.nextGCMNonce(CLIENT), n2.nextGCMNonce(SERVER)
 		if slices.Equal(s1, s2) {
 			t.Errorf("%d: %v = %v", i, s1, s2)
 		}
 
-		if n1 != n2 {
-			t.Errorf("%d: Underlying nonces not the same: %d and %d", i, n1, n2)
+		if n1.n != n2.n {
+			t.Errorf("%d: Underlying nonces not the same: %d and %d", i, n1.n, n2.n)
 		}
 	}
 
@@ -35,11 +35,11 @@ func TestNextGCMNoncePanicClient(t *testing.T) {
 		}
 	}()
 
-	n := nonce(uint64(math.MaxUint32))
+	n := &nonce{n: uint64(math.MaxUint32)}
 	// Should panic
 	n.nextGCMNonce(CLIENT)
 
-	t.Errorf("nextGCMNonce() didn't panic when rolling over 32 bits.")
+	t.Errorf("nextGCMNonce() didn't panic when rolling over 32 bits: %d", n.n)
 }
 
 func TestNonceFromBytesPanic32BitsClient(t *testing.T) {
@@ -52,9 +52,9 @@ func TestNonceFromBytesPanic32BitsClient(t *testing.T) {
 	}()
 
 	// Should panic
-	nonceFromBytes([]byte{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0})
+	n, dir := nonceFromBytes([]byte{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0})
 
-	t.Errorf("nonceFromBytes() didn't panic when over 32 bits.")
+	t.Errorf("nonceFromBytes() didn't panic when over 32 bits: %d/%d", n, dir)
 }
 
 func TestNextGCMNoncePanicServer(t *testing.T) {
@@ -65,11 +65,11 @@ func TestNextGCMNoncePanicServer(t *testing.T) {
 		}
 	}()
 
-	n := nonce(uint64(math.MaxUint32))
+	n := nonce{n: uint64(math.MaxUint32)}
 	// Should panic
 	n.nextGCMNonce(SERVER)
 
-	t.Errorf("nextGCMNonce didn't panic when rolling over 32 bits.")
+	t.Errorf("nextGCMNonce() didn't panic when rolling over 32 bits: %d", n.n)
 }
 
 func TestNonceFromBytesPanic32BitsServer(t *testing.T) {
@@ -81,20 +81,20 @@ func TestNonceFromBytesPanic32BitsServer(t *testing.T) {
 	}()
 
 	// Should panic
-	nonceFromBytes([]byte{1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0})
+	n, dir := nonceFromBytes([]byte{1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0})
 
 	// If the panic was not caught, the test will fail
-	t.Errorf("nonceFromBytes() didn't panic when over 32 bits.")
+	t.Errorf("nonceFromBytes() didn't panic when over 32 bits: %d/%d", n, dir)
 }
 
 func TestNonceFromBytes(t *testing.T) {
 	cases := []struct {
 		bytes   []byte
-		want    nonce
+		want    uint64
 		wantDir uint8
 	}{
-		{[]byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, nonce(0), SERVER},
-		{[]byte{0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0}, nonce(255), CLIENT},
+		{[]byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, SERVER},
+		{[]byte{0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0}, 255, CLIENT},
 	}
 
 	for i, c := range cases {
@@ -107,18 +107,18 @@ func TestNonceFromBytes(t *testing.T) {
 
 func TestNonceIncrement(t *testing.T) {
 	cases := []struct {
-		n    nonce
+		n    *nonce
 		want []uint64
 	}{
-		{nonce(0), []uint64{1, 2, 3}},
-		{nonce(uint64(math.MaxUint32) - 1), []uint64{uint64(math.MaxUint32)}},
-		{nonce(255), []uint64{256, 257}},
+		{&nonce{}, []uint64{1, 2, 3}},
+		{&nonce{n: uint64(math.MaxUint32) - 1}, []uint64{uint64(math.MaxUint32)}},
+		{&nonce{n: 255}, []uint64{256, 257}},
 	}
 
 	for i, c := range cases {
 		for j, n := range c.want {
 			c.n.nextGCMNonce(CLIENT)
-			if c.n != nonce(n) {
+			if c.n.n != n {
 				t.Errorf("%d/%d: Got %d, wanted %d", i, j, c.n, n)
 			}
 		}

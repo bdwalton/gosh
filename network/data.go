@@ -30,7 +30,8 @@ type GConn struct {
 	shutdown bool
 	key      []byte
 	aead     cipher.AEAD
-	ln, rn   nonce
+	nce      *nonce // Our local nonce generation
+	rnce     uint64 // Highest seen remote nonce value
 	cType    uint8
 }
 
@@ -75,6 +76,7 @@ func NewClient(addr, key string) (*GConn, error) {
 		aead:   aead,
 		cType:  CLIENT,
 		remote: a,
+		nce:    &nonce{},
 	}
 
 	return gc, nil
@@ -110,6 +112,7 @@ func NewServer(prng string) (*GConn, error) {
 		key:   key,
 		aead:  aead,
 		cType: SERVER,
+		nce:   &nonce{},
 	}
 
 	ua := &net.UDPAddr{Port: 0}
@@ -139,7 +142,7 @@ func (gc *GConn) Close() {
 
 func (gc *GConn) Write(msg []byte) (int, error) {
 	// panics if we overflow 32bits of nonce usage
-	nce := gc.ln.nextGCMNonce(gc.cType)
+	nce := gc.nce.nextGCMNonce(gc.cType)
 
 	sealed := gc.aead.Seal(nil, nce, msg, nil)
 
@@ -194,12 +197,12 @@ func (gc *GConn) Read(extbuf []byte) (int, error) {
 
 		// Only update our remote if the nonce sequence has
 		// increased from our last known good remote nonce.
-		if ors, rs := gc.remote.String(), remote.String(); rs != ors && rn > gc.rn {
+		if ors, rs := gc.remote.String(), remote.String(); rs != ors && rn > gc.rnce {
 			gc.remote = remote
 		}
 
-		if rn > gc.rn {
-			gc.rn = rn
+		if rn > gc.rnce {
+			gc.rnce = rn
 		}
 
 		n := copy(extbuf, unsealed)
