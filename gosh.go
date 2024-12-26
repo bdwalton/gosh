@@ -56,6 +56,9 @@ func main() {
 	if *logfile != "" {
 		args = append(args, "--logfile", *logfile)
 	}
+	if *debug {
+		args = append(args, "--debug")
+	}
 	envv := append(os.Environ(), fmt.Sprintf("GOSH_KEY=%s", m[2]))
 	syscall.Exec(*goshClient, args, envv)
 }
