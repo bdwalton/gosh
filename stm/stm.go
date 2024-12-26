@@ -27,8 +27,8 @@ const (
 )
 
 type stmObj struct {
-	gc *network.GConn
-	os *term.State // original state of the client pty
+	gc     *network.GConn
+	origSz *term.State // original state of the client pty
 
 	ctx       context.Context
 	ptmx      *os.File
@@ -43,7 +43,7 @@ type stmObj struct {
 
 func NewClient(gc *network.GConn) (*stmObj, error) {
 	fd := int(os.Stdin.Fd())
-	os, err := term.MakeRaw(fd)
+	orig, err := term.MakeRaw(fd)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't make terminal raw: %v", err)
 	}
@@ -55,9 +55,9 @@ func NewClient(gc *network.GConn) (*stmObj, error) {
 	}
 
 	s := &stmObj{
-		gc: gc,
-		os: os,
-		st: CLIENT,
+		gc:     gc,
+		origSz: orig,
+		st:     CLIENT,
 	}
 
 	return s, nil
@@ -155,7 +155,7 @@ func (s *stmObj) Shutdown() {
 
 	switch s.st {
 	case CLIENT:
-		if err := term.Restore(int(os.Stdin.Fd()), s.os); err != nil {
+		if err := term.Restore(int(os.Stdin.Fd()), s.origSz); err != nil {
 			slog.Error("couldn't restore terminal mode", "err", err)
 		}
 	}
