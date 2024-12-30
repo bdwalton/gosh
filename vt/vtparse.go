@@ -24,8 +24,8 @@ func (t transition) action() pAction {
 }
 
 type dispatcher interface {
-	Print(*parser, rune)
-	Handle(*parser, pAction, byte)
+	print(*parser, rune)
+	handle(*parser, pAction, byte)
 }
 
 type parser struct {
@@ -48,7 +48,7 @@ func newParser(d dispatcher) *parser {
 func (p *parser) ParseRune(r rune) {
 	switch p.state {
 	case VTPARSE_STATE_GROUND:
-		p.d.Print(p, r)
+		p.d.print(p, r)
 	}
 }
 
@@ -59,9 +59,9 @@ func (p *parser) ParseByte(b byte) {
 func (p *parser) action(a pAction, b byte) {
 	switch a {
 	case VTPARSE_ACTION_PRINT:
-		p.d.Print(p, rune(b))
+		p.d.print(p, rune(b))
 	case VTPARSE_ACTION_EXECUTE, VTPARSE_ACTION_HOOK, VTPARSE_ACTION_PUT, VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END, VTPARSE_ACTION_UNHOOK, VTPARSE_ACTION_CSI_DISPATCH, VTPARSE_ACTION_ESC_DISPATCH:
-		p.d.Handle(p, a, b)
+		p.d.handle(p, a, b)
 	case VTPARSE_ACTION_IGNORE:
 		// Do nothing
 	case VTPARSE_ACTION_COLLECT:
@@ -82,7 +82,7 @@ func (p *parser) action(a pAction, b byte) {
 		p.intermediate_chars = p.intermediate_chars[:0]
 		p.params = p.params[:0]
 	default:
-		p.d.Handle(p, VTPARSE_ACTION_ERROR, 0)
+		p.d.handle(p, VTPARSE_ACTION_ERROR, 0)
 	}
 }
 
