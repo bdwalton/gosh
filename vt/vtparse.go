@@ -1,11 +1,7 @@
 package vt
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"os"
-	"unicode/utf8"
 )
 
 const (
@@ -113,94 +109,5 @@ func (p *parser) stateChange(t transition, b byte) {
 		p.state = newState
 	} else {
 		p.action(act, b)
-	}
-}
-
-type disp struct {
-}
-
-func (d *disp) Print(p *parser, r rune) {
-	fmt.Println("Received action PRINT")
-	if r != 0 {
-		fmt.Printf("Char: 0x%02x ('%c')\n", r, r)
-	}
-	if l := len(p.intermediate_chars); l > 0 {
-		fmt.Printf("%d Intermediate chars:\n", l)
-		for _, ch := range p.intermediate_chars {
-			fmt.Printf("  0x%02x ('%c')\n", ch, ch)
-		}
-	}
-	if l := len(p.params); l > 0 {
-		fmt.Printf("%d Parameters:\n", l)
-		for _, n := range p.params {
-			fmt.Printf("\t%d\n", n)
-		}
-	}
-	fmt.Println()
-}
-
-func (d *disp) Handle(p *parser, a pAction, b byte) {
-	fmt.Println("Received action", ACTION_NAMES[a])
-	if b != 0 {
-		fmt.Printf("Char: 0x%02x ('%c')\n", b, b)
-	}
-	if l := len(p.intermediate_chars); l > 0 {
-		fmt.Printf("%d Intermediate chars:\n", l)
-		for _, ch := range p.intermediate_chars {
-			fmt.Printf("  0x%02x ('%c')\n", ch, ch)
-		}
-	}
-	if l := len(p.params); l > 0 {
-		fmt.Printf("%d Parameters:\n", l)
-		for _, n := range p.params {
-			fmt.Printf("\t%d\n", n)
-		}
-	}
-	fmt.Println()
-}
-
-func main() {
-	vtp := newParser(&disp{})
-	reader := bufio.NewReader(os.Stdin)
-
-	for {
-		// To support UTF-8, we need to handle some of the
-		// signal bytes that ANSI codes may look for (0x9b,
-		// 0x9c, etc) while also preferring to conume mutiple
-		// bytes as needed for UTF-8. The only time that we
-		// might find a byte that is a valid ANSI bytes with
-		// the high bit set is when it would be in byte 2, 3
-		// or 4 in a valid multi-byte character. That should
-		// make it difficult to infer the wrong intent here,
-		// so we can default to looking for runes and fall
-		// back to bytes.
-		r, sz, err := reader.ReadRune()
-		switch {
-		case sz == 0 || err != nil:
-			if err == io.EOF {
-				os.Exit(0)
-			}
-			os.Exit(1)
-		case r == utf8.RuneError:
-			if err := reader.UnreadRune(); err != nil {
-				break
-			}
-			b, err := reader.ReadByte()
-			if err != nil {
-				break
-			}
-			vtp.ParseByte(b)
-		case sz == 1:
-			// Send single byte runes through parsebyte so
-			// they get the full treatment of the lookup
-			// tables. Only mutli-byte runes will be
-			// diverted separately.
-			vtp.ParseByte(byte(r))
-		default:
-			// Multi-byte runes won't by viable in our
-			// state transntion lookup table, so we'll
-			// handle them specially.
-			vtp.ParseRune(r)
-		}
 	}
 }
