@@ -68,6 +68,9 @@ func (p *parser) action(act pAction, b byte) {
 		// : should be allowed.
 		// TODO: Add : support later when we get to vttest level.
 		if b == ';' {
+			if len(p.params) == 0 {
+				p.params = append(p.params, 0)
+			}
 			p.params = append(p.params, 0)
 		} else {
 			if len(p.params) == 0 {
