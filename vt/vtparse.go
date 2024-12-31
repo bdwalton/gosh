@@ -21,24 +21,24 @@ func (t transition) action() pAction {
 
 type dispatcher interface {
 	print(rune)
-	// action, params, intermediate_chars, last byte
+	// action, params, intermediate, last byte
 	handle(pAction, []int, []rune, byte)
 }
 
 type parser struct {
-	state              pState
-	d                  dispatcher
-	intermediate_chars []rune
-	num_intermediate   int
-	params             []int
+	state            pState
+	d                dispatcher
+	intermediate     []rune
+	num_intermediate int
+	params           []int
 }
 
 func newParser(d dispatcher) *parser {
 	return &parser{
-		state:              VTPARSE_STATE_GROUND,
-		d:                  d,
-		params:             make([]int, 0, MAX_EXPECTED_PARAMS),
-		intermediate_chars: make([]rune, 0, MAX_EXPECTED_INTERMEDIATE),
+		state:        VTPARSE_STATE_GROUND,
+		d:            d,
+		params:       make([]int, 0, MAX_EXPECTED_PARAMS),
+		intermediate: make([]rune, 0, MAX_EXPECTED_INTERMEDIATE),
 	}
 }
 
@@ -58,15 +58,14 @@ func (p *parser) action(act pAction, b byte) {
 	case VTPARSE_ACTION_PRINT:
 		p.d.print(rune(b))
 	case VTPARSE_ACTION_EXECUTE, VTPARSE_ACTION_HOOK, VTPARSE_ACTION_PUT, VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END, VTPARSE_ACTION_UNHOOK, VTPARSE_ACTION_CSI_DISPATCH, VTPARSE_ACTION_ESC_DISPATCH:
-		p.d.handle(act, p.params, p.intermediate_chars, b)
+		p.d.handle(act, p.params, p.intermediate, b)
 	case VTPARSE_ACTION_IGNORE:
 		// Do nothing
 	case VTPARSE_ACTION_COLLECT:
-		p.intermediate_chars = append(p.intermediate_chars, rune(b))
+		p.intermediate = append(p.intermediate, rune(b))
 	case VTPARSE_ACTION_PARAM:
 		if b == ';' || b == ':' { // The ; is more common, but : is allowed
 			p.params = append(p.params, 0)
-
 		} else {
 			if len(p.params) == 0 {
 				p.params = append(p.params, 0)
@@ -76,7 +75,7 @@ func (p *parser) action(act pAction, b byte) {
 			p.params[cp] = (p.params[cp]*10 + int(b-'0'))
 		}
 	case VTPARSE_ACTION_CLEAR:
-		p.intermediate_chars = p.intermediate_chars[:0]
+		p.intermediate = p.intermediate[:0]
 		p.params = p.params[:0]
 	default:
 		p.d.handle(VTPARSE_ACTION_ERROR, nil, nil, 0)
