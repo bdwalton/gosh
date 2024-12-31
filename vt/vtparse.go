@@ -64,7 +64,10 @@ func (p *parser) action(act pAction, b byte) {
 	case VTPARSE_ACTION_COLLECT:
 		p.intermediate = append(p.intermediate, rune(b))
 	case VTPARSE_ACTION_PARAM:
-		if b == ';' || b == ':' { // The ; is more common, but : is allowed
+		// State table only covers ; for param separator, but
+		// : should be allowed.
+		// TODO: Add : support later when we get to vttest level.
+		if b == ';' {
 			p.params = append(p.params, 0)
 		} else {
 			if len(p.params) == 0 {
