@@ -2046,7 +2046,10 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x04: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x05: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x06: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
-		0x07: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
+		// This was originally ignore, none, but xterm looks
+		// for BEL as the OSC terminator, so we honor that
+		// too, as it will be common in the wild.
+		0x07: newTransition(VTPARSE_ACTION_OSC_END, VTPARSE_STATE_GROUND),
 		0x08: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x09: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x0a: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),

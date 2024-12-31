@@ -10,17 +10,40 @@ type dummyD struct {
 	params       []int
 	intermediate []rune
 	lastbyte     byte
+	oscTemp      []rune
+	oscString    []rune
 }
 
 func newDummy() *dummyD {
-	return &dummyD{actions: make([]pAction, 0)}
+	return &dummyD{
+		actions:   make([]pAction, 0),
+		oscTemp:   make([]rune, 0),
+		oscString: make([]rune, 0),
+	}
+}
+
+func (d *dummyD) getActions() []string {
+	l := len(d.actions)
+	acts := make([]string, l, l)
+	for i := range d.actions {
+		acts[i] = ACTION_NAMES[d.actions[i]]
+	}
+	return acts
 }
 
 func (d *dummyD) handle(act pAction, params []int, intermediate []rune, lastbyte byte) {
 	d.actions = append(d.actions, act)
-	d.params = params
-	d.intermediate = intermediate
-	d.lastbyte = lastbyte
+	switch act {
+	case VTPARSE_ACTION_OSC_PUT:
+		d.oscTemp = append(d.oscTemp, rune(lastbyte))
+	case VTPARSE_ACTION_OSC_END:
+		d.oscString = d.oscTemp
+	default:
+
+		d.params = params
+		d.intermediate = intermediate
+		d.lastbyte = lastbyte
+	}
 }
 
 func (d *dummyD) print(r rune) {
@@ -123,5 +146,29 @@ func TestCSIParsing(t *testing.T) {
 		if d.lastbyte != c.wantLast {
 			t.Errorf("%d: Invalid last byte. Got %02x, want %02x", i, d.lastbyte, c.wantLast)
 		}
+	}
+}
+
+func TestOSCString(t *testing.T) {
+	cases := []struct {
+		input   []byte
+		wantOSC string
+	}{
+		{[]byte{C1_OSC, '0', ';', 'i', 'c', 'o', 'n', 't', 'i', 't', 'l', 'e', CTRL_BEL}, "0;icontitle"},
+		{[]byte{C1_OSC, '1', ';', 'i', 'c', 'o', 'n', CTRL_ST}, "1;icon"},
+		{[]byte{ESC, ESC_OSC, '2', ';', 't', 'i', 't', 'l', 'e', CTRL_ST}, "2;title"},
+		{[]byte{ESC, ESC_OSC, '3', ';', 'F', 'o', 'O', CTRL_BEL}, "3;FoO"},
+	}
+
+	for i, c := range cases {
+		d := newDummy()
+		p := newParser(d)
+		for _, b := range c.input {
+			p.ParseByte(b)
+		}
+		if string(d.oscString) != c.wantOSC {
+			t.Errorf("%d: Got %q, want: %q (actions: %v)", i, string(d.oscString), c.wantOSC, d.getActions())
+		}
+
 	}
 }
