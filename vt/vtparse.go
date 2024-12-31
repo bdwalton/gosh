@@ -26,11 +26,10 @@ type dispatcher interface {
 }
 
 type parser struct {
-	state            pState
-	d                dispatcher
-	intermediate     []rune
-	num_intermediate int
-	params           []int
+	state        pState
+	d            dispatcher
+	intermediate []rune
+	params       []int
 }
 
 func newParser(d dispatcher) *parser {
