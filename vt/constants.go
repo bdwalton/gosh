@@ -26,19 +26,21 @@ const (
 
 // CSI codes
 const (
-	CSI_CUU = 'A' // cursor up
-	CSI_CUD = 'B' // cursor down
-	CSI_CUF = 'C' // cursor forward
-	CSI_CUB = 'D' // cursor back
-	CSI_CNL = 'E' // cursor next line
-	CSI_CPL = 'F' // cursor previous line
-	CSI_CHA = 'G' // cursor horizontal attribute
-	CSI_CUP = 'H' // cursor position
-	CSI_ED  = 'J' // erase in display
-	CSI_EL  = 'K' // erase in line
-	CSI_SU  = 'S' // scroll up
-	CSI_SD  = 'T' // scroll down
-	CSI_HVP = 'f' // horizontal vertical position
-	CSI_SGR = 'm' // select graphic rendition
-	CSI_DSR = 'n' // device status report
+	CSI_CUU          = 'A' // cursor up
+	CSI_CUD          = 'B' // cursor down
+	CSI_CUF          = 'C' // cursor forward
+	CSI_CUB          = 'D' // cursor back
+	CSI_CNL          = 'E' // cursor next line
+	CSI_CPL          = 'F' // cursor previous line
+	CSI_CHA          = 'G' // cursor horizontal attribute
+	CSI_CUP          = 'H' // cursor position
+	CSI_ED           = 'J' // erase in display
+	CSI_EL           = 'K' // erase in line
+	CSI_SU           = 'S' // scroll up
+	CSI_SD           = 'T' // scroll down
+	CSI_HVP          = 'f' // horizontal vertical position
+	CSI_SGR          = 'm' // select graphic rendition
+	CSI_DSR          = 'n' // device status report
+	CSI_PRIV_ENABLE  = 'h' // h typically enables or activates something
+	CSI_PRIV_DISABLE = 'l' // l typically disables or deactivates something
 )
