@@ -1,9 +1,5 @@
 package vt
 
-import (
-	"fmt"
-)
-
 const (
 	MAX_EXPECTED_INTERMEDIATE = 10
 	MAX_EXPECTED_PARAMS       = 16
@@ -24,8 +20,9 @@ func (t transition) action() pAction {
 }
 
 type dispatcher interface {
-	print(*parser, rune)
-	handle(*parser, pAction, byte)
+	print(rune)
+	// action, params, intermediate_chars, last byte
+	handle(pAction, []int, []rune, byte)
 }
 
 type parser struct {
@@ -48,7 +45,7 @@ func newParser(d dispatcher) *parser {
 func (p *parser) ParseRune(r rune) {
 	switch p.state {
 	case VTPARSE_STATE_GROUND:
-		p.d.print(p, r)
+		p.d.print(r)
 	}
 }
 
@@ -56,12 +53,12 @@ func (p *parser) ParseByte(b byte) {
 	p.stateChange(STATE_TABLE[p.state][b], b)
 }
 
-func (p *parser) action(a pAction, b byte) {
-	switch a {
+func (p *parser) action(act pAction, b byte) {
+	switch act {
 	case VTPARSE_ACTION_PRINT:
-		p.d.print(p, rune(b))
+		p.d.print(rune(b))
 	case VTPARSE_ACTION_EXECUTE, VTPARSE_ACTION_HOOK, VTPARSE_ACTION_PUT, VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END, VTPARSE_ACTION_UNHOOK, VTPARSE_ACTION_CSI_DISPATCH, VTPARSE_ACTION_ESC_DISPATCH:
-		p.d.handle(p, a, b)
+		p.d.handle(act, p.params, p.intermediate_chars, b)
 	case VTPARSE_ACTION_IGNORE:
 		// Do nothing
 	case VTPARSE_ACTION_COLLECT:
@@ -82,7 +79,7 @@ func (p *parser) action(a pAction, b byte) {
 		p.intermediate_chars = p.intermediate_chars[:0]
 		p.params = p.params[:0]
 	default:
-		p.d.handle(p, VTPARSE_ACTION_ERROR, 0)
+		p.d.handle(VTPARSE_ACTION_ERROR, nil, nil, 0)
 	}
 }
 
