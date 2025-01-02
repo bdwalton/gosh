@@ -14,6 +14,26 @@ type format struct {
 	italic, blink, reversed, invisible, strikeout bool
 }
 
+func (f format) equal(other format) bool {
+	if f.bg != nil {
+		if !f.bg.equal(other.bg) {
+			return false
+		}
+	}
+
+	if f.fg != nil {
+		if !f.fg.equal(other.fg) {
+			return false
+		}
+	}
+
+	if f.brightness != other.brightness || f.underline != other.underline || f.italic != other.italic || f.blink != other.blink || f.reversed != other.reversed || f.invisible != other.invisible || f.strikeout != other.strikeout {
+		return false
+	}
+
+	return true
+}
+
 func formatFromParams(curF format, params []int) format {
 	f := curF
 	switch len(params) {
