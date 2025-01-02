@@ -3,14 +3,25 @@ package vt
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 )
 
 type color interface {
 	fmt.Stringer
+	Equal(color) bool
 }
 
 type ansiBasicColor struct {
 	col int
+}
+
+func (c ansiBasicColor) Equal(other color) bool {
+	switch other.(type) {
+	case ansiBasicColor:
+		return c.col == other.(ansiBasicColor).col
+	default:
+		return false
+	}
 }
 
 func (c ansiBasicColor) String() string {
@@ -21,12 +32,31 @@ type ansi256Color struct {
 	col int
 }
 
+func (c ansi256Color) Equal(other color) bool {
+	switch other.(type) {
+	case ansi256Color:
+		return c.col == other.(ansi256Color).col
+	default:
+		return false
+	}
+}
+
 func (c ansi256Color) String() string {
 	return fmt.Sprintf("5;%d", c.col)
 }
 
 type rgbColor struct {
 	rgb []int
+}
+
+func (c rgbColor) Equal(other color) bool {
+	switch other.(type) {
+	case rgbColor:
+		o := other.(rgbColor)
+		return slices.Equal(c.rgb, o.rgb)
+	default:
+		return false
+	}
 }
 
 func (c rgbColor) String() string {

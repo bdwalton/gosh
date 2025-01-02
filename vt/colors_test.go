@@ -42,3 +42,25 @@ func TestColorsFromParams(t *testing.T) {
 		}
 	}
 }
+
+func TestEquality(t *testing.T) {
+	cases := []struct {
+		col, other color
+		want       bool
+	}{
+		{standardColors[FG_WHITE], standardColors[FG_RED], false},
+		{standardColors[FG_WHITE], ansi256Color{1}, false},
+		{standardColors[FG_WHITE], rgbColor{[]int{1, 2, 3}}, false},
+		{ansi256Color{1}, rgbColor{[]int{1, 2, 3}}, false},
+		{standardColors[BG_BLUE], standardColors[BG_BLUE], true},
+		{ansi256Color{2}, ansi256Color{2}, true},
+		{rgbColor{[]int{1, 2, 3}}, rgbColor{[]int{1, 2, 3}}, true},
+	}
+
+	for i, c := range cases {
+		if got := c.col.Equal(c.other); got != c.want {
+			t.Errorf("%d: Got %t, wanted %t, from %s == %s", i, got, c.want, c.col, c.other)
+		}
+
+	}
+}
