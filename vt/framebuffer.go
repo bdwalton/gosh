@@ -1,11 +1,5 @@
 package vt
 
-import "github.com/muesli/termenv"
-
-type format struct {
-	fg, bg termenv.Color
-}
-
 type glyph struct {
 	r rune
 	f format

@@ -44,3 +44,90 @@ const (
 	CSI_PRIV_ENABLE  = 'h' // h typically enables or activates something
 	CSI_PRIV_DISABLE = 'l' // l typically disables or deactivates something
 )
+
+// CSI SGR Format codes
+const (
+	RESET = iota
+	INTENSITY_BOLD
+	INTENSITY_DIM
+	ITALIC_ON
+	UNDERLINE_ON
+	BLINK_ON
+	REVERSED_ON
+	INVISIBLE_ON
+	STRIKEOUT_ON
+	PRIMARY_FONT
+	ALT_FONT_1
+	ALT_FONT_2
+	ALT_FONT_3
+	ALT_FONT_4
+	ALT_FONT_5
+	ALT_FONT_6
+	ALT_FONT_7
+	ALT_FONT_8
+	ALT_FONT_9
+	FRAKTUR
+	DBL_UNDERLINE
+	INTENSITY_NORMAL
+	ITALIC_OFF
+	UNDERLINE_OFF
+	BLINK_OFF
+	UNUSED_PROPORTIONAL_SPACING
+	REVERSED_OFF
+	INVISIBLE_OFF
+	STRIKEOUT_OFF
+)
+
+// font intensities
+const (
+	FONT_NORMAL = iota
+	FONT_BOLD
+	FONT_DIM
+)
+
+// underline styles
+const (
+	UNDERLINE_NONE = iota
+	UNDERLINE_SINGLE
+	UNDERLINE_DOUBLE
+)
+
+// CSI SGR Color codes
+const (
+	FG_BLACK          = 30
+	FG_RED            = 31
+	FG_GREEN          = 32
+	FG_YELLOW         = 33
+	FG_BLUE           = 34
+	FG_MAGENTA        = 35
+	FG_CYAN           = 36
+	FG_WHITE          = 37
+	SET_FG            = 38
+	FG_DEF            = 39
+	BG_BLACK          = 40
+	BG_RED            = 41
+	BG_GREEN          = 42
+	BG_YELLOW         = 43
+	BG_BLUE           = 44
+	BG_MAGENTA        = 45
+	BG_CYAN           = 46
+	BG_WHITE          = 47
+	SET_BG            = 48
+	BG_DEF            = 49
+	FG_BLACK_BRIGHT   = 90
+	FG_RED_BRIGHT     = 91
+	FG_GREEN_BRIGHT   = 92
+	FG_YELLOW_BRIGHT  = 93
+	FG_BLUE_BRIGHT    = 94
+	FG_MAGENTA_BRIGHT = 95
+	FG_CYAN_BRIGHT    = 96
+	FG_WHITE_BRIGHT   = 97
+	BG_BLACK_BRIGHT   = 100
+	BG_RED_BRIGHT     = 101
+	BG_GREEN_BRIGHT   = 102
+	BG_YELLOW_BRIGHT  = 103
+	BG_BLUE_BRIGHT    = 104
+	BG_MAGENTA_BRIGHT = 105
+	BG_CYAN_BRIGHT    = 106
+	BG_WHITE_BRIGHT   = 107
+)
