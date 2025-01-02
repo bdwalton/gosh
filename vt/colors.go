@@ -19,6 +19,8 @@ func (c ansiBasicColor) Equal(other color) bool {
 	switch other.(type) {
 	case ansiBasicColor:
 		return c.col == other.(ansiBasicColor).col
+	case *ansiBasicColor:
+		return c.col == other.(*ansiBasicColor).col
 	default:
 		return false
 	}
@@ -36,6 +38,8 @@ func (c ansi256Color) Equal(other color) bool {
 	switch other.(type) {
 	case ansi256Color:
 		return c.col == other.(ansi256Color).col
+	case *ansi256Color:
+		return c.col == other.(*ansi256Color).col
 	default:
 		return false
 	}
@@ -53,6 +57,9 @@ func (c rgbColor) Equal(other color) bool {
 	switch other.(type) {
 	case rgbColor:
 		o := other.(rgbColor)
+		return slices.Equal(c.rgb, o.rgb)
+	case *rgbColor:
+		o := other.(*rgbColor)
 		return slices.Equal(c.rgb, o.rgb)
 	default:
 		return false
@@ -106,20 +113,20 @@ func colorFromParams(params []int) (color, int) {
 
 // Publish common color codes as standard variables
 var standardColors = map[int]color{
-	FG_BLACK:   ansiBasicColor{FG_BLACK},
-	FG_RED:     ansiBasicColor{FG_RED},
-	FG_GREEN:   ansiBasicColor{FG_GREEN},
-	FG_YELLOW:  ansiBasicColor{FG_YELLOW},
-	FG_BLUE:    ansiBasicColor{FG_BLUE},
-	FG_MAGENTA: ansiBasicColor{FG_MAGENTA},
-	FG_CYAN:    ansiBasicColor{FG_CYAN},
-	FG_WHITE:   ansiBasicColor{FG_WHITE},
-	BG_BLACK:   ansiBasicColor{BG_BLACK},
-	BG_RED:     ansiBasicColor{BG_RED},
-	BG_GREEN:   ansiBasicColor{BG_GREEN},
-	BG_YELLOW:  ansiBasicColor{BG_YELLOW},
-	BG_BLUE:    ansiBasicColor{BG_BLUE},
-	BG_MAGENTA: ansiBasicColor{BG_MAGENTA},
-	BG_CYAN:    ansiBasicColor{BG_CYAN},
-	BG_WHITE:   ansiBasicColor{BG_WHITE},
+	FG_BLACK:   &ansiBasicColor{FG_BLACK},
+	FG_RED:     &ansiBasicColor{FG_RED},
+	FG_GREEN:   &ansiBasicColor{FG_GREEN},
+	FG_YELLOW:  &ansiBasicColor{FG_YELLOW},
+	FG_BLUE:    &ansiBasicColor{FG_BLUE},
+	FG_MAGENTA: &ansiBasicColor{FG_MAGENTA},
+	FG_CYAN:    &ansiBasicColor{FG_CYAN},
+	FG_WHITE:   &ansiBasicColor{FG_WHITE},
+	BG_BLACK:   &ansiBasicColor{BG_BLACK},
+	BG_RED:     &ansiBasicColor{BG_RED},
+	BG_GREEN:   &ansiBasicColor{BG_GREEN},
+	BG_YELLOW:  &ansiBasicColor{BG_YELLOW},
+	BG_BLUE:    &ansiBasicColor{BG_BLUE},
+	BG_MAGENTA: &ansiBasicColor{BG_MAGENTA},
+	BG_CYAN:    &ansiBasicColor{BG_CYAN},
+	BG_WHITE:   &ansiBasicColor{BG_WHITE},
 }

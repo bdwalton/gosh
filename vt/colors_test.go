@@ -54,7 +54,13 @@ func TestEquality(t *testing.T) {
 		{ansi256Color{1}, rgbColor{[]int{1, 2, 3}}, false},
 		{standardColors[BG_BLUE], standardColors[BG_BLUE], true},
 		{ansi256Color{2}, ansi256Color{2}, true},
+		{ansi256Color{2}, &ansi256Color{2}, true},
+		{&ansi256Color{2}, ansi256Color{2}, true},
+		{ansi256Color{4}, &ansi256Color{4}, true},
+		{&ansi256Color{3}, &ansi256Color{3}, true},
 		{rgbColor{[]int{1, 2, 3}}, rgbColor{[]int{1, 2, 3}}, true},
+		{rgbColor{[]int{1, 2, 3}}, &rgbColor{[]int{1, 2, 3}}, true},
+		{&rgbColor{[]int{3, 4, 5}}, &rgbColor{[]int{3, 4, 5}}, true},
 	}
 
 	for i, c := range cases {
