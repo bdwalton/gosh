@@ -64,7 +64,7 @@ func TestEquality(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		if got := c.col.Equal(c.other); got != c.want {
+		if got := c.col.equal(c.other); got != c.want {
 			t.Errorf("%d: Got %t, wanted %t, from %s == %s", i, got, c.want, c.col, c.other)
 		}
 

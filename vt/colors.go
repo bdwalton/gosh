@@ -8,14 +8,14 @@ import (
 
 type color interface {
 	fmt.Stringer
-	Equal(color) bool
+	equal(color) bool
 }
 
 type ansiBasicColor struct {
 	col int
 }
 
-func (c ansiBasicColor) Equal(other color) bool {
+func (c ansiBasicColor) equal(other color) bool {
 	switch other.(type) {
 	case ansiBasicColor:
 		return c.col == other.(ansiBasicColor).col
@@ -34,7 +34,7 @@ type ansi256Color struct {
 	col int
 }
 
-func (c ansi256Color) Equal(other color) bool {
+func (c ansi256Color) equal(other color) bool {
 	switch other.(type) {
 	case ansi256Color:
 		return c.col == other.(ansi256Color).col
@@ -53,7 +53,7 @@ type rgbColor struct {
 	rgb []int
 }
 
-func (c rgbColor) Equal(other color) bool {
+func (c rgbColor) equal(other color) bool {
 	switch other.(type) {
 	case rgbColor:
 		o := other.(rgbColor)
