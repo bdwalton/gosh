@@ -1,19 +1,19 @@
 package vt
 
-type glyph struct {
+type cell struct {
 	r rune
 	f format
 }
 
 type framebuffer struct {
 	rows, cols int
-	data       [][]glyph
+	data       [][]cell
 }
 
 func newFramebuffer(rows, cols int) *framebuffer {
-	d := make([][]glyph, rows, rows)
+	d := make([][]cell, rows, rows)
 	for r := 0; r < rows; r++ {
-		d[r] = make([]glyph, cols, cols)
+		d[r] = make([]cell, cols, cols)
 	}
 	return &framebuffer{
 		rows: rows,
@@ -23,5 +23,5 @@ func newFramebuffer(rows, cols int) *framebuffer {
 }
 
 func (f *framebuffer) setCell(row, col int, fm format, r rune) {
-	f.data[row][col] = glyph{r: r, f: fm}
+	f.data[row][col] = cell{r: r, f: fm}
 }
