@@ -32,3 +32,33 @@ func TestFormatEquality(t *testing.T) {
 		}
 	}
 }
+
+func TestFormatApplication(t *testing.T) {
+	cases := []struct {
+		initial format
+		params  []int
+		want    format
+	}{
+		{
+			format{bg: standardColors[BG_BLUE], underline: UNDERLINE_DOUBLE, brightness: FONT_BOLD},
+			[]int{},
+			format{},
+		},
+		{
+			format{bg: standardColors[BG_BLUE], underline: UNDERLINE_DOUBLE, brightness: FONT_BOLD},
+			[]int{BG_BLACK, UNDERLINE_ON, STRIKEOUT_ON},
+			format{bg: standardColors[BG_BLACK], brightness: FONT_BOLD, underline: UNDERLINE_SINGLE, strikeout: true},
+		},
+		{
+			format{},
+			[]int{FG_BRIGHT_RED},
+			format{fg: standardColors[FG_RED], brightness: FONT_BOLD},
+		},
+	}
+
+	for i, c := range cases {
+		if got := formatFromParams(c.initial, c.params); !c.want.equal(got) {
+			t.Errorf("%d: Got %s, wanted %s after applying %v to %s", i, got.String(), c.want.String(), c.params, c.initial.String())
+		}
+	}
+}

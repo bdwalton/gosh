@@ -64,9 +64,9 @@ func formatFromParams(curF format, params []int) format {
 				i += n + 1
 			} else {
 				slog.Debug("unimplemented CSI format option", "param", params[i], "remaining", params[i:])
+				i += 1
 			}
 		}
-
 	}
 
 	return f
@@ -100,24 +100,42 @@ var formatters map[int]formatter = map[int]formatter{
 	INVISIBLE_OFF:    func(f format, p []int) (format, int) { f.invisible = false; return f, 0 },
 	STRIKEOUT_OFF:    func(f format, p []int) (format, int) { f.strikeout = false; return f, 0 },
 	// colors
-	FG_BLACK:   basicFG(FG_BLACK),
-	FG_RED:     basicFG(FG_RED),
-	FG_GREEN:   basicFG(FG_GREEN),
-	FG_YELLOW:  basicFG(FG_YELLOW),
-	FG_BLUE:    basicFG(FG_BLUE),
-	FG_MAGENTA: basicFG(FG_MAGENTA),
-	FG_CYAN:    basicFG(FG_CYAN),
-	FG_WHITE:   basicFG(FG_WHITE),
-	FG_DEF:     basicFG(FG_DEF),
-	BG_BLACK:   basicBG(BG_BLACK),
-	BG_RED:     basicBG(BG_RED),
-	BG_GREEN:   basicBG(BG_GREEN),
-	BG_YELLOW:  basicBG(BG_YELLOW),
-	BG_BLUE:    basicBG(BG_BLUE),
-	BG_MAGENTA: basicBG(BG_MAGENTA),
-	BG_CYAN:    basicBG(BG_CYAN),
-	BG_WHITE:   basicBG(BG_WHITE),
-	BG_DEF:     basicFG(BG_DEF),
+	FG_BLACK:          basicFG(FG_BLACK),
+	FG_RED:            basicFG(FG_RED),
+	FG_GREEN:          basicFG(FG_GREEN),
+	FG_YELLOW:         basicFG(FG_YELLOW),
+	FG_BLUE:           basicFG(FG_BLUE),
+	FG_MAGENTA:        basicFG(FG_MAGENTA),
+	FG_CYAN:           basicFG(FG_CYAN),
+	FG_WHITE:          basicFG(FG_WHITE),
+	SET_FG:            extendedFG(),
+	FG_DEF:            basicFG(FG_DEF),
+	BG_BLACK:          basicBG(BG_BLACK),
+	BG_RED:            basicBG(BG_RED),
+	BG_GREEN:          basicBG(BG_GREEN),
+	BG_YELLOW:         basicBG(BG_YELLOW),
+	BG_BLUE:           basicBG(BG_BLUE),
+	BG_MAGENTA:        basicBG(BG_MAGENTA),
+	BG_CYAN:           basicBG(BG_CYAN),
+	BG_WHITE:          basicBG(BG_WHITE),
+	SET_BG:            extendedBG(),
+	BG_DEF:            basicFG(BG_DEF),
+	FG_BRIGHT_BLACK:   basicBrightFG(FG_BLACK),
+	FG_BRIGHT_RED:     basicBrightFG(FG_RED),
+	FG_BRIGHT_GREEN:   basicBrightFG(FG_GREEN),
+	FG_BRIGHT_YELLOW:  basicBrightFG(FG_YELLOW),
+	FG_BRIGHT_BLUE:    basicBrightFG(FG_BLUE),
+	FG_BRIGHT_MAGENTA: basicBrightFG(FG_MAGENTA),
+	FG_BRIGHT_CYAN:    basicBrightFG(FG_CYAN),
+	FG_BRIGHT_WHITE:   basicBrightFG(FG_WHITE),
+	BG_BRIGHT_BLACK:   basicBrightBG(BG_BRIGHT_BLACK),
+	BG_BRIGHT_RED:     basicBrightBG(BG_BRIGHT_RED),
+	BG_BRIGHT_GREEN:   basicBrightBG(BG_BRIGHT_GREEN),
+	BG_BRIGHT_YELLOW:  basicBrightBG(BG_BRIGHT_YELLOW),
+	BG_BRIGHT_BLUE:    basicBrightBG(BG_BRIGHT_BLUE),
+	BG_BRIGHT_MAGENTA: basicBrightBG(BG_BRIGHT_MAGENTA),
+	BG_BRIGHT_CYAN:    basicBrightBG(BG_BRIGHT_CYAN),
+	BG_BRIGHT_WHITE:   basicBrightBG(BG_BRIGHT_WHITE),
 }
 
 func basicFG(col int) func(f format, p []int) (format, int) {
@@ -127,9 +145,24 @@ func basicFG(col int) func(f format, p []int) (format, int) {
 	}
 }
 
+func basicBrightFG(col int) func(f format, p []int) (format, int) {
+	return func(f format, p []int) (format, int) {
+		f.fg = standardColors[col]
+		f.brightness = FONT_BOLD
+		return f, 0
+	}
+}
+
 func basicBG(col int) func(f format, p []int) (format, int) {
 	return func(f format, p []int) (format, int) {
 		f.bg = standardColors[col]
+		return f, 0
+	}
+}
+
+func basicBrightBG(col int) func(f format, p []int) (format, int) {
+	return func(f format, p []int) (format, int) {
+		f.bg = ansiBasicColor{col}
 		return f, 0
 	}
 }
