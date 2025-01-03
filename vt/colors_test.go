@@ -30,9 +30,10 @@ func TestColorsFromParams(t *testing.T) {
 	}{
 		{[]int{SET_FG, 5}, "5;0", 2}, // Unspecified parameters are treated as 0
 		{[]int{SET_BG, 5, 253}, "5;253", 3},
-		{[]int{SET_FG, 2, 253, 128, 129}, "2;253;128;129", 5},
-		{[]int{SET_BG, 2, 253}, "2;253;0;0", 3},    // Unspecified parameters are treated as 0
-		{[]int{SET_FG, 2, 253, 1}, "2;253;1;0", 4}, // Unspecified parameters are treated as 0
+		{[]int{SET_FG, 2, 253, 128, 129}, "2;253;128;129", 4},
+		{[]int{SET_BG, 2, 253}, "2;253;0;0", 2},            // Unspecified parameters are treated as 0
+		{[]int{SET_FG, 2, 253, 1}, "2;253;1;0", 3},         // Unspecified parameters are treated as 0
+		{[]int{SET_FG, 2, 253, 1, 32, 1}, "2;253;1;32", 4}, // Additional parameters not consumed
 	}
 
 	for i, c := range cases {

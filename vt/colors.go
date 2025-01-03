@@ -88,17 +88,21 @@ func colorFromParams(params []int) (color, int) {
 
 	switch params[0] {
 	case 2: // 24 bit true color
+		cols := []int{0, 0, 0}
 		if lp == 1 {
-			return rgbColor{[]int{0, 0, 0}}, lp + 1
+			return rgbColor{cols}, lp + 1
 		}
 
-		cols := []int{0, 0, 0}
-		for i := 0; i < lp-1; i++ {
+		x := len(cols)
+		if len(params[1:]) < x {
+			x = len(params[1:])
+		}
+		for i := 0; i < x; i++ {
 			cols[i] = params[1+i]
 		}
 
 		// TODO: Handle invalid values (!0-255)
-		return rgbColor{cols}, lp + 1
+		return rgbColor{cols}, x + 1
 	case 5: // 256 color selection
 		if lp == 1 {
 			return ansi256Color{0}, lp + 1
