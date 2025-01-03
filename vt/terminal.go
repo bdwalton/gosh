@@ -67,12 +67,12 @@ func (t *terminal) print(r rune) {
 
 func (t *terminal) handleExecute(lastbyte byte) {
 	switch lastbyte {
+	case CTRL_BEL:
+		// just swallow this for now
 	case CTRL_BS:
-		t.curX -= 1
+		t.cursorMoveAbs(t.curY, t.curX-1)
 	case CTRL_CR:
-		t.curX = 0
-	case CTRL_HTS:
-
+		t.cursorMoveAbs(t.curY, 0)
 	}
 }
 
