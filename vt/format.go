@@ -173,7 +173,7 @@ func extendedFG() func(f format, p []int) (format, int) {
 		if n == 0 {
 			// We will always indicate consumption of the
 			// SET* parameter, even if we couldn't
-			// determin a color
+			// determine a color
 			return f, n + 1
 		}
 
@@ -188,7 +188,7 @@ func extendedBG() func(f format, p []int) (format, int) {
 		if n == 0 {
 			// We will always indicate consumption of the
 			// SET* parameter, even if we couldn't
-			// determin a color
+			// determine a color
 			return f, n + 1
 		}
 
