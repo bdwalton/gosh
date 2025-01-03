@@ -1,6 +1,7 @@
 package vt
 
 import (
+	"fmt"
 	"log/slog"
 )
 
@@ -12,6 +13,10 @@ type format struct {
 	brightness                                    intensity
 	underline                                     ulstyle
 	italic, blink, reversed, invisible, strikeout bool
+}
+
+func (f *format) String() string {
+	return fmt.Sprintf("fg: %s; bg: %s; bright: %d, underline: %d, italic: %t, blink: %t, reversed: %t, invisible: %t, strikeout: %t", f.fg, f.bg, f.brightness, f.underline, f.italic, f.blink, f.reversed, f.invisible, f.strikeout)
 }
 
 func (f format) equal(other format) bool {
