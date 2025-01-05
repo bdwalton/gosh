@@ -1,12 +1,36 @@
 package vt
 
+import "fmt"
+
 type cell struct {
 	r rune
 	f format
 }
 
-func newCell(f format) cell {
-	return cell{f: f}
+func defaultCell() cell {
+	return cell{f: defFmt}
+}
+
+func emptyCell(fm format) cell {
+	c := defaultCell()
+	c.f = fm
+	return c
+}
+
+func newCell(r rune, f format) cell {
+	return cell{r: r, f: f}
+}
+
+func (c cell) getFormat() format {
+	return c.f
+}
+
+func (c cell) equal(other cell) bool {
+	return c.getFormat().equal(other.getFormat()) && c.r == other.r
+}
+
+func (c cell) String() string {
+	return fmt.Sprintf("%s (%s)", string(c.r), c.f.String())
 }
 
 type framebuffer struct {
