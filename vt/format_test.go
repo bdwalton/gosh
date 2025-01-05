@@ -49,20 +49,36 @@ func TestFormatEquality(t *testing.T) {
 			true,
 		},
 		{
-			format{bg: standardColors[FG_RED], italic: true},
+			format{bg: standardColors[BG_GREEN], italic: true},
 			format{bg: standardColors[BG_RED], italic: true},
 			false,
 		},
 		{
-			format{bg: standardColors[BG_RED], fg: standardColors[FG_WHITE], italic: true},
+			format{bg: standardColors[BG_RED], fg: defFG, italic: true},
+			format{bg: standardColors[BG_RED], italic: true},
+			true,
+		},
+		{
+			format{bg: standardColors[BG_RED], fg: standardColors[FG_YELLOW], italic: true},
 			format{bg: standardColors[BG_RED], italic: true},
 			false,
+		},
+		{
+			format{fg: standardColors[FG_RED], bg: standardColors[BG_YELLOW], strikeout: true},
+			format{fg: standardColors[FG_RED], strikeout: true},
+			false,
+		},
+		{
+			format{}, defFmt, true,
+		},
+		{
+			defFmt, defFmt, true,
 		},
 	}
 
 	for i, c := range cases {
 		if got := c.f1.equal(c.f2); got != c.want {
-			t.Errorf("%d: Got %t, wanted %t when comparing %v == %v", i, got, c.want, c.f1, c.f2)
+			t.Errorf("%d: Got %t, wanted %t when comparing\n\t%v ==\n\t%v", i, got, c.want, c.f1.String(), c.f2.String())
 		}
 	}
 }

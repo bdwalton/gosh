@@ -12,6 +12,8 @@ type ulstyle uint8   // underline style
 var defFG = ansiBasicColor{FG_WHITE}
 var defBG = ansiBasicColor{BG_BLACK}
 
+var defFmt = format{bg: defBG, fg: defFG}
+
 type format struct {
 	fg, bg                                        color
 	brightness                                    intensity
@@ -34,20 +36,16 @@ func (f *format) getBG() color {
 }
 
 func (f *format) String() string {
-	return fmt.Sprintf("fg: %s; bg: %s; bright: %d, underline: %d, italic: %t, blink: %t, reversed: %t, invisible: %t, strikeout: %t", f.fg, f.bg, f.brightness, f.underline, f.italic, f.blink, f.reversed, f.invisible, f.strikeout)
+	return fmt.Sprintf("fg: %s; bg: %s; bright: %d, underline: %d, italic: %t, blink: %t, reversed: %t, invisible: %t, strikeout: %t", f.getFG(), f.getBG(), f.brightness, f.underline, f.italic, f.blink, f.reversed, f.invisible, f.strikeout)
 }
 
 func (f format) equal(other format) bool {
-	if f.bg != nil {
-		if !f.bg.equal(other.bg) {
-			return false
-		}
+	if bg := f.getBG(); !bg.equal(other.getBG()) {
+		return false
 	}
 
-	if f.fg != nil {
-		if !f.fg.equal(other.fg) {
-			return false
-		}
+	if fg := f.getFG(); !fg.equal(other.getFG()) {
+		return false
 	}
 
 	if f.brightness != other.brightness || f.underline != other.underline || f.italic != other.italic || f.blink != other.blink || f.reversed != other.reversed || f.invisible != other.invisible || f.strikeout != other.strikeout {
