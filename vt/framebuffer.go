@@ -5,6 +5,10 @@ type cell struct {
 	f format
 }
 
+func newCell(f format) cell {
+	return cell{f: f}
+}
+
 type framebuffer struct {
 	rows, cols int
 	data       [][]cell
@@ -13,13 +17,45 @@ type framebuffer struct {
 func newFramebuffer(rows, cols int) *framebuffer {
 	d := make([][]cell, rows, rows)
 	for r := 0; r < rows; r++ {
-		d[r] = make([]cell, cols, cols)
+		d[r] = newRow(cols, defFmt)
 	}
 	return &framebuffer{
 		rows: rows,
 		cols: cols,
 		data: d,
 	}
+}
+
+func (f *framebuffer) resetRows(from, to int, fm format) {
+	for i := from; i <= to; i++ {
+		if i > len(f.data) {
+			break
+		}
+		f.data[i] = newRow(f.cols, fm)
+	}
+}
+
+func (f *framebuffer) resetCells(row, from, to int, fm format) {
+	switch {
+	case row < 0 || row >= f.rows:
+		return
+	case from < 0 || from >= f.cols:
+		return
+	case to < 0 || from >= f.cols:
+		return
+	default:
+		for i := from; i < to; i++ {
+			f.data[row][i] = newCell(fm)
+		}
+	}
+}
+
+func newRow(cols int, f format) []cell {
+	row := make([]cell, cols, cols)
+	for i := 0; i < len(row); i++ {
+		row[i] = newCell(f)
+	}
+	return row
 }
 
 func (f *framebuffer) setCell(row, col int, fm format, r rune) {

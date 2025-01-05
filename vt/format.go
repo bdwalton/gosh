@@ -8,11 +8,29 @@ import (
 type intensity uint8 // font intensity
 type ulstyle uint8   // underline style
 
+// TODO: Validate these as sane, but for now they'll work
+var defFG = ansiBasicColor{FG_WHITE}
+var defBG = ansiBasicColor{BG_BLACK}
+
 type format struct {
 	fg, bg                                        color
 	brightness                                    intensity
 	underline                                     ulstyle
 	italic, blink, reversed, invisible, strikeout bool
+}
+
+func (f *format) getFG() color {
+	if f.fg == nil {
+		return defFG
+	}
+	return f.fg
+}
+
+func (f *format) getBG() color {
+	if f.bg == nil {
+		return defBG
+	}
+	return f.bg
 }
 
 func (f *format) String() string {

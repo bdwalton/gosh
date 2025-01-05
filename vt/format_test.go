@@ -4,6 +4,40 @@ import (
 	"testing"
 )
 
+func TestGetFG(t *testing.T) {
+	cases := []struct {
+		f    *format
+		want color
+	}{
+		{&format{}, defFG},
+		{&format{fg: defFG}, defFG},
+		{&format{fg: standardColors[FG_BLUE]}, standardColors[FG_BLUE]},
+	}
+
+	for i, c := range cases {
+		if got := c.f.getFG(); !got.equal(c.want) {
+			t.Errorf("%d: Got %v, wanted %v", i, got, c.want)
+		}
+	}
+}
+
+func TestGetBG(t *testing.T) {
+	cases := []struct {
+		f    *format
+		want color
+	}{
+		{&format{}, defBG},
+		{&format{bg: defBG}, defBG},
+		{&format{bg: standardColors[BG_BLUE]}, standardColors[BG_BLUE]},
+	}
+
+	for i, c := range cases {
+		if got := c.f.getBG(); !got.equal(c.want) {
+			t.Errorf("%d: Got %v, wanted %v", i, got, c.want)
+		}
+	}
+}
+
 func TestFormatEquality(t *testing.T) {
 	cases := []struct {
 		f1, f2 format
