@@ -15,7 +15,7 @@ var nonDefFmt = format{
 func fillBuffer(fb *framebuffer) *framebuffer {
 	for row := 0; row < fb.rows; row++ {
 		for col := 0; col < fb.cols; col++ {
-			fb.setCell(row, col, 'a'+rune(rand.Intn(26)), nonDefFmt)
+			fb.setCell(row, col, newCell('a'+rune(rand.Intn(26)), nonDefFmt))
 		}
 	}
 
@@ -45,32 +45,91 @@ func TestCellEquality(t *testing.T) {
 	}
 }
 
-func TestResetRows(t *testing.T) {
+func TestResetCells(t *testing.T) {
 	cases := []struct {
-		fb         *framebuffer
-		start, end int
+		fb              *framebuffer
+		row, start, end int
+		want            bool
 	}{
-		{fillBuffer(newFramebuffer(2, 2)), 0, 0},
-		{fillBuffer(newFramebuffer(24, 80)), 15, 18},
+		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 5, true},
+		{fillBuffer(newFramebuffer(10, 10)), 0, 5, 9, true},
+		{fillBuffer(newFramebuffer(10, 10)), -1, 5, 9, false},
+		{fillBuffer(newFramebuffer(10, 10)), 10, 5, 9, false},
+		{fillBuffer(newFramebuffer(10, 10)), 5, 9, 5, false},
+		{fillBuffer(newFramebuffer(10, 10)), 5, 9, 9, true},
 	}
 
 	empty := emptyCell(defFmt)
 
 	for i, c := range cases {
-		c.fb.resetRows(c.start, c.end, defFmt)
-		for row := 0; row < c.fb.rows; row++ {
-			for col := 0; col < c.fb.cols; col++ {
-				got := c.fb.getCell(row, col)
-				if row < c.start || row > c.end {
-					if got.equal(empty) {
-						t.Errorf("%d: (row:%d, col:%d) Got %v, wanted non-default", i, row, col, got)
-					}
-				} else {
-					if !got.equal(empty) {
-						t.Errorf("%d: (row:%d, col:%d) Got %v, wanted %v", i, row, col, got, empty)
+		resetWorked := c.fb.resetCells(c.row, c.start, c.end)
+		if resetWorked != c.want {
+			t.Errorf("%d: Got %t, wanted %t", i, resetWorked, c.want)
+		} else {
+			if resetWorked {
+				for row := 0; row < c.fb.rows; row++ {
+					for col := 0; col < c.fb.cols; col++ {
+						got := c.fb.getCell(row, col)
+						if row == c.row {
+							if col < c.start || col >= c.end {
+								if got.equal(empty) {
+									t.Errorf("%d: (row:%d, col:%d) Got\n\t%v, wanted\n\t%v", i, row, col, got, empty)
+								}
+							} else {
+								if !got.equal(empty) {
+									t.Errorf("%d: Got %t, wanted %t, expected empty, got %v", i, resetWorked, c.want, got)
+								}
+							}
+						} else {
+							if got.equal(empty) {
+								t.Errorf("%d: (row:%d, col:%d) Got %v, wanted non-default", i, row, col, got)
+							}
+						}
 					}
 				}
 			}
 		}
+	}
+}
+
+func TestResetRows(t *testing.T) {
+	cases := []struct {
+		fb         *framebuffer
+		start, end int
+		want       bool
+	}{
+		{fillBuffer(newFramebuffer(2, 2)), 0, 0, true},
+		{fillBuffer(newFramebuffer(2, 2)), 0, -1, false},
+		{fillBuffer(newFramebuffer(2, 2)), -1, 0, false},
+		{fillBuffer(newFramebuffer(2, 2)), 2, 2, false},
+		{fillBuffer(newFramebuffer(2, 2)), 2, 1, false},
+		{fillBuffer(newFramebuffer(24, 80)), 15, 18, true},
+	}
+
+	empty := emptyCell(defFmt)
+
+	for i, c := range cases {
+		resetWorked := c.fb.resetRows(c.start, c.end, defFmt)
+		if resetWorked != c.want {
+			t.Errorf("%d: Got %t, wanted %t", i, resetWorked, c.want)
+		} else {
+			if resetWorked {
+				for row := 0; row < c.fb.rows; row++ {
+					for col := 0; col < c.fb.cols; col++ {
+						got := c.fb.getCell(row, col)
+						if row < c.start || row > c.end {
+							if got.equal(empty) {
+								t.Errorf("%d: (row:%d, col:%d) Got %v, wanted non-default", i, row, col, got)
+							}
+						} else {
+							if !got.equal(empty) {
+								t.Errorf("%d: (row:%d, col:%d) Got\n\t%v, wanted\n\t%v", i, row, col, got, empty)
+							}
+						}
+					}
+				}
+			}
+		}
+
 	}
 }

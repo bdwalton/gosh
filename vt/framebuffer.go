@@ -50,29 +50,36 @@ func newFramebuffer(rows, cols int) *framebuffer {
 	}
 }
 
-func (f *framebuffer) resetRows(from, to int, fm format) {
+func (f *framebuffer) resetRows(from, to int, fm format) bool {
 	if from > to || from < 0 || to >= f.rows {
-		return
+		return false
 	}
+
 	for i := from; i <= to; i++ {
 		row := newRow(f.cols, defFmt)
 		f.data[i] = row
 	}
+
+	return true
 }
 
-func (f *framebuffer) resetCells(row, from, to int, fm format) {
+func (f *framebuffer) resetCells(row, from, to int) bool {
 	switch {
 	case row < 0 || row >= f.rows:
-		return
+		return false
 	case from < 0 || from >= f.cols:
-		return
+		return false
 	case to < 0 || from >= f.cols:
-		return
+		return false
+	case from > to:
+		return false
 	default:
-		for i := from; i < to; i++ {
-			f.data[row][i] = emptyCell(fm)
+		for col := from; col < to; col++ {
+			f.setCell(row, col, emptyCell(defFmt))
 		}
 	}
+
+	return true
 }
 
 func newRow(cols int, f format) []cell {
@@ -83,8 +90,8 @@ func newRow(cols int, f format) []cell {
 	return row
 }
 
-func (f *framebuffer) setCell(row, col int, r rune, fm format) {
-	f.data[row][col] = newCell(r, fm)
+func (f *framebuffer) setCell(row, col int, c cell) {
+	f.data[row][col] = c
 }
 
 func (f *framebuffer) getCell(row, col int) cell {
