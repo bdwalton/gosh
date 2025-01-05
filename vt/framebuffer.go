@@ -51,11 +51,12 @@ func newFramebuffer(rows, cols int) *framebuffer {
 }
 
 func (f *framebuffer) resetRows(from, to int, fm format) {
+	if from > to || from < 0 || to >= f.rows {
+		return
+	}
 	for i := from; i <= to; i++ {
-		if i > len(f.data) {
-			break
-		}
-		f.data[i] = newRow(f.cols, fm)
+		row := newRow(f.cols, defFmt)
+		f.data[i] = row
 	}
 }
 
@@ -69,7 +70,7 @@ func (f *framebuffer) resetCells(row, from, to int, fm format) {
 		return
 	default:
 		for i := from; i < to; i++ {
-			f.data[row][i] = newCell(fm)
+			f.data[row][i] = emptyCell(fm)
 		}
 	}
 }
@@ -77,11 +78,15 @@ func (f *framebuffer) resetCells(row, from, to int, fm format) {
 func newRow(cols int, f format) []cell {
 	row := make([]cell, cols, cols)
 	for i := 0; i < len(row); i++ {
-		row[i] = newCell(f)
+		row[i] = emptyCell(f)
 	}
 	return row
 }
 
-func (f *framebuffer) setCell(row, col int, fm format, r rune) {
-	f.data[row][col] = cell{r: r, f: fm}
+func (f *framebuffer) setCell(row, col int, r rune, fm format) {
+	f.data[row][col] = newCell(r, fm)
+}
+
+func (f *framebuffer) getCell(row, col int) cell {
+	return f.data[row][col]
 }
