@@ -43,6 +43,7 @@ const (
 	CSI_DSR          = 'n' // device status report
 	CSI_PRIV_ENABLE  = 'h' // h typically enables or activates something
 	CSI_PRIV_DISABLE = 'l' // l typically disables or deactivates something
+	CSI_DECSTBM      = 'r' // set top and bottom margin
 )
 
 // CSI SGR Format codes

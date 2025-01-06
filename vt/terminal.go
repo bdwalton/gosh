@@ -78,6 +78,8 @@ func (t *terminal) handleExecute(lastbyte byte) {
 
 func (t *terminal) handleCSI(params []int, data []rune, lastbyte byte) {
 	switch lastbyte {
+	case CSI_DECSTBM:
+		t.setTopBottom(params)
 	case CSI_EL:
 		t.eraseLine(params)
 	case CSI_ED:
@@ -89,6 +91,23 @@ func (t *terminal) handleCSI(params []int, data []rune, lastbyte byte) {
 	default:
 		slog.Debug("unimplemented CSI code", "lastbyte", lastbyte, "params", params, "data", data)
 	}
+}
+
+func (t *terminal) setTopBottom(params []int) {
+	top, bottom := 1, t.fb.rows
+	switch len(params) {
+	case 1:
+		top = params[0]
+	case 2:
+		top = params[0]
+		bottom = params[1]
+	}
+
+	if bottom <= top || top > t.fb.rows || (top == 0 && bottom == 1) {
+		return // matches xterm
+	}
+
+	t.fb.setTBScroll(top-1, bottom-1)
 }
 
 func (t *terminal) cursorMove(params []int, moveType byte) {
