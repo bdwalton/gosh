@@ -55,32 +55,25 @@ func (f format) equal(other format) bool {
 	return true
 }
 
-func formatFromParams(curF format, params []int) format {
+func formatFromParams(curF format, params *parameters) format {
 	f := curF
-	switch len(params) {
+	ni := params.numItems()
+	switch ni {
 	case 0: // CSI m
-		f, _ = formatters[RESET](f, nil)
+		f = formatters[RESET](f, nil)
 	default:
-		for i := 0; i < len(params); {
-			fmer, ok := formatters[params[i]]
+		for {
+			item, ok := params.consumeItem()
+			if !ok {
+				break
+			}
+
+			fmer, ok := formatters[item]
+			fmt.Println(item, ok)
 			if ok {
-				var n int
-				f, n = fmer(f, params[i:])
-				// We always consume the current parameter,
-				// and to avoid this function needing to know
-				// about how many extra params are consumed,
-				// we just pass current param and any
-				// remaining ones into the formatter. If the
-				// formatter indicates it consumes 1 extra
-				// param, we need to step forward by 2 places
-				// in the params slice. If it consumes zero
-				// extra params, we still need to step forward
-				// 1. So n+1 ensures we always consume the
-				// current parameter here.
-				i += n + 1
+				f = fmer(f, params)
 			} else {
-				slog.Debug("unimplemented CSI format option", "param", params[i], "remaining", params[i:])
-				i += 1
+				slog.Debug("unimplemented CSI format option", "param", item)
 			}
 		}
 	}
@@ -94,27 +87,27 @@ func formatFromParams(curF format, params []int) format {
 // that should be skipped for future consideration.  TOOD: How to
 // indicate errors? Just ignore and return the unmodified format? Log?
 // Return error?
-type formatter func(format, []int) (format, int)
+type formatter func(format, *parameters) format
 
 var formatters map[int]formatter = map[int]formatter{
-	RESET: func(f format, p []int) (format, int) { return format{}, 0 },
+	RESET: func(f format, p *parameters) format { return format{} },
 	// style formats
-	INTENSITY_BOLD:   func(f format, p []int) (format, int) { f.brightness = FONT_BOLD; return f, 0 },
-	INTENSITY_DIM:    func(f format, p []int) (format, int) { f.brightness = FONT_DIM; return f, 0 },
-	ITALIC_ON:        func(f format, p []int) (format, int) { f.italic = true; return f, 0 },
-	UNDERLINE_ON:     func(f format, p []int) (format, int) { f.underline = UNDERLINE_SINGLE; return f, 0 },
-	BLINK_ON:         func(f format, p []int) (format, int) { f.blink = true; return f, 0 },
-	REVERSED_ON:      func(f format, p []int) (format, int) { f.reversed = true; return f, 0 },
-	INVISIBLE_ON:     func(f format, p []int) (format, int) { f.invisible = true; return f, 0 },
-	STRIKEOUT_ON:     func(f format, p []int) (format, int) { f.strikeout = true; return f, 0 },
-	DBL_UNDERLINE:    func(f format, p []int) (format, int) { f.underline = UNDERLINE_DOUBLE; return f, 0 },
-	INTENSITY_NORMAL: func(f format, p []int) (format, int) { f.brightness = FONT_NORMAL; return f, 0 },
-	ITALIC_OFF:       func(f format, p []int) (format, int) { f.italic = false; return f, 0 },
-	UNDERLINE_OFF:    func(f format, p []int) (format, int) { f.underline = UNDERLINE_NONE; return f, 0 },
-	BLINK_OFF:        func(f format, p []int) (format, int) { f.blink = false; return f, 0 },
-	REVERSED_OFF:     func(f format, p []int) (format, int) { f.reversed = false; return f, 0 },
-	INVISIBLE_OFF:    func(f format, p []int) (format, int) { f.invisible = false; return f, 0 },
-	STRIKEOUT_OFF:    func(f format, p []int) (format, int) { f.strikeout = false; return f, 0 },
+	INTENSITY_BOLD:   func(f format, p *parameters) format { f.brightness = FONT_BOLD; return f },
+	INTENSITY_DIM:    func(f format, p *parameters) format { f.brightness = FONT_DIM; return f },
+	ITALIC_ON:        func(f format, p *parameters) format { f.italic = true; return f },
+	UNDERLINE_ON:     func(f format, p *parameters) format { f.underline = UNDERLINE_SINGLE; return f },
+	BLINK_ON:         func(f format, p *parameters) format { f.blink = true; return f },
+	REVERSED_ON:      func(f format, p *parameters) format { f.reversed = true; return f },
+	INVISIBLE_ON:     func(f format, p *parameters) format { f.invisible = true; return f },
+	STRIKEOUT_ON:     func(f format, p *parameters) format { f.strikeout = true; return f },
+	DBL_UNDERLINE:    func(f format, p *parameters) format { f.underline = UNDERLINE_DOUBLE; return f },
+	INTENSITY_NORMAL: func(f format, p *parameters) format { f.brightness = FONT_NORMAL; return f },
+	ITALIC_OFF:       func(f format, p *parameters) format { f.italic = false; return f },
+	UNDERLINE_OFF:    func(f format, p *parameters) format { f.underline = UNDERLINE_NONE; return f },
+	BLINK_OFF:        func(f format, p *parameters) format { f.blink = false; return f },
+	REVERSED_OFF:     func(f format, p *parameters) format { f.reversed = false; return f },
+	INVISIBLE_OFF:    func(f format, p *parameters) format { f.invisible = false; return f },
+	STRIKEOUT_OFF:    func(f format, p *parameters) format { f.strikeout = false; return f },
 	// colors
 	FG_BLACK:          basicFG(FG_BLACK),
 	FG_RED:            basicFG(FG_RED),
@@ -154,61 +147,45 @@ var formatters map[int]formatter = map[int]formatter{
 	BG_BRIGHT_WHITE:   basicBrightBG(BG_BRIGHT_WHITE),
 }
 
-func basicFG(col int) func(f format, p []int) (format, int) {
-	return func(f format, p []int) (format, int) {
+func basicFG(col int) func(f format, p *parameters) format {
+	return func(f format, p *parameters) format {
 		f.fg = standardColors[col]
-		return f, 0
+		return f
 	}
 }
 
-func basicBrightFG(col int) func(f format, p []int) (format, int) {
-	return func(f format, p []int) (format, int) {
+func basicBrightFG(col int) func(f format, p *parameters) format {
+	return func(f format, p *parameters) format {
 		f.fg = standardColors[col]
 		f.brightness = FONT_BOLD
-		return f, 0
+		return f
 	}
 }
 
-func basicBG(col int) func(f format, p []int) (format, int) {
-	return func(f format, p []int) (format, int) {
+func basicBG(col int) func(f format, p *parameters) format {
+	return func(f format, p *parameters) format {
 		f.bg = standardColors[col]
-		return f, 0
+		return f
 	}
 }
 
-func basicBrightBG(col int) func(f format, p []int) (format, int) {
-	return func(f format, p []int) (format, int) {
+func basicBrightBG(col int) func(f format, p *parameters) format {
+	return func(f format, p *parameters) format {
 		f.bg = ansiBasicColor{col}
-		return f, 0
+		return f
 	}
 }
 
-func extendedFG() func(f format, p []int) (format, int) {
-	return func(f format, p []int) (format, int) {
-		c, n := colorFromParams(p)
-		if n == 0 {
-			// We will always indicate consumption of the
-			// SET* parameter, even if we couldn't
-			// determine a color
-			return f, n + 1
-		}
-
-		f.fg = c
-		return f, n
+func extendedFG() func(f format, p *parameters) format {
+	return func(f format, p *parameters) format {
+		f.fg = colorFromParams(p, defFG)
+		return f
 	}
 }
 
-func extendedBG() func(f format, p []int) (format, int) {
-	return func(f format, p []int) (format, int) {
-		c, n := colorFromParams(p)
-		if n == 0 {
-			// We will always indicate consumption of the
-			// SET* parameter, even if we couldn't
-			// determine a color
-			return f, n + 1
-		}
-
-		f.bg = c
-		return f, n
+func extendedBG() func(f format, p *parameters) format {
+	return func(f format, p *parameters) format {
+		f.bg = colorFromParams(p, defBG)
+		return f
 	}
 }

@@ -70,49 +70,44 @@ func (c rgbColor) String() string {
 	return fmt.Sprintf("2;%d;%d;%d", c.rgb[0], c.rgb[1], c.rgb[2])
 }
 
-// colorFromParams takes a list of integers and interprets them as
+// colorFromParams takes a paramter object and interprets it as
 // either a 256 color or 24-bit true color ansi sequence. It expects
 // the parameters to be prefixed by either SET_FG, SET_BG that specify
 // what the color will be used for, but that parameter itself is
 // ignored. It returns a color and the number of parameters consumed
 // by the color, including the SET* parameter. Upon error, it will
 // return nil and 0 (no parameters consumed)
-func colorFromParams(params []int) (color, int) {
-	if len(params) < 2 {
-		slog.Debug("invalid parameters to provide extended color", "params", params)
-		return nil, 0
+func colorFromParams(params *parameters, def color) color {
+	cm, ok := params.consumeItem()
+	if !ok {
+		slog.Debug("invalid parameters to provide extended color", "params", params.items)
+		return def
 	}
 
-	params = params[1:]
-	lp := len(params)
-
-	switch params[0] {
+	switch cm { // consume the color mode
 	case 2: // 24 bit true color
 		cols := []int{0, 0, 0}
-		if lp == 1 {
-			return rgbColor{cols}, lp + 1
-		}
-
-		x := len(cols)
-		if len(params[1:]) < x {
-			x = len(params[1:])
-		}
-		for i := 0; i < x; i++ {
-			cols[i] = params[1+i]
+		var ok bool
+		for i := 0; i < len(cols); i++ {
+			cols[i], ok = params.consumeItem()
+			if !ok {
+				break
+			}
 		}
 
 		// TODO: Handle invalid values (!0-255)
-		return rgbColor{cols}, x + 1
+		return rgbColor{cols}
 	case 5: // 256 color selection
-		if lp == 1 {
-			return ansi256Color{0}, lp + 1
-		}
 		// TODO: Handle invalid values (!0-255)
-		return ansi256Color{params[1]}, lp + 1
+		item, ok := params.consumeItem()
+		if !ok {
+			return ansi256Color{0}
+		}
+		return ansi256Color{item}
 	}
 
-	slog.Debug("invalid color type selector, returning default", "selector param", params[1])
-	return nil, 0
+	slog.Debug("invalid color type selector, returning default", "selector param", cm)
+	return def
 }
 
 // Publish common color codes as standard variables

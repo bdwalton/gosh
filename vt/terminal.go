@@ -29,7 +29,7 @@ func NewTerminal(rows, cols int) *terminal {
 	return t
 }
 
-func (t *terminal) handle(action pAction, params []int, data []rune, lastbyte byte) {
+func (t *terminal) handle(action pAction, params *parameters, data []rune, lastbyte byte) {
 	switch action {
 	case VTPARSE_ACTION_EXECUTE:
 		t.handleExecute(lastbyte)
@@ -76,7 +76,7 @@ func (t *terminal) handleExecute(lastbyte byte) {
 	}
 }
 
-func (t *terminal) handleCSI(params []int, data []rune, lastbyte byte) {
+func (t *terminal) handleCSI(params *parameters, data []rune, lastbyte byte) {
 	switch lastbyte {
 	case CSI_DECSTBM:
 		t.setTopBottom(params)
@@ -93,16 +93,9 @@ func (t *terminal) handleCSI(params []int, data []rune, lastbyte byte) {
 	}
 }
 
-func (t *terminal) setTopBottom(params []int) {
-	top, bottom := 1, t.fb.rows
-	switch len(params) {
-	case 1:
-		top = params[0]
-	case 2:
-		top = params[0]
-		bottom = params[1]
-	}
-
+func (t *terminal) setTopBottom(params *parameters) {
+	top, _ := params.getItem(0, 1)
+	bottom, _ := params.getItem(0, t.fb.rows)
 	if bottom <= top || top > t.fb.rows || (top == 0 && bottom == 1) {
 		return // matches xterm
 	}
@@ -110,18 +103,12 @@ func (t *terminal) setTopBottom(params []int) {
 	t.fb.setTBScroll(top-1, bottom-1)
 }
 
-func (t *terminal) cursorMove(params []int, moveType byte) {
+func (t *terminal) cursorMove(params *parameters, moveType byte) {
 	// No paramter indicates a 0 paramter, but for cursor
 	// movement, we always default to 1. That allows more
 	// efficient specification of the common movements.
-	n := 1
-	m := 1
-	if len(params) > 0 {
-		n = params[0]
-	}
-	if len(params) > 1 {
-		m = params[1]
-	}
+	n, _ := params.getItem(0, 1)
+	m, _ := params.getItem(1, 1)
 
 	row := t.curY
 	col := t.curX
@@ -171,11 +158,8 @@ func (t *terminal) cursorMoveAbs(row, col int) {
 	}
 }
 
-func (t *terminal) eraseLine(params []int) {
-	m := 0
-	if len(params) > 0 {
-		m = params[0]
-	}
+func (t *terminal) eraseLine(params *parameters) {
+	m, _ := params.getItem(0, 0)
 
 	switch m {
 	case 0: // to end of line
@@ -187,11 +171,8 @@ func (t *terminal) eraseLine(params []int) {
 	}
 }
 
-func (t *terminal) eraseInDisplay(params []int) {
-	m := 0
-	if len(params) > 0 {
-		m = params[0]
-	}
+func (t *terminal) eraseInDisplay(params *parameters) {
+	m, _ := params.getItem(0, 0)
 
 	switch m {
 	case 0: // active position to end of screen, inclusive

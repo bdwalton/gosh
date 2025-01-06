@@ -7,7 +7,7 @@ import (
 
 type dummyD struct {
 	actions      []pAction
-	params       []int
+	params       *parameters
 	intermediate []rune
 	lastbyte     byte
 	oscTemp      []rune
@@ -31,7 +31,7 @@ func (d *dummyD) getActions() []string {
 	return acts
 }
 
-func (d *dummyD) handle(act pAction, params []int, intermediate []rune, lastbyte byte) {
+func (d *dummyD) handle(act pAction, params *parameters, intermediate []rune, lastbyte byte) {
 	d.actions = append(d.actions, act)
 	switch act {
 	case VTPARSE_ACTION_OSC_PUT:
@@ -39,7 +39,6 @@ func (d *dummyD) handle(act pAction, params []int, intermediate []rune, lastbyte
 	case VTPARSE_ACTION_OSC_END:
 		d.oscString = d.oscTemp
 	default:
-
 		d.params = params
 		d.intermediate = intermediate
 		d.lastbyte = lastbyte
@@ -52,16 +51,16 @@ func (d *dummyD) print(r rune) {
 func TestFirstParamEmpty(t *testing.T) {
 	cases := []struct {
 		input      []byte
-		wantParams []int
+		wantParams *parameters
 	}{
-		{[]byte{ESC, ESC_CSI, ';'}, []int{0, 0}},
-		{[]byte{C1_CSI, ';'}, []int{0, 0}},
-		{[]byte{C1_CSI, ';', ';'}, []int{0, 0, 0}},
-		{[]byte{C1_CSI, ';', '0', ';'}, []int{0, 0, 0}},
-		{[]byte{C1_CSI, ';', '5', '0', ';'}, []int{0, 50, 0}},
-		{[]byte{C1_CSI, '1', '0', ';', ';'}, []int{10, 0, 0}},
-		{[]byte{C1_CSI, '1', '0', ';', ';'}, []int{10, 0, 0}},
-		{[]byte{C1_CSI, '1', '0', ';', ';', '5'}, []int{10, 0, 5}},
+		{[]byte{ESC, ESC_CSI, ';'}, paramsFromInts([]int{0, 0})},
+		{[]byte{C1_CSI, ';'}, paramsFromInts([]int{0, 0})},
+		{[]byte{C1_CSI, ';', ';'}, paramsFromInts([]int{0, 0, 0})},
+		{[]byte{C1_CSI, ';', '0', ';'}, paramsFromInts([]int{0, 0, 0})},
+		{[]byte{C1_CSI, ';', '5', '0', ';'}, paramsFromInts([]int{0, 50, 0})},
+		{[]byte{C1_CSI, '1', '0', ';', ';'}, paramsFromInts([]int{10, 0, 0})},
+		{[]byte{C1_CSI, '1', '0', ';', ';'}, paramsFromInts([]int{10, 0, 0})},
+		{[]byte{C1_CSI, '1', '0', ';', ';', '5'}, paramsFromInts([]int{10, 0, 5})},
 	}
 
 	for i, c := range cases {
@@ -69,7 +68,7 @@ func TestFirstParamEmpty(t *testing.T) {
 		for _, b := range c.input {
 			p.ParseByte(b)
 		}
-		if len(p.params) != len(c.wantParams) || !slices.Equal(p.params, c.wantParams) {
+		if p.params.numItems() != c.wantParams.numItems() || !slices.Equal(p.params.items, c.wantParams.items) {
 			t.Errorf("%d: Got %v, want %v", i, p.params, c.wantParams)
 		}
 	}
@@ -79,49 +78,49 @@ func TestCSIParsing(t *testing.T) {
 	cases := []struct {
 		input            []byte
 		wantActions      []pAction
-		wantParams       []int
+		wantParams       *parameters
 		wantIntermediate []rune
 		wantLast         byte
 	}{
 		{
 			[]byte{C1_CSI, ';', 'm'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
-			[]int{0, 0},
+			paramsFromInts([]int{0, 0}),
 			[]rune{},
 			CSI_SGR,
 		},
 		{
 			[]byte{C1_CSI, 'm'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
-			[]int{},
+			paramsFromInts([]int{}),
 			[]rune{},
 			CSI_SGR,
 		},
 		{
 			[]byte{C1_CSI, '1', '0', 'A'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
-			[]int{10},
+			paramsFromInts([]int{10}),
 			[]rune{},
 			CSI_CUU,
 		},
 		{
 			[]byte{C1_CSI, '1', '0', ';', '3', 'H'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
-			[]int{10, 3},
+			paramsFromInts([]int{10, 3}),
 			[]rune{},
 			CSI_CUP,
 		},
 		{
 			[]byte{C1_CSI, '6', 'n'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
-			[]int{6},
+			paramsFromInts([]int{6}),
 			[]rune{},
 			CSI_DSR,
 		},
 		{
 			[]byte{C1_CSI, '?', '2', '0', '0', '4', 'l'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
-			[]int{2004},
+			paramsFromInts([]int{2004}),
 			[]rune{'?'},
 			CSI_PRIV_DISABLE,
 		},
@@ -137,7 +136,7 @@ func TestCSIParsing(t *testing.T) {
 		if !slices.Equal(d.actions, c.wantActions) {
 			t.Errorf("%d: Invalid actions called. Got %v, want %v", i, d.actions, c.wantActions)
 		}
-		if !slices.Equal(d.params, c.wantParams) {
+		if !slices.Equal(d.params.items, c.wantParams.items) {
 			t.Errorf("%d: Invalid params. Got %v, want %v", i, d.params, c.wantParams)
 		}
 		if !slices.Equal(d.intermediate, c.wantIntermediate) {
