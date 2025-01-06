@@ -34,8 +34,9 @@ func (c cell) String() string {
 }
 
 type framebuffer struct {
-	rows, cols int
-	data       [][]cell
+	rows, cols               int
+	top, bottom, left, right int // scroll window parameters
+	data                     [][]cell
 }
 
 func newFramebuffer(rows, cols int) *framebuffer {
@@ -48,6 +49,11 @@ func newFramebuffer(rows, cols int) *framebuffer {
 		cols: cols,
 		data: d,
 	}
+}
+
+func (f *framebuffer) setTBScroll(top, bottom int) {
+	f.top = top
+	f.bottom = bottom
 }
 
 func (f *framebuffer) resetRows(from, to int, fm format) bool {
