@@ -162,6 +162,7 @@ func (t *terminal) cursorMoveAbs(row, col int) {
 		t.curX = t.fb.cols - 1
 	}
 
+	// TODO: Fix this
 	switch {
 	case t.curY < 0:
 		t.curY = 0
