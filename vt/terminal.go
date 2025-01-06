@@ -78,6 +78,10 @@ func (t *terminal) handleExecute(lastbyte byte) {
 
 func (t *terminal) handleCSI(params []int, data []rune, lastbyte byte) {
 	switch lastbyte {
+	case CSI_EL:
+		t.eraseLine(params)
+	case CSI_ED:
+		t.eraseInDisplay(params)
 	case CSI_CUP, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
 		t.cursorMove(params, lastbyte)
 	case CSI_SGR:
@@ -144,5 +148,39 @@ func (t *terminal) cursorMoveAbs(row, col int) {
 		t.curY = 0
 	case t.curY >= t.fb.rows:
 		t.curY = t.fb.rows - 1
+	}
+}
+
+func (t *terminal) eraseLine(params []int) {
+	m := 0
+	if len(params) > 0 {
+		m = params[0]
+	}
+
+	switch m {
+	case 0: // to end of line
+		t.fb.resetCells(t.curY, t.curX, t.fb.cols)
+	case 1: // to start of line
+		t.fb.resetCells(t.curY, 0, t.curX)
+	case 2: // entire line
+		t.fb.resetCells(t.curY, 0, t.fb.cols)
+	}
+}
+
+func (t *terminal) eraseInDisplay(params []int) {
+	m := 0
+	if len(params) > 0 {
+		m = params[0]
+	}
+
+	switch m {
+	case 0: // active position to end of screen, inclusive
+		t.fb.resetRows(t.curY, t.fb.rows, defFmt)
+		t.eraseLine(params)
+	case 1: // start of screen to active position, inclusive
+		t.fb.resetRows(0, t.curY-1, defFmt)
+		t.eraseLine(params)
+	case 2: // entire screen
+		t.fb = newFramebuffer(t.fb.cols, t.fb.rows)
 	}
 }
