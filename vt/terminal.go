@@ -95,7 +95,7 @@ func (t *terminal) handleCSI(params *parameters, data []rune, lastbyte byte) {
 
 func (t *terminal) setTopBottom(params *parameters) {
 	top, _ := params.getItem(0, 1)
-	bottom, _ := params.getItem(0, t.fb.rows)
+	bottom, _ := params.getItem(1, t.fb.rows)
 	if bottom <= top || top > t.fb.rows || (top == 0 && bottom == 1) {
 		return // matches xterm
 	}
