@@ -62,7 +62,7 @@ func (t *terminal) handleOSC(act pAction, lastbyte byte) {
 }
 
 func (t *terminal) print(r rune) {
-	t.fb.setCell(t.curY, t.curX, t.curF, r)
+	t.fb.setCell(t.curY, t.curX, newCell(r, t.curF))
 }
 
 func (t *terminal) handleExecute(lastbyte byte) {
