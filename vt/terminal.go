@@ -182,6 +182,6 @@ func (t *terminal) eraseInDisplay(params *parameters) {
 		t.fb.resetRows(0, t.curY-1, defFmt)
 		t.eraseLine(params)
 	case 2: // entire screen
-		t.fb = newFramebuffer(t.fb.cols, t.fb.rows)
+		t.fb.resetRows(0, t.fb.rows, defFmt)
 	}
 }
