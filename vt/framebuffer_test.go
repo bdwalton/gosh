@@ -60,7 +60,7 @@ func TestResetCells(t *testing.T) {
 		{fillBuffer(newFramebuffer(10, 10)), 5, 9, 9, true},
 	}
 
-	empty := emptyCell(defFmt)
+	empty := defaultCell()
 
 	for i, c := range cases {
 		resetWorked := c.fb.resetCells(c.row, c.start, c.end)
@@ -107,7 +107,7 @@ func TestResetRows(t *testing.T) {
 		{fillBuffer(newFramebuffer(24, 80)), 15, 18, true},
 	}
 
-	empty := emptyCell(defFmt)
+	empty := defaultCell()
 
 	for i, c := range cases {
 		resetWorked := c.fb.resetRows(c.start, c.end)
