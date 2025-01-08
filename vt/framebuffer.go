@@ -61,7 +61,7 @@ func (f *framebuffer) setTBScroll(top, bottom int) {
 	f.bottom = bottom
 }
 
-func (f *framebuffer) resetRows(from, to int, fm format) bool {
+func (f *framebuffer) resetRows(from, to int) bool {
 	if from > to || from < 0 || to >= f.rows {
 		return false
 	}

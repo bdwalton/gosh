@@ -110,7 +110,7 @@ func TestResetRows(t *testing.T) {
 	empty := emptyCell(defFmt)
 
 	for i, c := range cases {
-		resetWorked := c.fb.resetRows(c.start, c.end, defFmt)
+		resetWorked := c.fb.resetRows(c.start, c.end)
 		if resetWorked != c.want {
 			t.Errorf("%d: Got %t, wanted %t", i, resetWorked, c.want)
 		} else {

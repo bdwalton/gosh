@@ -213,12 +213,12 @@ func (t *terminal) eraseInDisplay(params *parameters) {
 
 	switch m {
 	case 0: // active position to end of screen, inclusive
-		t.fb.resetRows(t.curY, t.fb.rows, defFmt)
+		t.fb.resetRows(t.curY, t.fb.rows)
 		t.eraseLine(params)
 	case 1: // start of screen to active position, inclusive
-		t.fb.resetRows(0, t.curY-1, defFmt)
+		t.fb.resetRows(0, t.curY-1)
 		t.eraseLine(params)
 	case 2: // entire screen
-		t.fb.resetRows(0, t.fb.rows, defFmt)
+		t.fb.resetRows(0, t.fb.rows)
 	}
 }
