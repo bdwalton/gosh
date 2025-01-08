@@ -133,3 +133,9 @@ const (
 	BG_BRIGHT_CYAN    = 106
 	BG_BRIGHT_WHITE   = 107
 )
+
+// CSI private mode parameter codes
+const (
+	PRIV_CSI_DECAWM = 7  // DEC autowrap mode, default reset
+	PRIV_CSI_LNM    = 20 // Line Feed/New Line Mode, default reset
+)

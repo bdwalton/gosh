@@ -17,6 +17,10 @@ type terminal struct {
 
 	// Temp
 	oscTemp []rune
+
+	// CSI private flags
+	privAutowrap    bool // default reset (false)
+	privNewLineMode bool // default reset (false)
 }
 
 func NewTerminal(rows, cols int) *terminal {
@@ -78,6 +82,10 @@ func (t *terminal) handleExecute(lastbyte byte) {
 
 func (t *terminal) handleCSI(params *parameters, data []rune, lastbyte byte) {
 	switch lastbyte {
+	case CSI_PRIV_ENABLE:
+		t.setPriv(params, data, true)
+	case CSI_PRIV_DISABLE:
+		t.setPriv(params, data, false)
 	case CSI_DECSTBM:
 		t.setTopBottom(params)
 	case CSI_DECSLRM:
@@ -92,6 +100,23 @@ func (t *terminal) handleCSI(params *parameters, data []rune, lastbyte byte) {
 		t.curF = formatFromParams(t.curF, params)
 	default:
 		slog.Debug("unimplemented CSI code", "lastbyte", lastbyte, "params", params, "data", data)
+	}
+}
+
+func (t *terminal) setPriv(params *parameters, data []rune, val bool) {
+	priv, ok := params.consumeItem()
+	if len(data) != 1 || data[0] != '?' || !ok {
+		slog.Debug("togglePriv called without ? intermediate or missing params", "data", data, "params", params.items, "enabled?", val)
+		return
+	}
+
+	switch priv {
+	case PRIV_CSI_DECAWM:
+		t.privAutowrap = val
+	case PRIV_CSI_LNM:
+		t.privNewLineMode = val
+	default:
+		slog.Debug("unimplmented private csi mode", "priv", priv)
 	}
 }
 
