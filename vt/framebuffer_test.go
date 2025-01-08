@@ -133,3 +133,23 @@ func TestResetRows(t *testing.T) {
 
 	}
 }
+
+func TestSetCell(t *testing.T) {
+	cases := []struct {
+		row, col int
+		c        cell
+	}{
+		{5, 5, defaultCell()},
+		{1, 2, newCell('a', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true})},
+		{1, 2, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true})},
+		{8, 3, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true})},
+	}
+
+	fb := newFramebuffer(10, 10)
+	for i, c := range cases {
+		fb.setCell(c.row, c.col, c.c)
+		if got := fb.getCell(c.row, c.col); !got.equal(c.c) {
+			t.Errorf("%d: Got %v, wanted %v", i, got, c.c)
+		}
+	}
+}
