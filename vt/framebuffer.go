@@ -1,6 +1,11 @@
 package vt
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+var fbInvalidCell = errors.New("invalid framebuffer cell")
 
 type cell struct {
 	r rune
@@ -96,10 +101,23 @@ func newRow(cols int, f format) []cell {
 	return row
 }
 
-func (f *framebuffer) setCell(row, col int, c cell) {
-	f.data[row][col] = c
+func (f *framebuffer) validPoint(row, col int) bool {
+	if row < 0 || row >= f.rows || col < 0 || col >= f.cols {
+		return false
+	}
+	return true
 }
 
-func (f *framebuffer) getCell(row, col int) cell {
-	return f.data[row][col]
+func (f *framebuffer) setCell(row, col int, c cell) {
+	if f.validPoint(row, col) {
+		f.data[row][col] = c
+	}
+}
+
+func (f *framebuffer) getCell(row, col int) (cell, error) {
+	if f.validPoint(row, col) {
+		return f.data[row][col], nil
+	}
+
+	return defaultCell(), fmt.Errorf("invalid coordinates (%d, %d): %w", col, row, fbInvalidCell)
 }

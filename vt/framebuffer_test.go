@@ -1,6 +1,7 @@
 package vt
 
 import (
+	"errors"
 	"math/rand"
 	"testing"
 )
@@ -69,7 +70,7 @@ func TestResetCells(t *testing.T) {
 			if resetWorked {
 				for row := 0; row < c.fb.rows; row++ {
 					for col := 0; col < c.fb.cols; col++ {
-						got := c.fb.getCell(row, col)
+						got, _ := c.fb.getCell(row, col)
 						if row == c.row {
 							if col < c.start || col >= c.end {
 								if got.equal(empty) {
@@ -116,7 +117,7 @@ func TestResetRows(t *testing.T) {
 			if resetWorked {
 				for row := 0; row < c.fb.rows; row++ {
 					for col := 0; col < c.fb.cols; col++ {
-						got := c.fb.getCell(row, col)
+						got, _ := c.fb.getCell(row, col)
 						if row < c.start || row > c.end {
 							if got.equal(empty) {
 								t.Errorf("%d: (row:%d, col:%d) Got %v, wanted non-default", i, row, col, got)
@@ -134,22 +135,33 @@ func TestResetRows(t *testing.T) {
 	}
 }
 
-func TestSetCell(t *testing.T) {
+func TestSetAndGetCell(t *testing.T) {
 	cases := []struct {
 		row, col int
 		c        cell
+		wantErr  error
 	}{
-		{5, 5, defaultCell()},
-		{1, 2, newCell('a', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true})},
-		{1, 2, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true})},
-		{8, 3, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true})},
+		{5, 5, defaultCell(), nil},
+		{1, 2, newCell('a', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true}), nil},
+		{1, 2, newCell('b', format{fg: standardColors[FG_RED], strikeout: true}), nil},
+		{8, 3, newCell('b', format{bg: standardColors[BG_BLUE], reversed: true}), nil},
+		{10, 01, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true}), fbInvalidCell},
+		{-1, 100, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true}), fbInvalidCell},
+		{-1, 1, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true}), fbInvalidCell},
+		{1, -1, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true}), fbInvalidCell},
 	}
 
 	fb := newFramebuffer(10, 10)
 	for i, c := range cases {
 		fb.setCell(c.row, c.col, c.c)
-		if got := fb.getCell(c.row, c.col); !got.equal(c.c) {
-			t.Errorf("%d: Got %v, wanted %v", i, got, c.c)
+		got, err := fb.getCell(c.row, c.col)
+
+		if err == nil && !got.equal(c.c) {
+			t.Errorf("%d: Got %v (%v), wanted %v (%v)", i, got, c.c, err, c.wantErr)
+		} else {
+			if !errors.Is(err, c.wantErr) {
+				t.Errorf("%d: Got error %v, wanted error %v", i, err, c.wantErr)
+			}
 		}
 	}
 }
