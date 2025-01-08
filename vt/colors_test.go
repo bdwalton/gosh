@@ -41,7 +41,6 @@ func TestColorsFromParams(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		fmt.Println("test", i, c.params.items)
 		col := colorFromParams(c.params, defFG)
 		if col == nil || col.String() != c.want {
 			t.Errorf("%d: Got %q, wanted %q, from %v", i, col, c.want, c.params.items)

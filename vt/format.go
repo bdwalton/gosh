@@ -69,7 +69,6 @@ func formatFromParams(curF format, params *parameters) format {
 			}
 
 			fmer, ok := formatters[item]
-			fmt.Println(item, ok)
 			if ok {
 				f = fmer(f, params)
 			} else {
