@@ -80,6 +80,8 @@ func (t *terminal) handleCSI(params *parameters, data []rune, lastbyte byte) {
 	switch lastbyte {
 	case CSI_DECSTBM:
 		t.setTopBottom(params)
+	case CSI_DECSLRM:
+		t.setLeftRight(params)
 	case CSI_EL:
 		t.eraseLine(params)
 	case CSI_ED:
@@ -101,6 +103,16 @@ func (t *terminal) setTopBottom(params *parameters) {
 	}
 
 	t.fb.setTBScroll(top-1, bottom-1)
+}
+
+func (t *terminal) setLeftRight(params *parameters) {
+	left, _ := params.getItem(0, 1)
+	right, _ := params.getItem(1, t.fb.cols)
+	if right <= left || left >= t.fb.cols || (left == 0 && right == 1) {
+		return // matches xterm
+	}
+
+	t.fb.setTBScroll(left-1, right-1)
 }
 
 func (t *terminal) cursorMove(params *parameters, moveType byte) {
