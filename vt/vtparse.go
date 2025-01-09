@@ -95,14 +95,14 @@ func newParser(d dispatcher) *parser {
 	}
 }
 
-func (p *parser) ParseRune(r rune) {
+func (p *parser) parseRune(r rune) {
 	switch p.state {
 	case VTPARSE_STATE_GROUND:
 		p.d.print(r)
 	}
 }
 
-func (p *parser) ParseByte(b byte) {
+func (p *parser) parseByte(b byte) {
 	p.stateChange(STATE_TABLE[p.state][b], b)
 }
 

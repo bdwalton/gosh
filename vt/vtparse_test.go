@@ -66,7 +66,7 @@ func TestFirstParamEmpty(t *testing.T) {
 	for i, c := range cases {
 		p := newParser(newDummy())
 		for _, b := range c.input {
-			p.ParseByte(b)
+			p.parseByte(b)
 		}
 		if p.params.numItems() != c.wantParams.numItems() || !slices.Equal(p.params.items, c.wantParams.items) {
 			t.Errorf("%d: Got %v, want %v", i, p.params, c.wantParams)
@@ -130,7 +130,7 @@ func TestCSIParsing(t *testing.T) {
 		d := newDummy()
 		p := newParser(d)
 		for _, b := range c.input {
-			p.ParseByte(b)
+			p.parseByte(b)
 		}
 
 		if !slices.Equal(d.actions, c.wantActions) {
@@ -163,7 +163,7 @@ func TestOSCString(t *testing.T) {
 		d := newDummy()
 		p := newParser(d)
 		for _, b := range c.input {
-			p.ParseByte(b)
+			p.parseByte(b)
 		}
 		if string(d.oscString) != c.wantOSC {
 			t.Errorf("%d: Got %q, want: %q (actions: %v)", i, string(d.oscString), c.wantOSC, d.getActions())
