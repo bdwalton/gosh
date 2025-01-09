@@ -73,13 +73,11 @@ func (f *framebuffer) resize(rows, cols int) bool {
 	}
 
 	for i, row := range f.data {
-		fmt.Println(i)
 		switch {
 		case cols < nc:
 			f.data[i] = row[0:cols]
 		case cols > nc:
 			for i := 0; i < cols-nc; i++ {
-				fmt.Println("col:", i)
 				row = append(row, defaultCell())
 			}
 			f.data[i] = row
