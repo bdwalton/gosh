@@ -15,6 +15,7 @@ import (
 
 	"github.com/bdwalton/gosh/network"
 	"github.com/bdwalton/gosh/protos/goshpb"
+	"github.com/bdwalton/gosh/vt"
 	"github.com/creack/pty"
 	"golang.org/x/term"
 	"google.golang.org/protobuf/proto"
@@ -26,6 +27,12 @@ const (
 	SERVER
 )
 
+const (
+	// Like it's 1975 baby!
+	DEF_ROWS = 24
+	DEF_COLS = 80
+)
+
 type stmObj struct {
 	gc     *network.GConn
 	origSz *term.State // original state of the client pty
@@ -34,6 +41,8 @@ type stmObj struct {
 	ptmx      *os.File
 	cmd       *exec.Cmd
 	cancelPty context.CancelFunc
+
+	term *vt.Terminal
 
 	st         uint8
 	shutdown   bool
@@ -58,6 +67,7 @@ func NewClient(gc *network.GConn) (*stmObj, error) {
 		gc:     gc,
 		origSz: orig,
 		st:     CLIENT,
+		term:   vt.NewTerminal(DEF_ROWS, DEF_COLS),
 	}
 
 	return s, nil
@@ -74,7 +84,7 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 	// TODO: We should probably clean this a bit, but for now,
 	// just pass it all through.
 	cmd.Env = os.Environ()
-	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: 24, Cols: 80})
+	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: DEF_ROWS, Cols: DEF_COLS})
 	if err != nil {
 		return nil, fmt.Errorf("couldn't start pty: %v", err)
 	}
@@ -93,6 +103,7 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 		cancelPty: cancel,
 		st:        SERVER,
 		cmd:       cmd,
+		term:      vt.NewTerminal(DEF_ROWS, DEF_COLS),
 	}
 
 	return s, nil
