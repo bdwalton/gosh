@@ -121,9 +121,10 @@ func (t *terminal) setPriv(params *parameters, data []rune, val bool) {
 }
 
 func (t *terminal) setTopBottom(params *parameters) {
+	nr := t.fb.getRows()
 	top, _ := params.getItem(0, 1)
-	bottom, _ := params.getItem(1, t.fb.rows)
-	if bottom <= top || top > t.fb.rows || (top == 0 && bottom == 1) {
+	bottom, _ := params.getItem(1, nr)
+	if bottom <= top || top > nr || (top == 0 && bottom == 1) {
 		return // matches xterm
 	}
 
@@ -131,9 +132,10 @@ func (t *terminal) setTopBottom(params *parameters) {
 }
 
 func (t *terminal) setLeftRight(params *parameters) {
+	nc := t.fb.getCols()
 	left, _ := params.getItem(0, 1)
-	right, _ := params.getItem(1, t.fb.cols)
-	if right <= left || left >= t.fb.cols || (left == 0 && right == 1) {
+	right, _ := params.getItem(1, nc)
+	if right <= left || left >= nc || (left == 0 && right == 1) {
 		return // matches xterm
 	}
 
@@ -179,46 +181,50 @@ func (t *terminal) cursorMoveAbs(row, col int) {
 	t.curX = col
 	t.curY = row
 
+	nc := t.fb.getCols()
 	switch {
 	case t.curX < 0:
 		t.curX = 0
-	case t.curX >= t.fb.cols:
-		t.curX = t.fb.cols - 1
+	case t.curX >= nc:
+		t.curX = nc - 1
 	}
 
+	nr := t.fb.getRows()
 	// TODO: Fix this
 	switch {
 	case t.curY < 0:
 		t.curY = 0
-	case t.curY >= t.fb.rows:
-		t.curY = t.fb.rows - 1
+	case t.curY >= nr:
+		t.curY = nr - 1
 	}
 }
 
 func (t *terminal) eraseLine(params *parameters) {
 	m, _ := params.getItem(0, 0)
 
+	nc := t.fb.getCols()
 	switch m {
 	case 0: // to end of line
-		t.fb.resetCells(t.curY, t.curX, t.fb.cols)
+		t.fb.resetCells(t.curY, t.curX, nc)
 	case 1: // to start of line
 		t.fb.resetCells(t.curY, 0, t.curX)
 	case 2: // entire line
-		t.fb.resetCells(t.curY, 0, t.fb.cols)
+		t.fb.resetCells(t.curY, 0, nc)
 	}
 }
 
 func (t *terminal) eraseInDisplay(params *parameters) {
 	m, _ := params.getItem(0, 0)
 
+	nr := t.fb.getRows()
 	switch m {
 	case 0: // active position to end of screen, inclusive
-		t.fb.resetRows(t.curY, t.fb.rows)
+		t.fb.resetRows(t.curY, nr)
 		t.eraseLine(params)
 	case 1: // start of screen to active position, inclusive
 		t.fb.resetRows(0, t.curY-1)
 		t.eraseLine(params)
 	case 2: // entire screen
-		t.fb.resetRows(0, t.fb.rows)
+		t.fb.resetRows(0, nr)
 	}
 }

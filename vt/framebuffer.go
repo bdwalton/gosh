@@ -33,7 +33,6 @@ func (c cell) String() string {
 }
 
 type framebuffer struct {
-	rows, cols               int
 	top, bottom, left, right int // scroll window parameters
 	data                     [][]cell
 }
@@ -44,8 +43,6 @@ func newFramebuffer(rows, cols int) *framebuffer {
 		d[r] = newRow(cols)
 	}
 	return &framebuffer{
-		rows: rows,
-		cols: cols,
 		data: d,
 	}
 }
@@ -56,12 +53,13 @@ func (f *framebuffer) setTBScroll(top, bottom int) {
 }
 
 func (f *framebuffer) resetRows(from, to int) bool {
-	if from > to || from < 0 || to >= f.rows {
+	if from > to || from < 0 || to >= f.getRows() {
 		return false
 	}
 
+	nc := len(f.data[0])
 	for i := from; i <= to; i++ {
-		row := newRow(f.cols)
+		row := newRow(nc)
 		f.data[i] = row
 	}
 
@@ -69,12 +67,14 @@ func (f *framebuffer) resetRows(from, to int) bool {
 }
 
 func (f *framebuffer) resetCells(row, from, to int) bool {
+	nr := len(f.data)
+	nc := len(f.data[0])
 	switch {
-	case row < 0 || row >= f.rows:
+	case row < 0 || row >= nr:
 		return false
-	case from < 0 || from >= f.cols:
+	case from < 0 || from >= nc:
 		return false
-	case to < 0 || from >= f.cols:
+	case to < 0 || from >= nc:
 		return false
 	case from > to:
 		return false
@@ -95,8 +95,16 @@ func newRow(cols int) []cell {
 	return row
 }
 
+func (f *framebuffer) getRows() int {
+	return len(f.data)
+}
+
+func (f *framebuffer) getCols() int {
+	return len(f.data[0])
+}
+
 func (f *framebuffer) validPoint(row, col int) bool {
-	if row < 0 || row >= f.rows || col < 0 || col >= f.cols {
+	if row < 0 || row >= f.getRows() || col < 0 || col >= f.getCols() {
 		return false
 	}
 	return true

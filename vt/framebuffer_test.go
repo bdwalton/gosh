@@ -14,8 +14,8 @@ var nonDefFmt = format{
 }
 
 func fillBuffer(fb *framebuffer) *framebuffer {
-	for row := 0; row < fb.rows; row++ {
-		for col := 0; col < fb.cols; col++ {
+	for row := 0; row < fb.getRows(); row++ {
+		for col := 0; col < fb.getCols(); col++ {
 			fb.setCell(row, col, newCell('a'+rune(rand.Intn(26)), nonDefFmt))
 		}
 	}
@@ -68,8 +68,10 @@ func TestResetCells(t *testing.T) {
 			t.Errorf("%d: Got %t, wanted %t", i, resetWorked, c.want)
 		} else {
 			if resetWorked {
-				for row := 0; row < c.fb.rows; row++ {
-					for col := 0; col < c.fb.cols; col++ {
+				nr := c.fb.getRows()
+				nc := c.fb.getCols()
+				for row := 0; row < nr; row++ {
+					for col := 0; col < nc; col++ {
 						got, _ := c.fb.getCell(row, col)
 						if row == c.row {
 							if col < c.start || col >= c.end {
@@ -115,8 +117,10 @@ func TestResetRows(t *testing.T) {
 			t.Errorf("%d: Got %t, wanted %t", i, resetWorked, c.want)
 		} else {
 			if resetWorked {
-				for row := 0; row < c.fb.rows; row++ {
-					for col := 0; col < c.fb.cols; col++ {
+				nr := c.fb.getRows()
+				nc := c.fb.getCols()
+				for row := 0; row < nr; row++ {
+					for col := 0; col < nc; col++ {
 						got, _ := c.fb.getCell(row, col)
 						if row < c.start || row > c.end {
 							if got.equal(empty) {
