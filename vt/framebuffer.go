@@ -55,6 +55,14 @@ func newFramebuffer(rows, cols int) *framebuffer {
 	}
 }
 
+func (f *framebuffer) scrollRows(n int) {
+	nc := f.getCols()
+	for i := 0; i < n; i++ {
+		f.data = append(f.data, newRow(nc))
+	}
+	f.data = f.data[n:]
+}
+
 func (f *framebuffer) resize(rows, cols int) bool {
 	if rows < MIN_ROWS || rows > MAX_ROWS || cols < MIN_COLS || cols > MAX_COLS {
 		slog.Debug("won't resize to dimensions too large or small", "rows", rows, "cols", cols)

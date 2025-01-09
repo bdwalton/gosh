@@ -197,3 +197,34 @@ func TestResize(t *testing.T) {
 		}
 	}
 }
+
+func TestScrollRows(t *testing.T) {
+	cases := []struct {
+		rows, cols int
+		scroll     int
+		c          cell
+		wantErr    error
+	}{
+		{10, 10, 2, newCell('a', defFmt), nil},
+		{10, 10, 10, newCell('z', defFmt), fbInvalidCell},
+	}
+
+	for i, c := range cases {
+		fb := newFramebuffer(c.rows, c.cols)
+		fb.setCell(fb.getRows()-1, 0, c.c)
+		fb.scrollRows(c.scroll)
+		r := fb.getRows() - 1 - c.scroll
+		got, err := fb.getCell(r, 0)
+		if c.wantErr != nil && !errors.Is(err, c.wantErr) {
+			t.Errorf("%d: Got error %v, wanted %v", i, err, c.wantErr)
+		}
+		if err == nil && !got.equal(c.c) {
+			t.Errorf("%d: Got %v, wanted %v at (%d,0): %v", i, got, c.c, r, err)
+		}
+
+		nr, nc := fb.getRows(), fb.getCols()
+		if nr != c.rows || nc != c.cols {
+			t.Errorf("%d: Got (%d, %d), wanted (%d, %d)", i, nr, nc, c.rows, c.cols)
+		}
+	}
+}
