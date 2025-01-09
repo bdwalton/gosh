@@ -33,6 +33,10 @@ func NewTerminal(rows, cols int) *terminal {
 	return t
 }
 
+func (t *terminal) Resize(rows, cols int) {
+	t.fb.resize(rows, cols)
+}
+
 func (t *terminal) handle(action pAction, params *parameters, data []rune, lastbyte byte) {
 	switch action {
 	case VTPARSE_ACTION_EXECUTE:

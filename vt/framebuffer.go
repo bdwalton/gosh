@@ -3,9 +3,17 @@ package vt
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 )
 
 var fbInvalidCell = errors.New("invalid framebuffer cell")
+
+const (
+	MIN_ROWS = 1
+	MIN_COLS = 2
+	MAX_ROWS = 511 // taken from libvte
+	MAX_COLS = MAX_ROWS
+)
 
 type cell struct {
 	r rune
@@ -45,6 +53,40 @@ func newFramebuffer(rows, cols int) *framebuffer {
 	return &framebuffer{
 		data: d,
 	}
+}
+
+func (f *framebuffer) resize(rows, cols int) bool {
+	if rows < MIN_ROWS || rows > MAX_ROWS || cols < MIN_COLS || cols > MAX_COLS {
+		slog.Debug("won't resize to dimensions too large or small", "rows", rows, "cols", cols)
+		return false
+	}
+
+	nr := len(f.data)
+	nc := len(f.data[0])
+	switch {
+	case rows < nr:
+		f.data = f.data[0:rows]
+	case rows > nr:
+		for i := 0; i < rows-nr; i++ {
+			f.data = append(f.data, newRow(nc))
+		}
+	}
+
+	for i, row := range f.data {
+		fmt.Println(i)
+		switch {
+		case cols < nc:
+			f.data[i] = row[0:cols]
+		case cols > nc:
+			for i := 0; i < cols-nc; i++ {
+				fmt.Println("col:", i)
+				row = append(row, defaultCell())
+			}
+			f.data[i] = row
+		}
+	}
+
+	return true
 }
 
 func (f *framebuffer) setTBScroll(top, bottom int) {

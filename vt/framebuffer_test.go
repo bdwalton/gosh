@@ -169,3 +169,31 @@ func TestSetAndGetCell(t *testing.T) {
 		}
 	}
 }
+
+func TestResize(t *testing.T) {
+	cases := []struct {
+		fb           *framebuffer
+		nrows, ncols int // updated size params
+		want         bool
+	}{
+		{newFramebuffer(2, 2), 4, 4, true},
+		{newFramebuffer(4, 4), 2, 2, true},
+		{newFramebuffer(10, 10), MIN_ROWS, MIN_COLS, true},
+		{newFramebuffer(10, 10), MAX_ROWS, MAX_COLS, true},
+		{newFramebuffer(10, 10), 20, MIN_COLS - 1, false},
+		{newFramebuffer(10, 10), MIN_ROWS - 1, 5, false},
+		{newFramebuffer(10, 10), MAX_ROWS + 1, 20, false},
+		{newFramebuffer(10, 10), 20, MAX_COLS + 1, false},
+	}
+
+	for i, c := range cases {
+		got := c.fb.resize(c.nrows, c.ncols)
+		if got != c.want {
+			t.Errorf("%d: Expected %t resize, but got %t", i, c.want, got)
+		} else {
+			if got && (c.fb.getRows() != c.nrows || c.fb.getCols() != c.ncols) {
+				t.Errorf("%d: Expected (%d, %d), got (%d, %d)", i, c.nrows, c.ncols, c.fb.getRows(), c.fb.getCols())
+			}
+		}
+	}
+}
