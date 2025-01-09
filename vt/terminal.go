@@ -5,6 +5,10 @@ import (
 	"strings"
 )
 
+type cursor struct {
+	row, col int
+}
+
 type Terminal struct {
 	// Functional members
 	p  *parser
@@ -12,7 +16,7 @@ type Terminal struct {
 
 	// State
 	title, icon string
-	curX, curY  int
+	cur         cursor
 	curF        format
 
 	// Temp
@@ -78,9 +82,9 @@ func (t *Terminal) handleExecute(lastbyte byte) {
 	case CTRL_BEL:
 		// just swallow this for now
 	case CTRL_BS:
-		t.cursorMoveAbs(t.curY, t.curX-1)
+		t.cursorMoveAbs(t.cur.row, t.cur.col-1)
 	case CTRL_CR:
-		t.cursorMoveAbs(t.curY, 0)
+		t.cursorMoveAbs(t.cur.row, 0)
 	}
 }
 
@@ -153,8 +157,8 @@ func (t *Terminal) cursorMove(params *parameters, moveType byte) {
 	n, _ := params.getItem(0, 1)
 	m, _ := params.getItem(1, 1)
 
-	row := t.curY
-	col := t.curX
+	row := t.cur.row
+	col := t.cur.col
 
 	switch moveType {
 	case CSI_CUU:
@@ -182,24 +186,24 @@ func (t *Terminal) cursorMove(params *parameters, moveType byte) {
 }
 
 func (t *Terminal) cursorMoveAbs(row, col int) {
-	t.curX = col
-	t.curY = row
+	t.cur.col = col
+	t.cur.row = row
 
 	nc := t.fb.getCols()
 	switch {
-	case t.curX < 0:
-		t.curX = 0
-	case t.curX >= nc:
-		t.curX = nc - 1
+	case t.cur.col < 0:
+		t.cur.col = 0
+	case t.cur.col >= nc:
+		t.cur.col = nc - 1
 	}
 
 	nr := t.fb.getRows()
 	// TODO: Fix this
 	switch {
-	case t.curY < 0:
-		t.curY = 0
-	case t.curY >= nr:
-		t.curY = nr - 1
+	case t.cur.row < 0:
+		t.cur.row = 0
+	case t.cur.row >= nr:
+		t.cur.row = nr - 1
 	}
 }
 
@@ -209,11 +213,11 @@ func (t *Terminal) eraseLine(params *parameters) {
 	nc := t.fb.getCols()
 	switch m {
 	case 0: // to end of line
-		t.fb.resetCells(t.curY, t.curX, nc)
+		t.fb.resetCells(t.cur.row, t.cur.col, nc)
 	case 1: // to start of line
-		t.fb.resetCells(t.curY, 0, t.curX)
+		t.fb.resetCells(t.cur.row, 0, t.cur.col)
 	case 2: // entire line
-		t.fb.resetCells(t.curY, 0, nc)
+		t.fb.resetCells(t.cur.row, 0, nc)
 	}
 }
 
@@ -223,10 +227,10 @@ func (t *Terminal) eraseInDisplay(params *parameters) {
 	nr := t.fb.getRows()
 	switch m {
 	case 0: // active position to end of screen, inclusive
-		t.fb.resetRows(t.curY, nr)
+		t.fb.resetRows(t.cur.row, nr)
 		t.eraseLine(params)
 	case 1: // start of screen to active position, inclusive
-		t.fb.resetRows(0, t.curY-1)
+		t.fb.resetRows(0, t.cur.row-1)
 		t.eraseLine(params)
 	case 2: // entire screen
 		t.fb.resetRows(0, nr)
