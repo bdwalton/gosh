@@ -49,13 +49,13 @@ func main() {
 
 	gc, err := network.NewServer(*portRange)
 	if err != nil {
-		slog.Error(fmt.Sprintf("Couldn't setup network connection", "err", err))
+		slog.Error("Couldn't setup network connection", "err", err)
 		os.Exit(1)
 	}
 
 	s, err := stm.NewServer(gc)
 	if err != nil {
-		slog.Error(fmt.Sprintf("Couldn't setup STM server", "err", err))
+		slog.Error("Couldn't setup STM server", "err", err)
 		os.Exit(1)
 	}
 
