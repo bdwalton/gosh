@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-type terminal struct {
+type Terminal struct {
 	// Functional members
 	p  *parser
 	fb *framebuffer
@@ -23,8 +23,8 @@ type terminal struct {
 	privNewLineMode bool // default reset (false)
 }
 
-func NewTerminal(rows, cols int) *terminal {
-	t := &terminal{
+func NewTerminal(rows, cols int) *Terminal {
+	t := &Terminal{
 		fb:      newFramebuffer(rows, cols),
 		oscTemp: make([]rune, 0),
 	}
@@ -33,11 +33,11 @@ func NewTerminal(rows, cols int) *terminal {
 	return t
 }
 
-func (t *terminal) Resize(rows, cols int) {
+func (t *Terminal) Resize(rows, cols int) {
 	t.fb.resize(rows, cols)
 }
 
-func (t *terminal) handle(action pAction, params *parameters, data []rune, lastbyte byte) {
+func (t *Terminal) handle(action pAction, params *parameters, data []rune, lastbyte byte) {
 	switch action {
 	case VTPARSE_ACTION_EXECUTE:
 		t.handleExecute(lastbyte)
@@ -48,7 +48,7 @@ func (t *terminal) handle(action pAction, params *parameters, data []rune, lastb
 	}
 }
 
-func (t *terminal) handleOSC(act pAction, lastbyte byte) {
+func (t *Terminal) handleOSC(act pAction, lastbyte byte) {
 	switch act {
 	case VTPARSE_ACTION_OSC_PUT:
 		t.oscTemp = append(t.oscTemp, rune(lastbyte))
@@ -69,11 +69,11 @@ func (t *terminal) handleOSC(act pAction, lastbyte byte) {
 	}
 }
 
-func (t *terminal) print(r rune) {
+func (t *Terminal) print(r rune) {
 	t.fb.setCell(t.curY, t.curX, newCell(r, t.curF))
 }
 
-func (t *terminal) handleExecute(lastbyte byte) {
+func (t *Terminal) handleExecute(lastbyte byte) {
 	switch lastbyte {
 	case CTRL_BEL:
 		// just swallow this for now
@@ -84,7 +84,7 @@ func (t *terminal) handleExecute(lastbyte byte) {
 	}
 }
 
-func (t *terminal) handleCSI(params *parameters, data []rune, lastbyte byte) {
+func (t *Terminal) handleCSI(params *parameters, data []rune, lastbyte byte) {
 	switch lastbyte {
 	case CSI_PRIV_ENABLE:
 		t.setPriv(params, data, true)
@@ -107,7 +107,7 @@ func (t *terminal) handleCSI(params *parameters, data []rune, lastbyte byte) {
 	}
 }
 
-func (t *terminal) setPriv(params *parameters, data []rune, val bool) {
+func (t *Terminal) setPriv(params *parameters, data []rune, val bool) {
 	priv, ok := params.consumeItem()
 	if len(data) != 1 || data[0] != '?' || !ok {
 		slog.Debug("togglePriv called without ? intermediate or missing params", "data", data, "params", params.items, "enabled?", val)
@@ -124,7 +124,7 @@ func (t *terminal) setPriv(params *parameters, data []rune, val bool) {
 	}
 }
 
-func (t *terminal) setTopBottom(params *parameters) {
+func (t *Terminal) setTopBottom(params *parameters) {
 	nr := t.fb.getRows()
 	top, _ := params.getItem(0, 1)
 	bottom, _ := params.getItem(1, nr)
@@ -135,7 +135,7 @@ func (t *terminal) setTopBottom(params *parameters) {
 	t.fb.setTBScroll(top-1, bottom-1)
 }
 
-func (t *terminal) setLeftRight(params *parameters) {
+func (t *Terminal) setLeftRight(params *parameters) {
 	nc := t.fb.getCols()
 	left, _ := params.getItem(0, 1)
 	right, _ := params.getItem(1, nc)
@@ -146,7 +146,7 @@ func (t *terminal) setLeftRight(params *parameters) {
 	t.fb.setTBScroll(left-1, right-1)
 }
 
-func (t *terminal) cursorMove(params *parameters, moveType byte) {
+func (t *Terminal) cursorMove(params *parameters, moveType byte) {
 	// No paramter indicates a 0 paramter, but for cursor
 	// movement, we always default to 1. That allows more
 	// efficient specification of the common movements.
@@ -181,7 +181,7 @@ func (t *terminal) cursorMove(params *parameters, moveType byte) {
 	t.cursorMoveAbs(row, col)
 }
 
-func (t *terminal) cursorMoveAbs(row, col int) {
+func (t *Terminal) cursorMoveAbs(row, col int) {
 	t.curX = col
 	t.curY = row
 
@@ -203,7 +203,7 @@ func (t *terminal) cursorMoveAbs(row, col int) {
 	}
 }
 
-func (t *terminal) eraseLine(params *parameters) {
+func (t *Terminal) eraseLine(params *parameters) {
 	m, _ := params.getItem(0, 0)
 
 	nc := t.fb.getCols()
@@ -217,7 +217,7 @@ func (t *terminal) eraseLine(params *parameters) {
 	}
 }
 
-func (t *terminal) eraseInDisplay(params *parameters) {
+func (t *Terminal) eraseInDisplay(params *parameters) {
 	m, _ := params.getItem(0, 0)
 
 	nr := t.fb.getRows()
