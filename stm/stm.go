@@ -51,16 +51,9 @@ type stmObj struct {
 }
 
 func NewClient(gc *network.GConn) (*stmObj, error) {
-	fd := int(os.Stdin.Fd())
-	orig, err := term.MakeRaw(fd)
+	orig, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		return nil, fmt.Errorf("couldn't make terminal raw: %v", err)
-	}
-
-	// Any use of Fd() will set the descriptor non-blocking, so we
-	// need to change that here.NewClient
-	if err := syscall.SetNonblock(fd, true); err != nil {
-		return nil, fmt.Errorf("couldn't set ptmx non-blocking: %v", err)
 	}
 
 	s := &stmObj{
@@ -135,15 +128,15 @@ func (s *stmObj) Run() {
 	switch s.st {
 	case CLIENT:
 		s.ping()
-		s.wg.Add(2)
 		go func() {
+			s.wg.Add(1)
 			s.handleWinCh()
 			s.wg.Done()
 		}()
-		go func() {
-			s.handleInput()
-			s.wg.Done()
-		}()
+
+		// Don't put this in a goroutine or count it as we'll
+		// just let it get torn down by the runtime.
+		go s.handleInput()
 	case SERVER:
 		s.wg.Add(1)
 		go func() {
@@ -168,6 +161,10 @@ func (s *stmObj) Shutdown() {
 	case CLIENT:
 		if err := term.Restore(int(os.Stdin.Fd()), s.origSz); err != nil {
 			slog.Error("couldn't restore terminal mode", "err", err)
+		}
+
+		if err := os.Stdin.Close(); err != nil {
+			slog.Debug("error closing stdin", "err", err)
 		}
 	}
 
@@ -222,7 +219,7 @@ func (s *stmObj) handleWinCh() {
 func (s *stmObj) handleInput() {
 	var inEsc bool
 
-	char := make([]byte, 1)
+	char := make([]byte, 1024)
 
 	for {
 		if s.shutdown {
@@ -230,12 +227,15 @@ func (s *stmObj) handleInput() {
 		}
 
 		msg := s.buildPayload(goshpb.PayloadType_CLIENT_INPUT.Enum())
-		_, err := os.Stdin.Read(char)
+		n, err := os.Stdin.Read(char)
 		if err != nil {
-			// This is a constant stream as Read returns
-			// EAGAIN.  Figure out a nicer approach
-			// here. Can we use syscall.RawConn elegantly
-			// for this somehow?
+			if errors.Is(err, io.EOF) {
+				slog.Debug("os.stdin eof. shutting down")
+				s.Shutdown()
+				return
+			}
+
+			slog.Debug("stdin readbyte error", "err", err)
 			continue
 		}
 
@@ -245,15 +245,17 @@ func (s *stmObj) handleInput() {
 				s.Shutdown()
 				return
 			default:
-				msg.SetData(append(msg.GetData(), char...))
+				msg.SetData(char[:n]...)
 				inEsc = false
 			}
 		} else {
-			msg.SetData(char)
+
 			switch char[0] {
 			case '\x1e':
 				inEsc = true
 				continue // Don't immediately send this
+			default:
+				msg.SetData(char[:n]...)
 			}
 		}
 		s.sendPayload(msg)
