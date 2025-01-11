@@ -9,6 +9,14 @@ type cursor struct {
 	row, col int
 }
 
+func (c cursor) equal(other cursor) bool {
+	return c.row == other.row && c.col == other.col
+}
+
+func (c cursor) String() string {
+	return fmt.Sprintf("(%d, %d)", c.row, c.col)
+}
+
 type Terminal struct {
 	// Functional members
 	p  *parser
