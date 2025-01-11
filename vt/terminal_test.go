@@ -113,3 +113,125 @@ func TestLineFeed(t *testing.T) {
 
 	}
 }
+
+func TestPrint(t *testing.T) {
+	cases := []struct {
+		cur      cursor
+		autowrap bool
+		d        cell
+		r        []rune
+		wantCur  cursor
+		cellCur  cursor
+		wantCell cell
+	}{
+		{
+			cursor{0, 0},
+			false,
+			defaultCell(),
+			[]rune("a"),
+			cursor{0, 1},
+			cursor{0, 0},
+			newCell('a', defFmt),
+		},
+		{
+			cursor{0, 0},
+			false,
+			defaultCell(),
+			[]rune("ab"),
+			cursor{0, 2},
+			cursor{0, 1},
+			newCell('b', defFmt),
+		},
+		{
+			cursor{0, 0},
+			false,
+			defaultCell(),
+			[]rune("u\u0308"),
+			cursor{0, 1},
+			cursor{0, 0},
+			newCell('ü', defFmt),
+		},
+		{
+			cursor{0, 9},
+			false,
+			defaultCell(),
+			[]rune("u\u0308"),
+			cursor{0, 10},
+			cursor{0, 9},
+			newCell('ü', defFmt),
+		},
+		{
+			cursor{0, 9},
+			true,
+			defaultCell(),
+			[]rune("u\u0308"),
+			cursor{0, 10},
+			cursor{0, 9},
+			newCell('ü', defFmt),
+		},
+		{
+			cursor{0, 10}, // already printed last char in row
+			false,         // no autowrap
+			defaultCell(),
+			[]rune("z"),
+			cursor{0, 10},
+			cursor{0, 9},
+			newCell('z', defFmt), // we should overwrite the last cell
+		},
+		{
+			cursor{0, 10}, // already printed last char in row
+			true,          // autowrap
+			defaultCell(),
+			[]rune("z"),
+			cursor{1, 1},
+			cursor{1, 0},
+			newCell('z', defFmt),
+		},
+		{
+			cursor{0, 10}, // already printed last char in row
+			false,         // no autowrap
+			defaultCell(),
+			[]rune("世"),
+			cursor{0, 10},
+			cursor{0, 8},
+			newCell('世', defFmt),
+		},
+		{
+			cursor{0, 10}, // already printed last char in row
+			true,          // no autowrap
+			defaultCell(),
+			[]rune("世"),
+			cursor{1, 2},
+			cursor{1, 0},
+			newCell('世', defFmt),
+		},
+		{
+			cursor{0, 5}, // already printed last char in row
+			true,         // no autowrap
+			defaultCell(),
+			[]rune("世"),
+			cursor{0, 7},
+			cursor{0, 5},
+			newCell('世', defFmt),
+		},
+	}
+
+	for i, c := range cases {
+		term := NewTerminal(10, 10)
+		term.privAutowrap = c.autowrap
+		term.cur = c.cur
+		term.fb.setCell(c.cur.row, c.cur.col, c.d)
+
+		for _, r := range c.r {
+			term.print(r)
+		}
+
+		if !term.cur.equal(c.wantCur) {
+			t.Errorf("%d: Got %q, wanted %q", i, term.cur, c.wantCur)
+		}
+
+		if w, _ := term.fb.getCell(c.cellCur.row, c.cellCur.col); !w.equal(c.wantCell) {
+			t.Errorf("%d: Got %v, wanted %v; %v", i, w, c.wantCell, term.fb.data[c.wantCur.row])
+		}
+	}
+}

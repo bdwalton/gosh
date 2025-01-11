@@ -1,8 +1,12 @@
 package vt
 
 import (
+	"fmt"
 	"log/slog"
 	"strings"
+
+	"github.com/mattn/go-runewidth"
+	"golang.org/x/text/unicode/norm"
 )
 
 type cursor struct {
@@ -82,7 +86,71 @@ func (t *Terminal) handleOSC(act pAction, lastbyte byte) {
 }
 
 func (t *Terminal) print(r rune) {
-	t.fb.setCell(t.curY, t.curX, newCell(r, t.curF))
+	row, col := t.cur.row, t.cur.col
+	rw := runewidth.StringWidth(string(r))
+
+	switch rw {
+	case 0: // combining
+		if col == 0 && !t.privAutowrap {
+			// can't do anything with this. if we're in
+			// the first position but hadn't wrapped, we
+			// don't have something to combine with, so
+			// just punt.
+			return
+		}
+
+		switch {
+		case col == 0 && t.privAutowrap: // we wrapped
+			col = t.fb.getCols() - 1
+			row -= 1
+		case col >= t.fb.getCols(): // we're at the end of a row but didn't wrap
+			col = t.fb.getCols() - 1
+		default:
+			col -= 1
+		}
+		c, err := t.fb.getCell(row, col)
+		if err != nil {
+			slog.Debug("couldn't fetch cell", "row", row, "col", col)
+			return
+		} else {
+			n := norm.NFC.String(string(c.r) + string(r))
+			c.r = []rune(n)[0]
+			// TODO: Update format here too? Possible that
+			// an escape sequence updated the pen between
+			// the combining characters...if a bit daft.
+		}
+
+		t.fb.setCell(row, col, c)
+	case 1, 2: // default (1 colume), wide (2 columns)
+		if col <= t.fb.getCols()-rw {
+			t.fb.setCell(row, col, newCell(r, t.curF))
+			t.cur.col += rw
+			return
+		} else {
+			if t.privAutowrap {
+				col = 0
+				if row == t.fb.getRows()-1 {
+					t.fb.scrollRows(1)
+				} else {
+					row += 1
+				}
+			} else {
+				col = t.fb.getRows() - rw
+			}
+
+			t.fb.setCell(row, col, newCell(r, t.curF))
+			t.cur.col = col + rw
+			t.cur.row = row
+			return
+		}
+
+		// punt, otherwise
+		return
+	default:
+		// We could panic, but since we punt on other unknowns
+		// here, let's do that for a wonky width, too.
+		return
+	}
 }
 
 func (t *Terminal) handleExecute(lastbyte byte) {
