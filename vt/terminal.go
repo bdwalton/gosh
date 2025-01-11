@@ -85,6 +85,9 @@ func (t *Terminal) handleExecute(lastbyte byte) {
 		t.cursorMoveAbs(t.cur.row, t.cur.col-1)
 	case CTRL_CR:
 		t.cursorMoveAbs(t.cur.row, 0)
+	case CTRL_LF, CTRL_FF: // libvte treats lf and ff the same, so we do too
+		t.lineFeed()
+
 	}
 }
 
@@ -108,6 +111,16 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, lastbyte byte) {
 		t.curF = formatFromParams(t.curF, params)
 	default:
 		slog.Debug("unimplemented CSI code", "lastbyte", lastbyte, "params", params, "data", data)
+	}
+}
+
+func (t *Terminal) lineFeed() {
+	if !t.fb.validPoint(t.cur.row+1, t.cur.col) {
+		// Add new row, but keep cursor in the same position
+		// TODO: fill the new row with BCE color?
+		t.fb.scrollRows(1)
+	} else {
+		t.cursorMoveAbs(t.cur.row+1, t.cur.col)
 	}
 }
 

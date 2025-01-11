@@ -72,3 +72,44 @@ func TestCursorMove(t *testing.T) {
 		}
 	}
 }
+
+func TestLineFeed(t *testing.T) {
+	xc := newCell('x', defFmt)
+	term := &Terminal{fb: newFramebuffer(10, 10)}
+	term.fb.setCell(9, 5, xc)
+
+	cases := []struct {
+		row, col         int //current cursor
+		wantRow, wantCol int
+	}{
+		{0, 0, 1, 0},
+		{1, 1, 2, 1},
+		{9, 5, 9, 5}, // should scroll.
+	}
+
+	for i, c := range cases {
+		term.cur.row = c.row
+		term.cur.col = c.col
+		if c.row == c.wantRow {
+			gc, _ := term.fb.getCell(c.row, c.col)
+			if !gc.equal(xc) {
+				t.Errorf("%d: Invalid cell setup. Got %v, wanted %v", i, gc, xc)
+			}
+		}
+		term.lineFeed()
+		if c.row == c.wantRow {
+			gc, _ := term.fb.getCell(c.row-1, c.col)
+			if !gc.equal(xc) {
+				t.Errorf("%d: Invalid linefeed scroll (old line). Got %v, wanted %v", i, gc, xc)
+			}
+			gc, _ = term.fb.getCell(c.row, c.col)
+			if !gc.equal(defaultCell()) {
+				t.Errorf("%d: Invalid linefeed scroll (new line). Got %v, wanted %v", i, gc, xc)
+			}
+		}
+		if row, col := term.cur.row, term.cur.col; row != c.wantRow || col != c.wantCol {
+			t.Errorf("%d: Got (%d, %d), wanted (%d, %d)", i, row, col, c.wantRow, c.wantCol)
+		}
+
+	}
+}
