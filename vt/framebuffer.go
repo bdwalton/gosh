@@ -142,6 +142,12 @@ func (f *framebuffer) resize(rows, cols int) bool {
 		switch {
 		case cols < nc:
 			f.data[i] = row[0:cols]
+			// Don't leave dangling fragments, if we
+			// happen to chop one in half.
+			c, err := f.getCell(i, cols-1)
+			if err == nil && c.frag > 0 {
+				f.setCell(i, cols-1, defaultCell())
+			}
 		case cols > nc:
 			for i := 0; i < cols-nc; i++ {
 				row = append(row, defaultCell())

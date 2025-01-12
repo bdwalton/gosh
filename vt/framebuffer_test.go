@@ -199,6 +199,20 @@ func TestResize(t *testing.T) {
 			}
 		}
 	}
+
+	// Separate test to ensure we never leave a split "fragmented" cell behind.
+	fb := newFramebuffer(10, 10)
+	fb.setCell(0, 8, fragCell('世', defFmt, FRAG_PRIMARY))
+	fb.setCell(0, 9, fragCell(0, defFmt, FRAG_SECONDARY))
+
+	// this should split the width 2 fragment we just added and
+	// force (0,8) to be cleared
+	fb.resize(10, 9)
+
+	tfb := newFramebuffer(10, 9)
+	if !tfb.equal(fb) {
+		t.Errorf("Chopping a wide character fragment in half failed. Wanted:\n%s\nGot:\n%s", tfb, fb)
+	}
 }
 
 func TestScrollRows(t *testing.T) {
