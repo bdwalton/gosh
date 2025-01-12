@@ -115,112 +115,112 @@ func TestLineFeed(t *testing.T) {
 }
 
 func TestPrint(t *testing.T) {
+	dfb := func() *framebuffer {
+		return newFramebuffer(10, 10)
+	}
+
+	wfb1 := newFramebuffer(10, 10)
+	wfb1.setCell(0, 0, newCell('a', defFmt))
+
+	wfb2 := newFramebuffer(10, 10)
+	wfb2.setCell(0, 0, newCell('a', defFmt))
+	wfb2.setCell(0, 1, newCell('b', defFmt))
+
+	wfb3 := newFramebuffer(10, 10)
+	wfb3.setCell(0, 0, newCell('ü', defFmt))
+
+	wfb4 := newFramebuffer(10, 10)
+	wfb4.setCell(0, 9, newCell('ü', defFmt))
+
+	wfb5 := newFramebuffer(10, 10)
+	wfb5.setCell(0, 9, newCell('z', defFmt))
+
+	wfb6 := newFramebuffer(10, 10)
+	wfb6.setCell(1, 0, newCell('z', defFmt))
+
+	wfb7 := newFramebuffer(10, 10)
+	wfb7.setCell(0, 8, fragCell('世', defFmt, FRAG_PRIMARY))
+	wfb7.setCell(0, 9, fragCell(0, defFmt, FRAG_SECONDARY))
+
+	wfb8 := newFramebuffer(10, 10)
+	wfb8.setCell(1, 0, fragCell('世', defFmt, FRAG_PRIMARY))
+	wfb8.setCell(1, 1, fragCell(0, defFmt, FRAG_SECONDARY))
+
+	wfb9 := newFramebuffer(10, 10)
+	wfb9.setCell(0, 5, fragCell('世', defFmt, FRAG_PRIMARY))
+	wfb9.setCell(0, 6, fragCell(0, defFmt, FRAG_SECONDARY))
+
+	ffb := newFramebuffer(10, 10)
+	ffb.setCell(5, 5, fragCell('世', defFmt, FRAG_PRIMARY))
+	ffb.setCell(5, 6, fragCell(0, defFmt, FRAG_SECONDARY))
+
+	// We'll write a combining character at 5,6, which is the
+	// fragmented second half of the wide cell in 5,5 (from
+	// ffb). That should demonstrate overwritting a frag cell with
+	// a complex case.
+	wffb := newFramebuffer(10, 10)
+	wffb.setCell(5, 5, defaultCell())
+	wffb.setCell(5, 6, newCell('ü', defFmt))
+
+	ffb2 := newFramebuffer(10, 10)
+	ffb2.setCell(5, 5, fragCell('世', defFmt, FRAG_PRIMARY))
+	ffb2.setCell(5, 6, fragCell(0, defFmt, FRAG_SECONDARY))
+
+	// We'll write a combining character at 5,5, which is the
+	// fragmented second half of the wide cell in 5,5 (from
+	// ffb2). That should demonstrate overwritting a frag cell with
+	// a complex case.
+	wffb2 := newFramebuffer(10, 10)
+	wffb2.setCell(5, 6, newCell('ü', defFmt))
+
+	sfb := newFramebuffer(10, 10)
+	sfb.setCell(8, 9, newCell('b', defFmt))
+	sfb.setCell(9, 0, newCell('a', defFmt))
+
+	wsfb := newFramebuffer(10, 10)
+	wsfb.setCell(7, 9, newCell('b', defFmt))
+	wsfb.setCell(8, 0, newCell('a', defFmt))
+	wsfb.setCell(9, 0, newCell('ü', defFmt))
+
+	wfb10 := newFramebuffer(10, 10)
+	wfb10.setCell(9, 9, newCell('ü', defFmt))
+
+	fb13 := dfb()
+	fb13.setCell(5, 5, fragCell('世', defFmt, FRAG_PRIMARY))
+	fb13.setCell(5, 6, fragCell(0, defFmt, FRAG_SECONDARY))
+	wfb13 := dfb()
+	wfb13.setCell(5, 5, newCell('a', defFmt))
+
 	cases := []struct {
 		cur      cursor
 		autowrap bool
-		d        cell
+		fb       *framebuffer
 		r        []rune
 		wantCur  cursor
-		cellCur  cursor
-		wantCell cell
+		wantFb   *framebuffer
 	}{
-		{
-			cursor{0, 0},
-			false,
-			defaultCell(),
-			[]rune("a"),
-			cursor{0, 1},
-			cursor{0, 0},
-			newCell('a', defFmt),
-		},
-		{
-			cursor{0, 0},
-			false,
-			defaultCell(),
-			[]rune("ab"),
-			cursor{0, 2},
-			cursor{0, 1},
-			newCell('b', defFmt),
-		},
-		{
-			cursor{0, 0},
-			false,
-			defaultCell(),
-			[]rune("u\u0308"),
-			cursor{0, 1},
-			cursor{0, 0},
-			newCell('ü', defFmt),
-		},
-		{
-			cursor{0, 9},
-			false,
-			defaultCell(),
-			[]rune("u\u0308"),
-			cursor{0, 10},
-			cursor{0, 9},
-			newCell('ü', defFmt),
-		},
-		{
-			cursor{0, 9},
-			true,
-			defaultCell(),
-			[]rune("u\u0308"),
-			cursor{0, 10},
-			cursor{0, 9},
-			newCell('ü', defFmt),
-		},
-		{
-			cursor{0, 10}, // already printed last char in row
-			false,         // no autowrap
-			defaultCell(),
-			[]rune("z"),
-			cursor{0, 10},
-			cursor{0, 9},
-			newCell('z', defFmt), // we should overwrite the last cell
-		},
-		{
-			cursor{0, 10}, // already printed last char in row
-			true,          // autowrap
-			defaultCell(),
-			[]rune("z"),
-			cursor{1, 1},
-			cursor{1, 0},
-			newCell('z', defFmt),
-		},
-		{
-			cursor{0, 10}, // already printed last char in row
-			false,         // no autowrap
-			defaultCell(),
-			[]rune("世"),
-			cursor{0, 10},
-			cursor{0, 8},
-			newCell('世', defFmt),
-		},
-		{
-			cursor{0, 10}, // already printed last char in row
-			true,          // no autowrap
-			defaultCell(),
-			[]rune("世"),
-			cursor{1, 2},
-			cursor{1, 0},
-			newCell('世', defFmt),
-		},
-		{
-			cursor{0, 5}, // already printed last char in row
-			true,         // no autowrap
-			defaultCell(),
-			[]rune("世"),
-			cursor{0, 7},
-			cursor{0, 5},
-			newCell('世', defFmt),
-		},
+		{cursor{0, 0}, false, dfb(), []rune("a"), cursor{0, 1}, wfb1},
+		{cursor{0, 0}, false, dfb(), []rune("ab"), cursor{0, 2}, wfb2},
+		{cursor{0, 0}, false, dfb(), []rune("u\u0308"), cursor{0, 1}, wfb3},
+		{cursor{0, 9}, false, dfb(), []rune("u\u0308"), cursor{0, 10}, wfb4},
+		{cursor{0, 9}, true, dfb(), []rune("u\u0308"), cursor{0, 10}, wfb4},
+		{cursor{0, 10}, false, dfb(), []rune("z"), cursor{0, 10}, wfb5},
+		{cursor{0, 10}, true, dfb(), []rune("z"), cursor{1, 1}, wfb6},
+		{cursor{0, 10}, false, dfb(), []rune("世"), cursor{0, 10}, wfb7},
+		{cursor{0, 10}, true, dfb(), []rune("世"), cursor{1, 2}, wfb8},
+		{cursor{0, 5}, true, dfb(), []rune("世"), cursor{0, 7}, wfb9},
+		{cursor{5, 6}, false, ffb, []rune("u\u0308"), cursor{5, 7}, wffb},
+		{cursor{5, 6}, false, ffb2, []rune("u\u0308"), cursor{5, 7}, wffb2},
+		{cursor{9, 10}, true, sfb, []rune("u\u0308"), cursor{9, 1}, wsfb},
+		{cursor{9, 10}, false, dfb(), []rune("u\u0308"), cursor{9, 10}, wfb10},
+		{cursor{5, 5}, false, fb13, []rune("a"), cursor{5, 6}, wfb13},
 	}
 
 	for i, c := range cases {
 		term := NewTerminal(10, 10)
+		term.fb = c.fb
 		term.privAutowrap = c.autowrap
 		term.cur = c.cur
-		term.fb.setCell(c.cur.row, c.cur.col, c.d)
 
 		for _, r := range c.r {
 			term.print(r)
@@ -230,8 +230,8 @@ func TestPrint(t *testing.T) {
 			t.Errorf("%d: Got %q, wanted %q", i, term.cur, c.wantCur)
 		}
 
-		if w, _ := term.fb.getCell(c.cellCur.row, c.cellCur.col); !w.equal(c.wantCell) {
-			t.Errorf("%d: Got %v, wanted %v; %v", i, w, c.wantCell, term.fb.data[c.wantCur.row])
+		if !term.fb.equal(c.wantFb) {
+			t.Errorf("%d: Got:\n%s\nWant:\n%s", i, term.fb, c.wantFb)
 		}
 	}
 }

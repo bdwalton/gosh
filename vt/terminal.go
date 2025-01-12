@@ -123,26 +123,62 @@ func (t *Terminal) print(r rune) {
 		t.fb.setCell(row, col, c)
 	case 1, 2: // default (1 colume), wide (2 columns)
 		if col <= t.fb.getCols()-rw {
-			t.fb.setCell(row, col, newCell(r, t.curF))
-			t.cur.col += rw
-			return
-		} else {
-			if t.privAutowrap {
-				col = 0
-				if row == t.fb.getRows()-1 {
-					t.fb.scrollRows(1)
-				} else {
-					row += 1
+			// if we're writing the second cell of a
+			// previously fragmented write, clear the
+			// fragment entirely
+			if gc, err := t.fb.getCell(row, col); err == nil {
+				switch gc.frag {
+				case 1: // primary cell
+					t.fb.setCell(row, col+1, defaultCell())
+				case 2: // secondary/empty cell
+					t.fb.setCell(row, col-1, defaultCell())
 				}
-			} else {
-				col = t.fb.getRows() - rw
+			}
+			nc := newCell(r, t.curF)
+
+			if rw > 1 {
+				// Clear adjacent cells and note fragments
+				t.fb.setCell(row, col+1, fragCell(0, t.curF, FRAG_SECONDARY))
+				nc.frag = FRAG_PRIMARY
 			}
 
-			t.fb.setCell(row, col, newCell(r, t.curF))
-			t.cur.col = col + rw
-			t.cur.row = row
+			t.fb.setCell(row, col, nc)
+			t.cur.col += rw
 			return
 		}
+
+		if t.privAutowrap {
+			col = 0
+			if row == t.fb.getRows()-1 {
+				t.fb.scrollRows(1)
+			} else {
+				row += 1
+			}
+		} else {
+			// overwrite chars at the end
+			col = t.fb.getRows() - rw
+		}
+
+		if gc, err := t.fb.getCell(row, col); err == nil {
+			switch gc.frag {
+			case 1: // primary cell
+				t.fb.setCell(row, col+1, defaultCell())
+			case 2: // secondary/empty cell
+				t.fb.setCell(row, col-1, defaultCell())
+			}
+		}
+		nc := newCell(r, t.curF)
+
+		if rw > 1 {
+			// Clear adjacent cells and note fragments
+			t.fb.setCell(row, col+1, fragCell(0, t.curF, FRAG_SECONDARY))
+			nc.frag = FRAG_PRIMARY
+		}
+
+		t.fb.setCell(row, col, nc)
+
+		t.cur.col = col + rw
+		t.cur.row = row
 
 		// punt, otherwise
 		return
