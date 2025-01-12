@@ -85,6 +85,22 @@ func (t *Terminal) handleOSC(act pAction, lastbyte byte) {
 	}
 }
 
+// clearFrags will ensure we never leave a dangling fragment when we
+// write to a cell. If the row and column to be written to is part of
+// a fragment, it will clear the previous or next cell, depending on
+// whether the current cell is the primary or secondary piece of the
+// fragment.
+func (t *Terminal) clearFrags(row, col int) {
+	if gc, err := t.fb.getCell(row, col); err == nil {
+		switch gc.frag {
+		case FRAG_PRIMARY: // primary cell
+			t.fb.setCell(row, col+1, defaultCell())
+		case FRAG_SECONDARY: // secondary/empty cell
+			t.fb.setCell(row, col-1, defaultCell())
+		}
+	}
+}
+
 func (t *Terminal) print(r rune) {
 	row, col := t.cur.row, t.cur.col
 	rw := runewidth.StringWidth(string(r))
@@ -123,17 +139,7 @@ func (t *Terminal) print(r rune) {
 		t.fb.setCell(row, col, c)
 	case 1, 2: // default (1 colume), wide (2 columns)
 		if col <= t.fb.getCols()-rw {
-			// if we're writing the second cell of a
-			// previously fragmented write, clear the
-			// fragment entirely
-			if gc, err := t.fb.getCell(row, col); err == nil {
-				switch gc.frag {
-				case 1: // primary cell
-					t.fb.setCell(row, col+1, defaultCell())
-				case 2: // secondary/empty cell
-					t.fb.setCell(row, col-1, defaultCell())
-				}
-			}
+			t.clearFrags(row, col)
 			nc := newCell(r, t.curF)
 
 			if rw > 1 {
@@ -159,14 +165,7 @@ func (t *Terminal) print(r rune) {
 			col = t.fb.getRows() - rw
 		}
 
-		if gc, err := t.fb.getCell(row, col); err == nil {
-			switch gc.frag {
-			case 1: // primary cell
-				t.fb.setCell(row, col+1, defaultCell())
-			case 2: // secondary/empty cell
-				t.fb.setCell(row, col-1, defaultCell())
-			}
-		}
+		t.clearFrags(row, col)
 		nc := newCell(r, t.curF)
 
 		if rw > 1 {
