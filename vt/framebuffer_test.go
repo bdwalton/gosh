@@ -29,14 +29,14 @@ func TestCellEquality(t *testing.T) {
 		want   bool
 	}{
 		{cell{}, cell{}, true},
-		{cell{frag: true}, cell{}, false},
+		{cell{frag: 1}, cell{}, false},
 		{cell{f: defFmt}, cell{f: defFmt}, true},
-		{cell{f: defFmt}, cell{f: defFmt, frag: true}, false},
+		{cell{f: defFmt}, cell{f: defFmt, frag: 2}, false},
 		{cell{r: 'a', f: defFmt}, cell{r: 'a', f: defFmt}, true},
 		{cell{r: 'a', f: format{italic: true}}, cell{r: 'a', f: format{italic: true}}, true},
 		{cell{f: defFmt}, cell{r: 'a', f: defFmt}, false},
 		{cell{r: 'a'}, cell{r: 'a', f: defFmt}, true},
-		{cell{r: 'a', frag: true}, cell{r: 'a', f: defFmt}, false},
+		{cell{r: 'a', frag: 1}, cell{r: 'a', f: defFmt}, false},
 		{cell{r: 'a'}, cell{r: 'b'}, false},
 		{cell{r: 'a', f: defFmt}, cell{r: 'a'}, true},
 		{cell{r: 'a', f: format{italic: true}}, cell{r: 'a'}, false},
@@ -270,7 +270,7 @@ func TestFBEquality(t *testing.T) {
 
 	for i, c := range cases {
 		if got := c.fb.equal(c.ofb); got != c.want {
-			t.Errorf("%d: Got %t, wanted %t, comparing:\n\t%v and \n\n\t%v", i, got, c.want, c.fb, c.ofb)
+			t.Errorf("%d: Got %t, wanted %t, comparing:\n%s and \n\n%s", i, got, c.want, c.fb, c.ofb)
 		}
 	}
 }

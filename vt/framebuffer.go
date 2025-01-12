@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
+	"unicode"
 )
 
 var fbInvalidCell = errors.New("invalid framebuffer cell")
@@ -15,18 +17,30 @@ const (
 	MAX_COLS = MAX_ROWS
 )
 
+const (
+	FRAG_PRIMARY   = 1
+	FRAG_SECONDARY = 2
+)
+
 type cell struct {
-	r    rune
-	f    format
-	frag bool // when true, this cell is part of a "wide character"
+	r rune
+	f format
+	// when non-zero, indicates this cell participates in width 2 character
+	// 1 = primary rune
+	// 2 = spare/empty cell next to primary
+	frag int
 }
 
 func defaultCell() cell {
 	return cell{f: defFmt}
 }
 
-func fragCell() cell {
-	return cell{f: defFmt, frag: true}
+// fragCell returns a cell tagged as a fragment (number = fn), with
+// content and format as specified.
+func fragCell(r rune, f format, fn int) cell {
+	c := newCell(r, f)
+	c.frag = fn
+	return c
 }
 
 func newCell(r rune, f format) cell {
@@ -42,7 +56,7 @@ func (c cell) equal(other cell) bool {
 }
 
 func (c cell) String() string {
-	return fmt.Sprintf("%s (f:%t) (%s)", string(c.r), c.frag, c.f.String())
+	return fmt.Sprintf("%s (f:%d) (%s)", string(c.r), c.frag, c.f.String())
 }
 
 type framebuffer struct {
@@ -58,6 +72,25 @@ func newFramebuffer(rows, cols int) *framebuffer {
 	return &framebuffer{
 		data: d,
 	}
+}
+
+func (f *framebuffer) String() string {
+	var sb strings.Builder
+	for _, row := range f.data {
+		for _, cell := range row {
+			if cell.frag == 2 {
+				continue
+			}
+			if unicode.IsPrint(cell.r) {
+				sb.WriteString(string(cell.r))
+			} else {
+				sb.WriteString(".")
+			}
+		}
+		sb.WriteString("\n")
+	}
+
+	return sb.String()
 }
 
 func (f *framebuffer) equal(other *framebuffer) bool {
