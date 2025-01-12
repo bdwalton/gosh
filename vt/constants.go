@@ -16,10 +16,10 @@ const (
 const (
 	CTRL_BEL = 0x07 // ^G Bell
 	CTRL_BS  = 0x08 // ^H Backspace
-	CTRL_TAB = 0x09 // ^I Tab
-	CTRL_LF  = 0x0a // ^J Line feed
-	CTRL_FF  = 0x0c // ^L Form feed
-	CTRL_CR  = 0x0d // ^M Carriage return
+	CTRL_TAB = 0x09 // ^I Tab \t
+	CTRL_LF  = 0x0a // ^J Line feed \n
+	CTRL_FF  = 0x0c // ^L Form feed \f
+	CTRL_CR  = 0x0d // ^M Carriage return \r
 	CTRL_HTS = 0x88 // Horizontal tab stop
 	CTRL_ST  = 0x9c // ST string terminator
 )
