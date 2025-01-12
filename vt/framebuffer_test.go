@@ -29,11 +29,14 @@ func TestCellEquality(t *testing.T) {
 		want   bool
 	}{
 		{cell{}, cell{}, true},
+		{cell{frag: true}, cell{}, false},
 		{cell{f: defFmt}, cell{f: defFmt}, true},
+		{cell{f: defFmt}, cell{f: defFmt, frag: true}, false},
 		{cell{r: 'a', f: defFmt}, cell{r: 'a', f: defFmt}, true},
 		{cell{r: 'a', f: format{italic: true}}, cell{r: 'a', f: format{italic: true}}, true},
 		{cell{f: defFmt}, cell{r: 'a', f: defFmt}, false},
 		{cell{r: 'a'}, cell{r: 'a', f: defFmt}, true},
+		{cell{r: 'a', frag: true}, cell{r: 'a', f: defFmt}, false},
 		{cell{r: 'a'}, cell{r: 'b'}, false},
 		{cell{r: 'a', f: defFmt}, cell{r: 'a'}, true},
 		{cell{r: 'a', f: format{italic: true}}, cell{r: 'a'}, false},

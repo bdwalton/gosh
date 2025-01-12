@@ -16,12 +16,17 @@ const (
 )
 
 type cell struct {
-	r rune
-	f format
+	r    rune
+	f    format
+	frag bool // when true, this cell is part of a "wide character"
 }
 
 func defaultCell() cell {
 	return cell{f: defFmt}
+}
+
+func fragCell() cell {
+	return cell{f: defFmt, frag: true}
 }
 
 func newCell(r rune, f format) cell {
@@ -33,11 +38,11 @@ func (c cell) getFormat() format {
 }
 
 func (c cell) equal(other cell) bool {
-	return c.getFormat().equal(other.getFormat()) && c.r == other.r
+	return c.r == other.r && c.frag == other.frag && c.getFormat().equal(other.getFormat())
 }
 
 func (c cell) String() string {
-	return fmt.Sprintf("%s (%s)", string(c.r), c.f.String())
+	return fmt.Sprintf("%s (f:%t) (%s)", string(c.r), c.frag, c.f.String())
 }
 
 type framebuffer struct {
