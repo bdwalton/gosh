@@ -64,7 +64,7 @@ func TestFirstParamEmpty(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		p := newParser(newDummy())
+		p := newParser()
 		for _, b := range c.input {
 			p.parseByte(b)
 		}
@@ -127,20 +127,22 @@ func TestCSIParsing(t *testing.T) {
 	}
 
 	for i, c := range cases {
+		p := newParser()
 		d := newDummy()
-		p := newParser(d)
 		for _, b := range c.input {
-			p.parseByte(b)
+			for _, a := range p.parseByte(b) {
+				d.handle(a.act, a.params, a.data, a.b)
+			}
 		}
 
 		if !slices.Equal(d.actions, c.wantActions) {
 			t.Errorf("%d: Invalid actions called. Got %v, want %v", i, d.actions, c.wantActions)
 		}
 		if !slices.Equal(d.params.items, c.wantParams.items) {
-			t.Errorf("%d: Invalid params. Got %v, want %v", i, d.params, c.wantParams)
+			t.Errorf("%d: Invalid params. Got %v, want %v", i, p.params, c.wantParams)
 		}
 		if !slices.Equal(d.intermediate, c.wantIntermediate) {
-			t.Errorf("%d: Invalid params. Got %v, want %v", i, d.intermediate, c.wantIntermediate)
+			t.Errorf("%d: Invalid params. Got %v, want %v", i, p.intermediate, c.wantIntermediate)
 		}
 		if d.lastbyte != c.wantLast {
 			t.Errorf("%d: Invalid last byte. Got %02x, want %02x", i, d.lastbyte, c.wantLast)
@@ -161,9 +163,11 @@ func TestOSCString(t *testing.T) {
 
 	for i, c := range cases {
 		d := newDummy()
-		p := newParser(d)
+		p := newParser()
 		for _, b := range c.input {
-			p.parseByte(b)
+			for _, a := range p.parseByte(b) {
+				d.handle(a.act, a.params, a.data, a.b)
+			}
 		}
 		if string(d.oscString) != c.wantOSC {
 			t.Errorf("%d: Got %q, want: %q (actions: %v)", i, string(d.oscString), c.wantOSC, d.getActions())

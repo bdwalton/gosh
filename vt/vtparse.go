@@ -73,45 +73,51 @@ func (p *parameters) consumeItem() (int, bool) {
 	return n, true
 }
 
-type dispatcher interface {
-	print(rune)
-	// action, params, intermediate, last byte
-	handle(pAction, *parameters, []rune, byte)
-}
-
 type parser struct {
 	state        pState
-	d            dispatcher
 	intermediate []rune
 	params       *parameters
 }
 
-func newParser(d dispatcher) *parser {
+func newParser() *parser {
 	return &parser{
 		state:        VTPARSE_STATE_GROUND,
-		d:            d,
 		params:       newParams(),
 		intermediate: make([]rune, 0, MAX_EXPECTED_INTERMEDIATE),
 	}
 }
 
-func (p *parser) parseRune(r rune) {
+func (p *parser) parseRune(r rune) []*action {
 	switch p.state {
 	case VTPARSE_STATE_GROUND:
-		p.d.print(r)
+		return []*action{
+			&action{VTPARSE_ACTION_PRINT, p.params, p.intermediate, 0, r},
+		}
 	}
+
+	return nil
 }
 
-func (p *parser) parseByte(b byte) {
-	p.stateChange(STATE_TABLE[p.state][b], b)
+func (p *parser) parseByte(b byte) []*action {
+	return p.stateChange(STATE_TABLE[p.state][b], b)
 }
 
-func (p *parser) action(act pAction, b byte) {
+// action is what we'll return to our clients to udpate and manage
+// state as we parse the input.
+type action struct {
+	act    pAction
+	params *parameters
+	data   []rune
+	// only 1 of b or r should be used by consumers. this is still
+	// an ugly wart we should fix with utf8 handling
+	b byte
+	r rune
+}
+
+func (p *parser) action(act pAction, b byte) *action {
 	switch act {
-	case VTPARSE_ACTION_PRINT:
-		p.d.print(rune(b))
-	case VTPARSE_ACTION_EXECUTE, VTPARSE_ACTION_HOOK, VTPARSE_ACTION_PUT, VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END, VTPARSE_ACTION_UNHOOK, VTPARSE_ACTION_CSI_DISPATCH, VTPARSE_ACTION_ESC_DISPATCH:
-		p.d.handle(act, p.params, p.intermediate, b)
+	case VTPARSE_ACTION_PRINT, VTPARSE_ACTION_EXECUTE, VTPARSE_ACTION_HOOK, VTPARSE_ACTION_PUT, VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END, VTPARSE_ACTION_UNHOOK, VTPARSE_ACTION_CSI_DISPATCH, VTPARSE_ACTION_ESC_DISPATCH:
+		return &action{act, p.params, p.intermediate, b, rune(b)}
 	case VTPARSE_ACTION_IGNORE:
 		// Do nothing
 	case VTPARSE_ACTION_COLLECT:
@@ -137,32 +143,46 @@ func (p *parser) action(act pAction, b byte) {
 		p.intermediate = p.intermediate[:0]
 		p.params.reset()
 	default:
-		p.d.handle(VTPARSE_ACTION_ERROR, nil, nil, 0)
+		return &action{VTPARSE_ACTION_ERROR, nil, nil, 0, 0}
 	}
+
+	return nil
 }
 
-func (p *parser) stateChange(t transition, b byte) {
+func (p *parser) stateChange(t transition, b byte) []*action {
 	newState := t.state()
 	act := t.action()
+
+	ret := []*action{}
 
 	if newState != VTPARSE_STATE_NONE {
 		exit := EXIT_ACTIONS[p.state]
 		enter := ENTRY_ACTIONS[newState]
 
 		if exit != VTPARSE_ACTION_NOP {
-			p.action(exit, b)
+			if a := p.action(exit, b); a != nil {
+				ret = append(ret, a)
+			}
 		}
 
 		if act != VTPARSE_ACTION_NOP {
-			p.action(act, b)
+			if a := p.action(act, b); a != nil {
+				ret = append(ret, a)
+			}
 		}
 
 		if enter != VTPARSE_ACTION_NOP {
-			p.action(enter, b)
+			if a := p.action(enter, b); a != nil {
+				ret = append(ret, a)
+			}
 		}
 
 		p.state = newState
 	} else {
-		p.action(act, b)
+		if a := p.action(act, b); a != nil {
+			ret = append(ret, a)
+		}
 	}
+
+	return ret
 }
