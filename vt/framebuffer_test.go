@@ -231,3 +231,46 @@ func TestScrollRows(t *testing.T) {
 		}
 	}
 }
+
+func TestFBEquality(t *testing.T) {
+	dfb := newFramebuffer(10, 10)
+	ofb := newFramebuffer(10, 10)
+	ofb.setCell(5, 5, newCell('z', format{italic: true}))
+
+	mfbt := newFramebuffer(10, 10)
+	mfbt.top = 1
+
+	mfbb := newFramebuffer(10, 10)
+	mfbb.bottom = 5
+
+	mfbl := newFramebuffer(10, 10)
+	mfbl.left = 4
+
+	mfbr := newFramebuffer(10, 10)
+	mfbr.right = 7
+
+	cases := []struct {
+		fb   *framebuffer
+		ofb  *framebuffer
+		want bool
+	}{
+		{newFramebuffer(5, 5), newFramebuffer(5, 5), true},
+		{newFramebuffer(5, 10), newFramebuffer(5, 10), true},
+		{newFramebuffer(10, 5), newFramebuffer(10, 5), true},
+		{newFramebuffer(10, 10), newFramebuffer(5, 5), false},
+		{newFramebuffer(5, 10), newFramebuffer(2, 10), false},
+		{dfb, ofb, false},
+		{dfb, mfbt, false},
+		{dfb, mfbb, false},
+		{dfb, mfbl, false},
+		{dfb, mfbr, false},
+		{mfbl, mfbr, false},
+		{mfbt, mfbb, false},
+	}
+
+	for i, c := range cases {
+		if got := c.fb.equal(c.ofb); got != c.want {
+			t.Errorf("%d: Got %t, wanted %t, comparing:\n\t%v and \n\n\t%v", i, got, c.want, c.fb, c.ofb)
+		}
+	}
+}

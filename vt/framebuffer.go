@@ -60,6 +60,26 @@ func newFramebuffer(rows, cols int) *framebuffer {
 	}
 }
 
+func (f *framebuffer) equal(other *framebuffer) bool {
+	if f.getCols() != other.getCols() || f.getRows() != other.getRows() {
+		return false
+	}
+
+	if f.top != other.top || f.bottom != other.bottom || f.left != other.left || f.right != other.right {
+		return false
+	}
+
+	for r, row := range f.data {
+		for c, cell := range row {
+			oc, _ := other.getCell(r, c)
+			if !cell.equal(oc) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func (f *framebuffer) scrollRows(n int) {
 	nc := f.getCols()
 	for i := 0; i < n; i++ {
