@@ -18,5 +18,8 @@ gosh-server: server/gosh-server.go $(SUBPACKAGE_FILES)
 protos:
 	@(cd protos; make)
 
+test:
+	@go test ./...
+
 clean:
 	@rm gosh gosh-server gosh-client
