@@ -18,6 +18,20 @@ type cursor struct {
 	row, col int
 }
 
+func (c cursor) moveTo() string {
+	var sb strings.Builder
+	sb.Write([]byte{ESC, ESC_CSI})
+	if c.row != 0 {
+		sb.WriteString(fmt.Sprintf("%d", c.row+1))
+	}
+	sb.WriteByte(';')
+	if c.col != 0 {
+		sb.WriteString(fmt.Sprintf("%d", c.col+1))
+	}
+	sb.WriteByte(CSI_CUP)
+	return sb.String()
+}
+
 func (c cursor) equal(other cursor) bool {
 	return c.row == other.row && c.col == other.col
 }

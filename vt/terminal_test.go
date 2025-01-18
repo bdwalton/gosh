@@ -1,6 +1,7 @@
 package vt
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -232,6 +233,24 @@ func TestPrint(t *testing.T) {
 
 		if !term.fb.equal(c.wantFb) {
 			t.Errorf("%d: Got:\n%s\nWant:\n%s", i, term.fb, c.wantFb)
+		}
+	}
+}
+
+func TestCursorMoveTo(t *testing.T) {
+	cases := []struct {
+		cur  cursor
+		want string
+	}{
+		{cursor{0, 0}, fmt.Sprintf("%c%c;%c", ESC, ESC_CSI, CSI_CUP)},
+		{cursor{1, 1}, fmt.Sprintf("%c%c2;2%c", ESC, ESC_CSI, CSI_CUP)},
+		{cursor{30, 0}, fmt.Sprintf("%c%c31;%c", ESC, ESC_CSI, CSI_CUP)},
+		{cursor{0, 15}, fmt.Sprintf("%c%c;16%c", ESC, ESC_CSI, CSI_CUP)},
+	}
+
+	for i, c := range cases {
+		if got := c.cur.moveTo(); got != c.want {
+			t.Errorf("%d: Got %q, wanted %q", i, got, c.want)
 		}
 	}
 }
