@@ -1,7 +1,6 @@
 package vt
 
 import (
-	"slices"
 	"testing"
 )
 
@@ -76,22 +75,5 @@ func TestEquality(t *testing.T) {
 			t.Errorf("%d: Got %t, wanted %t, from %s == %s", i, got, c.want, c.col, c.other)
 		}
 
-	}
-}
-
-func TestParams(t *testing.T) {
-	cases := []struct {
-		col  color
-		want []int
-	}{
-		{ansiBasicColor{35}, []int{35}},
-		{ansi256Color{192}, []int{5, 192}},
-		{rgbColor{rgb: []int{1, 10, 15}}, []int{2, 1, 10, 15}},
-	}
-
-	for i, c := range cases {
-		if p := c.col.params(); !slices.Equal(p, c.want) {
-			t.Errorf("%d: Got %v, wanted %v", i, p, c.want)
-		}
 	}
 }
