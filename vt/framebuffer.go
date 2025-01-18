@@ -74,6 +74,28 @@ func newFramebuffer(rows, cols int) *framebuffer {
 	}
 }
 
+func (f *framebuffer) copy() *framebuffer {
+	rows := f.getRows()
+	cols := f.getCols()
+
+	nf := &framebuffer{
+		top:    f.top,
+		bottom: f.bottom,
+		left:   f.left,
+		right:  f.right,
+		data:   make([][]cell, rows, rows),
+	}
+
+	for row := range f.data {
+		nf.data[row] = make([]cell, cols, cols)
+		for col, c := range f.data[row] {
+			nf.data[row][col] = c
+		}
+	}
+
+	return nf
+}
+
 func (f *framebuffer) String() string {
 	var sb strings.Builder
 	for _, row := range f.data {

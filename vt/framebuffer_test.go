@@ -288,3 +288,26 @@ func TestFBEquality(t *testing.T) {
 		}
 	}
 }
+
+func TestCopy(t *testing.T) {
+	cases := []struct {
+		fb         *framebuffer
+		l, r, t, b int
+	}{
+		{fillBuffer(newFramebuffer(10, 10)), 2, 1, 3, 4},
+		{fillBuffer(newFramebuffer(20, 15)), 3, 2, 1, 9},
+	}
+
+	for i, c := range cases {
+
+		c.fb.left = c.l
+		c.fb.right = c.r
+		c.fb.top = c.t
+		c.fb.bottom = c.b
+
+		cfb := c.fb.copy()
+		if !cfb.equal(c.fb) {
+			t.Errorf("%d: %v != %v", i, cfb, c.fb)
+		}
+	}
+}
