@@ -335,7 +335,7 @@ func (t *Terminal) setLeftRight(params *parameters) {
 		return // matches xterm
 	}
 
-	t.fb.setTBScroll(left-1, right-1)
+	t.fb.setLRScroll(left-1, right-1)
 }
 
 func (t *Terminal) cursorMove(params *parameters, moveType byte) {
