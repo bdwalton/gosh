@@ -8,11 +8,7 @@ import (
 type intensity uint8 // font intensity
 type ulstyle uint8   // underline style
 
-// TODO: Validate these as sane, but for now they'll work
-var defFG = ansiBasicColor{FG_WHITE}
-var defBG = ansiBasicColor{BG_BLACK}
-
-var defFmt = format{bg: defBG, fg: defFG}
+var defFmt = format{}
 
 type format struct {
 	fg, bg                                        color
@@ -23,14 +19,14 @@ type format struct {
 
 func (f *format) getFG() color {
 	if f.fg == nil {
-		return defFG
+		return standardColors[FG_DEF]
 	}
 	return f.fg
 }
 
 func (f *format) getBG() color {
 	if f.bg == nil {
-		return defBG
+		return standardColors[BG_DEF]
 	}
 	return f.bg
 }
@@ -127,7 +123,7 @@ var formatters map[int]formatter = map[int]formatter{
 	BG_CYAN:           basicBG(BG_CYAN),
 	BG_WHITE:          basicBG(BG_WHITE),
 	SET_BG:            extendedBG(),
-	BG_DEF:            basicFG(BG_DEF),
+	BG_DEF:            basicBG(BG_DEF),
 	FG_BRIGHT_BLACK:   basicBrightFG(FG_BLACK),
 	FG_BRIGHT_RED:     basicBrightFG(FG_RED),
 	FG_BRIGHT_GREEN:   basicBrightFG(FG_GREEN),
@@ -177,14 +173,14 @@ func basicBrightBG(col int) func(f format, p *parameters) format {
 
 func extendedFG() func(f format, p *parameters) format {
 	return func(f format, p *parameters) format {
-		f.fg = colorFromParams(p, defFG)
+		f.fg = colorFromParams(p, standardColors[FG_DEF])
 		return f
 	}
 }
 
 func extendedBG() func(f format, p *parameters) format {
 	return func(f format, p *parameters) format {
-		f.bg = colorFromParams(p, defBG)
+		f.bg = colorFromParams(p, standardColors[FG_DEF])
 		return f
 	}
 }

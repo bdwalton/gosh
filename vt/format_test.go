@@ -4,13 +4,16 @@ import (
 	"testing"
 )
 
+var dFG = standardColors[FG_DEF]
+var dBG = standardColors[BG_DEF]
+
 func TestGetFG(t *testing.T) {
 	cases := []struct {
 		f    *format
 		want color
 	}{
-		{&format{}, defFG},
-		{&format{fg: defFG}, defFG},
+		{&format{}, dFG},
+		{&format{fg: dFG}, dFG},
 		{&format{fg: standardColors[FG_BLUE]}, standardColors[FG_BLUE]},
 	}
 
@@ -26,8 +29,8 @@ func TestGetBG(t *testing.T) {
 		f    *format
 		want color
 	}{
-		{&format{}, defBG},
-		{&format{bg: defBG}, defBG},
+		{&format{}, dBG},
+		{&format{bg: dBG}, dBG},
 		{&format{bg: standardColors[BG_BLUE]}, standardColors[BG_BLUE]},
 	}
 
@@ -54,7 +57,7 @@ func TestFormatEquality(t *testing.T) {
 			false,
 		},
 		{
-			format{bg: standardColors[BG_RED], fg: defFG, italic: true},
+			format{bg: standardColors[BG_RED], fg: dFG, italic: true},
 			format{bg: standardColors[BG_RED], italic: true},
 			true,
 		},

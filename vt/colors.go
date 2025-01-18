@@ -120,6 +120,7 @@ var standardColors = map[int]color{
 	FG_MAGENTA: &ansiBasicColor{FG_MAGENTA},
 	FG_CYAN:    &ansiBasicColor{FG_CYAN},
 	FG_WHITE:   &ansiBasicColor{FG_WHITE},
+	FG_DEF:     &ansiBasicColor{FG_DEF},
 	BG_BLACK:   &ansiBasicColor{BG_BLACK},
 	BG_RED:     &ansiBasicColor{BG_RED},
 	BG_GREEN:   &ansiBasicColor{BG_GREEN},
@@ -128,4 +129,5 @@ var standardColors = map[int]color{
 	BG_MAGENTA: &ansiBasicColor{BG_MAGENTA},
 	BG_CYAN:    &ansiBasicColor{BG_CYAN},
 	BG_WHITE:   &ansiBasicColor{BG_WHITE},
+	BG_DEF:     &ansiBasicColor{BG_DEF},
 }
