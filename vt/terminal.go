@@ -61,6 +61,8 @@ func (t *Terminal) Run() {
 	rr := bufio.NewReader(t.ptyIO)
 
 	for {
+		var actions []*action
+
 		r, sz, err := rr.ReadRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
@@ -79,36 +81,21 @@ func (t *Terminal) Run() {
 				continue
 
 			} else {
-				t.parseByte(b)
+				actions = t.p.parseByte(b)
 			}
 		} else {
-			t.parseRune(r)
+			actions = t.p.parseRune(r)
 		}
-	}
-}
 
-func (t *Terminal) parseByte(b byte) {
-	for _, a := range t.p.parseByte(b) {
-		switch a.act {
-		case VTPARSE_ACTION_EXECUTE:
-			t.handleExecute(a.b)
-		case VTPARSE_ACTION_CSI_DISPATCH:
-			t.handleCSI(a.params, a.data, a.b)
-		case VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
-			t.handleOSC(a.act, a.b)
-		}
-	}
-}
-
-func (t *Terminal) parseRune(r rune) {
-	for _, a := range t.p.parseRune(r) {
-		switch a.act {
-		case VTPARSE_ACTION_EXECUTE:
-			t.handleExecute(a.b)
-		case VTPARSE_ACTION_CSI_DISPATCH:
-			t.handleCSI(a.params, a.data, a.b)
-		case VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
-			t.handleOSC(a.act, a.b)
+		for _, a := range actions {
+			switch a.act {
+			case VTPARSE_ACTION_EXECUTE:
+				t.handleExecute(a.b)
+			case VTPARSE_ACTION_CSI_DISPATCH:
+				t.handleCSI(a.params, a.data, a.b)
+			case VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
+				t.handleOSC(a.act, a.b)
+			}
 		}
 	}
 }
