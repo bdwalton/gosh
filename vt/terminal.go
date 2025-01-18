@@ -1,9 +1,14 @@
 package vt
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"log/slog"
+	"os"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/mattn/go-runewidth"
 	"golang.org/x/text/unicode/norm"
@@ -26,6 +31,8 @@ type Terminal struct {
 	p  *parser
 	fb *framebuffer
 
+	ptyIO io.Reader
+
 	// State
 	title, icon string
 	cur         cursor
@@ -39,14 +46,71 @@ type Terminal struct {
 	privNewLineMode bool // default reset (false)
 }
 
-func NewTerminal(rows, cols int) *Terminal {
+func NewTerminal(pio io.Reader, rows, cols int) *Terminal {
 	t := &Terminal{
 		fb:      newFramebuffer(rows, cols),
 		oscTemp: make([]rune, 0),
+		ptyIO:   pio,
 	}
-	t.p = newParser(t)
+	t.p = newParser()
 
 	return t
+}
+
+func (t *Terminal) Run() {
+	rr := bufio.NewReader(t.ptyIO)
+
+	for {
+		r, sz, err := rr.ReadRune()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			if !errors.Is(err, os.ErrDeadlineExceeded) {
+				slog.Error("pty ReadRune", "r", r, "sz", sz, "err", err)
+			}
+			continue
+		}
+		if r == utf8.RuneError && sz == 1 {
+			rr.UnreadRune()
+			b, err := rr.ReadByte()
+			if err != nil {
+				slog.Error("pty ReadByte", "b", b, "err", err)
+				continue
+
+			} else {
+				t.parseByte(b)
+			}
+		} else {
+			t.parseRune(r)
+		}
+	}
+}
+
+func (t *Terminal) parseByte(b byte) {
+	for _, a := range t.p.parseByte(b) {
+		switch a.act {
+		case VTPARSE_ACTION_EXECUTE:
+			t.handleExecute(a.b)
+		case VTPARSE_ACTION_CSI_DISPATCH:
+			t.handleCSI(a.params, a.data, a.b)
+		case VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
+			t.handleOSC(a.act, a.b)
+		}
+	}
+}
+
+func (t *Terminal) parseRune(r rune) {
+	for _, a := range t.p.parseRune(r) {
+		switch a.act {
+		case VTPARSE_ACTION_EXECUTE:
+			t.handleExecute(a.b)
+		case VTPARSE_ACTION_CSI_DISPATCH:
+			t.handleCSI(a.params, a.data, a.b)
+		case VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
+			t.handleOSC(a.act, a.b)
+		}
+	}
 }
 
 func (t *Terminal) Resize(rows, cols int) {

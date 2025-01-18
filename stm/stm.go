@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"os/exec"
@@ -39,6 +40,7 @@ type stmObj struct {
 
 	ctx       context.Context
 	ptmx      *os.File
+	ptyIO     *io.PipeWriter
 	cmd       *exec.Cmd
 	cancelPty context.CancelFunc
 
@@ -56,11 +58,18 @@ func NewClient(gc *network.GConn) (*stmObj, error) {
 		return nil, fmt.Errorf("couldn't make terminal raw: %v", err)
 	}
 
+	// On the client end, we will read from the network and ship
+	// the diff into the locally running terminal. To do that,
+	// we'll tell the terminal we create that it's pty is the pr
+	// end of the pipe we'll write into.
+	pr, pw := io.Pipe()
+
 	s := &stmObj{
 		gc:     gc,
 		origSz: orig,
 		st:     CLIENT,
-		term:   vt.NewTerminal(DEF_ROWS, DEF_COLS),
+		term:   vt.NewTerminal(pr, DEF_ROWS, DEF_COLS),
+		ptyIO:  pw,
 	}
 
 	return s, nil
@@ -96,7 +105,7 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 		cancelPty: cancel,
 		st:        SERVER,
 		cmd:       cmd,
-		term:      vt.NewTerminal(DEF_ROWS, DEF_COLS),
+		term:      vt.NewTerminal(ptmx, DEF_ROWS, DEF_COLS),
 	}
 
 	return s, nil
@@ -166,6 +175,8 @@ func (s *stmObj) Shutdown() {
 		if err := os.Stdin.Close(); err != nil {
 			slog.Debug("error closing stdin", "err", err)
 		}
+	case SERVER:
+		s.ptyIO.CloseWithError(io.EOF)
 	}
 
 	go func() {
@@ -245,7 +256,7 @@ func (s *stmObj) handleInput() {
 				s.Shutdown()
 				return
 			default:
-				msg.SetData(char[:n]...)
+				msg.SetData(char[:n])
 				inEsc = false
 			}
 		} else {
@@ -255,7 +266,7 @@ func (s *stmObj) handleInput() {
 				inEsc = true
 				continue // Don't immediately send this
 			default:
-				msg.SetData(char[:n]...)
+				msg.SetData(char[:n])
 			}
 		}
 		s.sendPayload(msg)
@@ -284,7 +295,13 @@ func (s *stmObj) handleRemote() {
 
 		n, err := s.gc.Read(buf)
 		if err != nil {
-			// TODO: Log this
+			if errors.Is(err, io.EOF) {
+				slog.Debug("EOF from remote, so shutting down")
+				s.Shutdown()
+				return
+			}
+			// TODO Log this if not a timeout
+			// slog.Error("error reading remote", "err", err)
 			continue
 		}
 
@@ -299,7 +316,7 @@ func (s *stmObj) handleRemote() {
 			if s.st == SERVER && !s.ptyRunning {
 				s.wg.Add(1)
 				go func() {
-					s.handlePtyOutput()
+					s.term.Run()
 					s.wg.Done()
 				}()
 				s.ptyRunning = true
@@ -331,38 +348,11 @@ func (s *stmObj) handleRemote() {
 			slog.Info("changed window size", "rows", h, "cols", w)
 		case goshpb.PayloadType_SERVER_OUTPUT:
 			o := msg.GetData()
-			n, err := os.Stdout.Write(o)
+			n, err := s.ptyIO.Write(o)
 			if err != nil || n != len(o) {
 				slog.Error("couldn't write to stdout", "err", err)
 				break
 			}
 		}
-	}
-}
-
-func (s *stmObj) handlePtyOutput() {
-	defer s.cancelPty()
-
-	buf := make([]byte, 1024)
-
-	for {
-		if s.shutdown {
-			break
-		}
-
-		if err := s.ptmx.SetReadDeadline(time.Now().Add(1 * time.Second)); err != nil {
-			slog.Error("failed to set ptmx read deadline", "err", err)
-		}
-		n, err := s.ptmx.Read(buf)
-		if err != nil {
-			if !errors.Is(err, os.ErrDeadlineExceeded) {
-				slog.Error("ptmx read", "n", n, "err", err)
-			}
-			continue
-		}
-
-		msg := s.buildPayload(goshpb.PayloadType_SERVER_OUTPUT.Enum())
-		msg.SetData(buf[:n])
-		s.sendPayload(msg)
 	}
 }

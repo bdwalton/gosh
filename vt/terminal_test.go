@@ -217,7 +217,7 @@ func TestPrint(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		term := NewTerminal(10, 10)
+		term := NewTerminal(nil, 10, 10)
 		term.fb = c.fb
 		term.privAutowrap = c.autowrap
 		term.cur = c.cur
