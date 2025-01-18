@@ -9,10 +9,15 @@ import (
 type color interface {
 	fmt.Stringer
 	equal(color) bool
+	params() []int
 }
 
 type ansiBasicColor struct {
 	col int
+}
+
+func (c ansiBasicColor) params() []int {
+	return []int{c.col}
 }
 
 func (c ansiBasicColor) equal(other color) bool {
@@ -34,6 +39,10 @@ type ansi256Color struct {
 	col int
 }
 
+func (c ansi256Color) params() []int {
+	return []int{5, c.col}
+}
+
 func (c ansi256Color) equal(other color) bool {
 	switch other.(type) {
 	case ansi256Color:
@@ -51,6 +60,10 @@ func (c ansi256Color) String() string {
 
 type rgbColor struct {
 	rgb []int
+}
+
+func (c rgbColor) params() []int {
+	return []int{2, c.rgb[0], c.rgb[1], c.rgb[2]}
 }
 
 func (c rgbColor) equal(other color) bool {
