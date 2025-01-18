@@ -101,18 +101,8 @@ func (t *Terminal) Run() {
 }
 
 func (t *Terminal) Resize(rows, cols int) {
-	t.fb.resize(rows, cols)
-}
 
-func (t *Terminal) handle(action pAction, params *parameters, data []rune, lastbyte byte) {
-	switch action {
-	case VTPARSE_ACTION_EXECUTE:
-		t.handleExecute(lastbyte)
-	case VTPARSE_ACTION_CSI_DISPATCH:
-		t.handleCSI(params, data, lastbyte)
-	case VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
-		t.handleOSC(action, lastbyte)
-	}
+	t.fb.resize(rows, cols)
 }
 
 func (t *Terminal) handleOSC(act pAction, lastbyte byte) {
