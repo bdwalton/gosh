@@ -1,6 +1,8 @@
 package vt
 
 import (
+	"fmt"
+	"slices"
 	"testing"
 )
 
@@ -122,6 +124,61 @@ func TestFormatApplication(t *testing.T) {
 	for i, c := range cases {
 		if got := formatFromParams(c.initial, c.params); !c.want.equal(got) {
 			t.Errorf("%d: Got\n\t%s, wanted\n\t%s after applying %v to %s", i, got.String(), c.want.String(), c.params, c.initial.String())
+		}
+	}
+}
+
+func TestDiff(t *testing.T) {
+	cases := []struct {
+		srcF, destF format
+		want        []byte
+	}{
+		{
+			format{fg: standardColors[FG_WHITE], italic: true},
+			format{fg: standardColors[FG_WHITE], italic: true},
+			[]byte{},
+		},
+		{
+			format{fg: rgbColor{[]int{10, 20, 30}}, bg: rgbColor{[]int{30, 20, 10}}},
+			defFmt,
+			[]byte(FMT_RESET),
+		},
+		{
+			defFmt,
+			format{fg: standardColors[FG_WHITE], italic: true},
+			[]byte(fmt.Sprintf("%c%c%dm%c%c%d%c", ESC, ESC_CSI, FG_WHITE, ESC, ESC_CSI, ITALIC_ON, CSI_SGR)),
+		},
+		{
+			format{fg: standardColors[FG_WHITE], strikeout: true},
+			format{bg: ansi256Color{243}, reversed: true},
+			[]byte(fmt.Sprintf("%c%c%d;%d;5;%dm%c%c%d;%d%c", ESC, ESC_CSI, FG_DEF, SET_BG, 243, ESC, ESC_CSI, REVERSED_ON, STRIKEOUT_OFF, CSI_SGR)),
+		},
+		{
+			format{fg: rgbColor{[]int{10, 20, 30}}, bg: rgbColor{[]int{30, 20, 10}}},
+			format{fg: rgbColor{[]int{30, 20, 10}}, bg: rgbColor{[]int{10, 20, 30}}},
+			[]byte(fmt.Sprintf("%c%c%d;2;%d;%d;%d;%d;2;%d;%d;%d%c", ESC, ESC_CSI, SET_FG, 30, 20, 10, SET_BG, 10, 20, 30, CSI_SGR)),
+		},
+		{
+			format{fg: rgbColor{[]int{10, 20, 30}}, bg: rgbColor{[]int{30, 20, 10}}},
+			format{fg: standardColors[FG_BLUE], bg: ansi256Color{124}},
+			[]byte(fmt.Sprintf("%c%c%d;%d;5;%d%c", ESC, ESC_CSI, FG_BLUE, SET_BG, 124, CSI_SGR)),
+		},
+
+		{
+			format{fg: rgbColor{[]int{10, 20, 30}}, bg: rgbColor{[]int{30, 20, 10}}},
+			format{fg: rgbColor{[]int{10, 20, 30}}, bg: ansi256Color{124}},
+			[]byte(fmt.Sprintf("%c%c%d;5;%d%c", ESC, ESC_CSI, SET_BG, 124, CSI_SGR)),
+		},
+		{
+			defFmt,
+			format{italic: true},
+			[]byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, ITALIC_ON, CSI_SGR)),
+		},
+	}
+
+	for i, c := range cases {
+		if got := c.srcF.diff(c.destF); !slices.Equal(got, c.want) {
+			t.Errorf("%d: Got\n\t%v (%q), wanted\n\t%v (%q)", i, got, string(got), c.want, string(c.want))
 		}
 	}
 }

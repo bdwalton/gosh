@@ -3,12 +3,15 @@ package vt
 import (
 	"fmt"
 	"log/slog"
+	"strings"
 )
 
 type intensity uint8 // font intensity
 type ulstyle uint8   // underline style
 
 var defFmt = format{}
+
+const FMT_RESET = "\x1b[m"
 
 type format struct {
 	fg, bg                                        color
@@ -29,6 +32,169 @@ func (f *format) getBG() color {
 		return standardColors[BG_DEF]
 	}
 	return f.bg
+}
+
+func (src format) diff(dest format) []byte {
+	if dest.equal(defFmt) {
+		return []byte(FMT_RESET)
+	}
+
+	var sb, ts strings.Builder
+
+	switch {
+	case dest.fg == nil && src.fg != nil:
+		// Is this ok? We could reset the whole format to
+		// start, but...?
+		ts.WriteString(fmt.Sprintf("%d", FG_DEF))
+	case src.fg == nil && dest.fg != nil:
+		s := dest.fg.String()
+		// more than a 2 digit color code or 1 digit with
+		// subspecifiers (2; or 5;)
+		if len(s) > 2 {
+			s = fmt.Sprintf("%d;%s", SET_FG, s)
+		}
+		ts.WriteString(s)
+	case (src.fg != nil && dest.fg != nil):
+		if !src.fg.equal(dest.fg) {
+			s := dest.fg.String()
+			// more than a 2 digit color code or 1 digit with
+			// subspecifiers (2; or 5;)
+			if len(s) > 2 {
+				s = fmt.Sprintf("%d;%s", SET_FG, s)
+			}
+			ts.WriteString(s)
+		}
+	}
+
+	switch {
+	case dest.bg == nil && src.bg != nil:
+		if ts.Len() > 0 {
+			ts.WriteByte(';')
+		}
+		// Is this ok? We could reset the whole format to
+		// start, but...?
+		ts.WriteString(fmt.Sprintf("%d", BG_DEF))
+	case src.bg == nil && dest.bg != nil:
+		if ts.Len() > 0 {
+			ts.WriteByte(';')
+		}
+		s := dest.bg.String()
+		// more than a 2 digit color code or 1 digit with
+		// subspecifiers (2; or 5;)
+		if len(s) > 2 {
+			s = fmt.Sprintf("%d;%s", SET_BG, s)
+		}
+		ts.WriteString(s)
+	case src.bg != nil && dest.bg != nil:
+		if ts.Len() > 0 {
+			ts.WriteByte(';')
+		}
+		if !src.bg.equal(dest.bg) {
+			s := dest.bg.String()
+			// more than a 2 digit color code or 1 digit with
+			// subspecifiers (2; or 5;)
+			if len(s) > 2 {
+				s = fmt.Sprintf("%d;%s", SET_BG, s)
+			}
+			ts.WriteString(s)
+		}
+	}
+
+	if ts.Len() > 0 {
+		sb.Write([]byte{ESC, ESC_CSI})
+		sb.WriteString(ts.String())
+		sb.WriteRune(CSI_SGR)
+	}
+
+	ts.Reset()
+
+	if src.brightness != dest.brightness {
+		switch src.brightness {
+		case FONT_BOLD:
+			ts.WriteString(fmt.Sprintf("%d", INTENSITY_BOLD))
+		case FONT_DIM:
+			ts.WriteString(fmt.Sprintf("%d", INTENSITY_DIM))
+		default:
+			ts.WriteString(fmt.Sprintf("%d", INTENSITY_NORMAL))
+		}
+	}
+
+	if src.underline != dest.underline {
+		if ts.Len() > 0 {
+			ts.WriteByte(';')
+		}
+		switch src.underline {
+		case UNDERLINE_SINGLE:
+			ts.WriteString(fmt.Sprintf("%d", UNDERLINE_ON))
+		case UNDERLINE_DOUBLE:
+			ts.WriteString(fmt.Sprintf("%d", DBL_UNDERLINE))
+		default: // none
+			ts.WriteString(fmt.Sprintf("%d", UNDERLINE_OFF))
+		}
+	}
+
+	if src.italic != dest.italic {
+		if ts.Len() > 0 {
+			ts.WriteByte(';')
+		}
+		it := ITALIC_ON
+		if !dest.italic {
+			it = ITALIC_OFF
+		}
+		ts.WriteString(fmt.Sprintf("%d", it))
+	}
+
+	if src.blink != dest.blink {
+		if ts.Len() > 0 {
+			ts.WriteByte(';')
+		}
+		b := BLINK_ON
+		if !dest.blink {
+			b = BLINK_OFF
+		}
+		ts.WriteString(fmt.Sprintf("%d", b))
+	}
+
+	if src.reversed != dest.reversed {
+		if ts.Len() > 0 {
+			ts.WriteByte(';')
+		}
+		r := REVERSED_ON
+		if !dest.reversed {
+			r = REVERSED_OFF
+		}
+		ts.WriteString(fmt.Sprintf("%d", r))
+	}
+
+	if src.invisible != dest.invisible {
+		if ts.Len() > 0 {
+			ts.WriteByte(';')
+		}
+		iv := INVISIBLE_ON
+		if !dest.invisible {
+			iv = INVISIBLE_OFF
+		}
+		ts.WriteString(fmt.Sprintf("%d", iv))
+	}
+
+	if src.strikeout != dest.strikeout {
+		if ts.Len() > 0 {
+			ts.WriteByte(';')
+		}
+		s := STRIKEOUT_ON
+		if !dest.strikeout {
+			s = STRIKEOUT_OFF
+		}
+		ts.WriteString(fmt.Sprintf("%d", s))
+	}
+
+	if ts.Len() > 0 {
+		sb.Write([]byte{ESC, ESC_CSI})
+		sb.WriteString(ts.String())
+		sb.WriteRune(CSI_SGR)
+	}
+
+	return []byte(sb.String())
 }
 
 func (f *format) String() string {
