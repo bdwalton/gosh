@@ -93,11 +93,17 @@ func TestCellEfficientDiff(t *testing.T) {
 			defFmt,
 			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, ESC_CSI, FG_RED, CSI_SGR, 'a')),
 		},
+		{
+			newCell('a', format{fg: standardColors[FG_RED]}),
+			newCell('a', format{bg: standardColors[BG_RED]}),
+			defFmt,
+			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, ESC_CSI, BG_RED, CSI_SGR, 'a')),
+		},
 	}
 
 	for i, c := range cases {
 		if got := c.src.efficientDiff(c.dest, c.f); !slices.Equal(got, c.want) {
-			t.Errorf("\n%d: Got: %v\nWanted: %v", i, got, c.want)
+			t.Errorf("\n%d: Got: %v %q\nWanted: %v %q", i, got, string(got), c.want, string(c.want))
 		}
 	}
 }
