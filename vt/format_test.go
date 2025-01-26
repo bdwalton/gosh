@@ -139,9 +139,15 @@ func TestDiff(t *testing.T) {
 			[]byte{},
 		},
 		{
+			// Any diff against "dest == default" should just reset the pen
 			format{fg: rgbColor{[]int{10, 20, 30}}, bg: rgbColor{[]int{30, 20, 10}}},
 			defFmt,
 			[]byte(FMT_RESET),
+		},
+		{
+			format{fg: rgbColor{[]int{10, 20, 30}}},
+			format{bg: standardColors[BG_YELLOW]},
+			[]byte(fmt.Sprintf("%c%c%d;%d%c", ESC, ESC_CSI, FG_DEF, BG_YELLOW, CSI_SGR)),
 		},
 		{
 			defFmt,
@@ -178,7 +184,7 @@ func TestDiff(t *testing.T) {
 
 	for i, c := range cases {
 		if got := c.srcF.diff(c.destF); !slices.Equal(got, c.want) {
-			t.Errorf("%d: Got\n\t%v (%q), wanted\n\t%v (%q)", i, got, string(got), c.want, string(c.want))
+			t.Errorf("%d: Got\n\t%v (%q), wanted\n\t%v (%q)\n\t%v\n\t%v", i, got, string(got), c.want, string(c.want), c.srcF, c.destF)
 		}
 	}
 }

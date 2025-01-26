@@ -52,69 +52,33 @@ func (f *format) isDefaultBG() bool {
 }
 
 func (src format) diff(dest format) []byte {
-	if dest.equal(defFmt) {
+	if !dest.equal(src) && dest.equal(defFmt) {
 		return []byte(FMT_RESET)
 	}
 
 	var sb, ts strings.Builder
 
-	switch {
-	case dest.fg == nil && src.fg != nil:
-		// Is this ok? We could reset the whole format to
-		// start, but...?
-		ts.WriteString(fmt.Sprintf("%d", FG_DEF))
-	case src.fg == nil && dest.fg != nil:
-		s := dest.fg.String()
+	if dfg := dest.getFG(); !dfg.equal(src.getFG()) {
+		s := dfg.String()
 		// more than a 2 digit color code or 1 digit with
 		// subspecifiers (2; or 5;)
 		if len(s) > 2 {
 			s = fmt.Sprintf("%d;%s", SET_FG, s)
 		}
 		ts.WriteString(s)
-	case (src.fg != nil && dest.fg != nil):
-		if !src.fg.equal(dest.fg) {
-			s := dest.fg.String()
-			// more than a 2 digit color code or 1 digit with
-			// subspecifiers (2; or 5;)
-			if len(s) > 2 {
-				s = fmt.Sprintf("%d;%s", SET_FG, s)
-			}
-			ts.WriteString(s)
-		}
 	}
 
-	switch {
-	case dest.bg == nil && src.bg != nil:
+	if dbg := dest.getBG(); !dbg.equal(src.getBG()) {
 		if ts.Len() > 0 {
 			ts.WriteByte(';')
 		}
-		// Is this ok? We could reset the whole format to
-		// start, but...?
-		ts.WriteString(fmt.Sprintf("%d", BG_DEF))
-	case src.bg == nil && dest.bg != nil:
-		if ts.Len() > 0 {
-			ts.WriteByte(';')
-		}
-		s := dest.bg.String()
+		s := dbg.String()
 		// more than a 2 digit color code or 1 digit with
 		// subspecifiers (2; or 5;)
 		if len(s) > 2 {
 			s = fmt.Sprintf("%d;%s", SET_BG, s)
 		}
 		ts.WriteString(s)
-	case src.bg != nil && dest.bg != nil:
-		if ts.Len() > 0 {
-			ts.WriteByte(';')
-		}
-		if !src.bg.equal(dest.bg) {
-			s := dest.bg.String()
-			// more than a 2 digit color code or 1 digit with
-			// subspecifiers (2; or 5;)
-			if len(s) > 2 {
-				s = fmt.Sprintf("%d;%s", SET_BG, s)
-			}
-			ts.WriteString(s)
-		}
 	}
 
 	if ts.Len() > 0 {
