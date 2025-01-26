@@ -140,3 +140,11 @@ const (
 	PRIV_CSI_DECAWM = 7  // DEC autowrap mode, default reset
 	PRIV_CSI_LNM    = 20 // Line Feed/New Line Mode, default reset
 )
+
+// OSC actions
+const (
+	OSC_ICON_TITLE = "0"
+	OSC_ICON       = "1"
+	OSC_TITLE      = "2"
+	OSC_SETSIZE    = "X" // Gosh-specific
+)

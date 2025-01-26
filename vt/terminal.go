@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -124,16 +125,49 @@ func (t *Terminal) handleOSC(act pAction, lastbyte byte) {
 	case VTPARSE_ACTION_OSC_PUT:
 		t.oscTemp = append(t.oscTemp, rune(lastbyte))
 	case VTPARSE_ACTION_OSC_END:
+		// https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
+		// is a good description of many of the options
+		// here. So many of them are completely legacy that we
+		// won't implement them here unless it proves to be
+		// useful as we gain experience with things in the
+		// wild.
+		//
+		// NOTE: Per the xterm documentation, we're going to
+		// steal "X" to mean reasize and expect 2 parameters
+		// (rows, cols) as arguments (eg: PS X ; r ; c ST)
+		// which will allow us to succinctly pass along window
+		// size information from the emulation on the server
+		// to the emulation on the client. (The client passes
+		// this to the server with a special message, but we
+		// prefer to ship it back via "diff" which will be in
+		// the form of ANSI code using this capability.)
 		if len(t.oscTemp) > 0 {
 			parts := strings.SplitN(string(t.oscTemp), ";", 2)
 			switch parts[0] {
-			case "0":
+			case OSC_ICON_TITLE:
 				t.title = parts[1]
 				t.icon = parts[1]
-			case "1":
+			case OSC_ICON:
 				t.icon = parts[1]
-			case "2":
+			case OSC_TITLE:
 				t.title = parts[1]
+			case OSC_SETSIZE: // a Gosh convention
+				if len(parts) == 3 {
+					for {
+						var rows, cols int
+						var err error
+						if rows, err = strconv.Atoi(parts[1]); err != nil {
+							break
+						}
+						if cols, err = strconv.Atoi(parts[2]); err != nil {
+							break
+						}
+
+						t.Resize(rows, cols)
+						break
+					}
+
+				}
 			}
 			t.oscTemp = t.oscTemp[:0]
 		}
