@@ -21,17 +21,34 @@ type format struct {
 }
 
 func (f *format) getFG() color {
-	if f.fg == nil {
+	if f.isDefaultFG() {
 		return standardColors[FG_DEF]
 	}
+
 	return f.fg
 }
 
+func (f *format) isDefaultFG() bool {
+	if f.fg == nil {
+		return true
+	}
+
+	return false
+}
+
 func (f *format) getBG() color {
-	if f.bg == nil {
+	if f.isDefaultBG() {
 		return standardColors[BG_DEF]
 	}
 	return f.bg
+}
+
+func (f *format) isDefaultBG() bool {
+	if f.bg == nil {
+		return true
+	}
+
+	return false
 }
 
 func (src format) diff(dest format) []byte {
