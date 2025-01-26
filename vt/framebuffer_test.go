@@ -69,6 +69,39 @@ func TestCellDiff(t *testing.T) {
 	}
 }
 
+func TestCellEfficientDiff(t *testing.T) {
+	cases := []struct {
+		src, dest cell
+		f         format
+		want      []byte
+	}{
+		{
+			defaultCell(),
+			defaultCell(),
+			defFmt,
+			[]byte{},
+		},
+		{
+			newCell('a', format{fg: standardColors[FG_RED]}),
+			newCell('a', format{fg: standardColors[FG_RED]}),
+			format{fg: standardColors[FG_RED]},
+			[]byte{},
+		},
+		{
+			newCell('a', format{fg: standardColors[FG_RED]}),
+			newCell('a', format{fg: standardColors[FG_RED]}),
+			defFmt,
+			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, ESC_CSI, FG_RED, CSI_SGR, 'a')),
+		},
+	}
+
+	for i, c := range cases {
+		if got := c.src.efficientDiff(c.dest, c.f); !slices.Equal(got, c.want) {
+			t.Errorf("\n%d: Got: %v\nWanted: %v", i, got, c.want)
+		}
+	}
+}
+
 func TestCellEquality(t *testing.T) {
 	cases := []struct {
 		c1, c2 cell

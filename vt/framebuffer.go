@@ -83,6 +83,14 @@ func (c cell) diff(dest cell) []byte {
 	return []byte(sb.String())
 }
 
+func (c cell) efficientDiff(dest cell, f format) []byte {
+	nc := newCell(c.r, f)
+	if c.frag > 1 {
+		nc.frag = c.frag
+	}
+	return nc.diff(dest)
+}
+
 func (c cell) String() string {
 	return fmt.Sprintf("%s (f:%d) (%s)", string(c.r), c.frag, c.f.String())
 }
