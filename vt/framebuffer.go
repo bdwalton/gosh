@@ -18,8 +18,9 @@ const (
 )
 
 const (
-	FRAG_PRIMARY   = 1
-	FRAG_SECONDARY = 2
+	FRAG_NONE = iota
+	FRAG_PRIMARY
+	FRAG_SECONDARY
 )
 
 type cell struct {
@@ -85,7 +86,7 @@ func (c cell) diff(dest cell) []byte {
 
 func (c cell) efficientDiff(dest cell, f format) []byte {
 	nc := newCell(c.r, f)
-	if c.frag > 1 {
+	if c.frag != FRAG_NONE {
 		nc.frag = c.frag
 	}
 	return nc.diff(dest)
