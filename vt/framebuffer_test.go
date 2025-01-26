@@ -414,3 +414,48 @@ func TestAnsiOSCSize(t *testing.T) {
 	}
 }
 
+func TestFrameBufferDiff(t *testing.T) {
+	fb1 := newFramebuffer(10, 10)
+	fb2 := fb1.copy()
+	fb3 := fb2.copy()
+	fb3.resize(10, 20)
+	fb3.setCell(5, 11, newCell('a', defFmt))
+	fb4 := fb3.copy()
+	fb4.setCell(5, 12, newCell('b', defFmt))
+	fb5 := fb4.copy()
+	fb5.setCell(5, 12, newCell('b', format{fg: standardColors[FG_GREEN]}))
+	fb5.setCell(5, 13, newCell('c', format{fg: standardColors[FG_GREEN]}))
+
+	fb6 := fb5.copy()
+	fb6.setCell(1, 0, newCell('X', format{fg: standardColors[FG_BLUE], bg: standardColors[BG_RED], italic: true}))
+	fb6.setCell(5, 12, newCell('Y', format{fg: standardColors[FG_BLUE], bg: standardColors[BG_RED], italic: true}))
+	fb6.setCell(5, 13, newCell('Z', format{fg: standardColors[FG_YELLOW], bg: standardColors[BG_GREEN]}))
+	fb6.resize(10, 13)
+
+	cases := []struct {
+		fb1, fb2 *framebuffer
+		want     string
+	}{
+		// no diff
+		{fb1, fb2, ""},
+		// set size, move cursor, write rune
+		{fb2, fb3, "\x1b]X;10;20\\\x1b[6;12Ha"},
+		// move cursor, write rune
+		{fb3, fb4, "\x1b[6;13Hb"},
+		// move cursor, set pen, write runes
+		{fb4, fb5, "\x1b[6;13H\x1b[32mbc"},
+		// cursor, set pen, write 2 runes set size, move
+		// cursor, set pen, write rune, move cursor, write
+		// rune (only Y, no Z because of resize)
+		{fb5, fb6, "\x1b]X;10;13\\\x1b[2;H\x1b[34;41m\x1b[3mX\x1b[6;13HY"},
+	}
+
+	for i, c := range cases {
+		// shadows, but ok
+		fb1 := c.fb1.copy()
+		fb2 := c.fb2.copy()
+		if got := string(fb1.diff(fb2)); got != c.want {
+			t.Errorf("%d: Got\n\t%q, wanted\n\t%q", i, got, c.want)
+		}
+	}
+}

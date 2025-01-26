@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"unicode"
 )
@@ -113,6 +114,40 @@ func newFramebuffer(rows, cols int) *framebuffer {
 
 func (f *framebuffer) ansiOSCSize() []byte {
 	return []byte(fmt.Sprintf("%c%c%s;%d;%d%c", ESC, ESC_OSC, OSC_SETSIZE, f.getRows(), f.getCols(), ESC_ST))
+}
+
+func (src *framebuffer) diff(dest *framebuffer) []byte {
+	var sb strings.Builder
+
+	lastF := defFmt
+	lastCur := cursor{0, 0}
+
+	sz := dest.ansiOSCSize()
+	if !slices.Equal(sz, src.ansiOSCSize()) {
+		sb.Write(sz)
+	}
+
+	for r, row := range dest.data {
+		for c, destCell := range row {
+			cur := cursor{r, c}
+			srcCell, err := src.getCell(r, c)
+			if err != nil {
+				srcCell = defaultCell()
+			}
+
+			if !srcCell.equal(destCell) {
+				if cur.row != lastCur.row || cur.col != lastCur.col+1 {
+					sb.WriteString(cur.moveTo())
+				}
+
+				sb.Write(srcCell.efficientDiff(destCell, lastF))
+				lastF = destCell.getFormat()
+				lastCur = cur
+			}
+		}
+	}
+
+	return []byte(sb.String())
 }
 
 func (f *framebuffer) copy() *framebuffer {
