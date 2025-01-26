@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode/utf8"
 
 	"github.com/mattn/go-runewidth"
@@ -59,6 +60,9 @@ type Terminal struct {
 	// CSI private flags
 	privAutowrap    bool // default reset (false)
 	privNewLineMode bool // default reset (false)
+
+	// Internal
+	mux sync.Mutex
 }
 
 func NewTerminal(pio io.Reader, rows, cols int) *Terminal {
@@ -103,6 +107,7 @@ func (t *Terminal) Run() {
 		}
 
 		for _, a := range actions {
+			t.mux.Lock()
 			switch a.act {
 			case VTPARSE_ACTION_EXECUTE:
 				t.handleExecute(a.b)
@@ -111,11 +116,14 @@ func (t *Terminal) Run() {
 			case VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
 				t.handleOSC(a.act, a.b)
 			}
+			t.mux.Unlock()
 		}
 	}
 }
 
 func (t *Terminal) Resize(rows, cols int) {
+	t.mux.Lock()
+	defer t.mux.Unlock()
 
 	t.fb.resize(rows, cols)
 }
