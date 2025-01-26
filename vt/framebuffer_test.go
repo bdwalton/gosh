@@ -396,3 +396,21 @@ func TestCopy(t *testing.T) {
 		}
 	}
 }
+
+func TestAnsiOSCSize(t *testing.T) {
+	cases := []struct {
+		fb   *framebuffer
+		want []byte
+	}{
+		{newFramebuffer(10, 10), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, ESC_OSC, 10, 10, ESC_ST))},
+		{newFramebuffer(10, 5), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, ESC_OSC, 10, 5, ESC_ST))},
+		{newFramebuffer(15, 22), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, ESC_OSC, 15, 22, ESC_ST))},
+	}
+
+	for i, c := range cases {
+		if got := c.fb.ansiOSCSize(); !slices.Equal(got, c.want) {
+			t.Errorf("%d: Got\n\t%v, wanted\n\t%v", i, got, c.want)
+		}
+	}
+}
+

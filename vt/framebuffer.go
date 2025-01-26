@@ -111,6 +111,10 @@ func newFramebuffer(rows, cols int) *framebuffer {
 	}
 }
 
+func (f *framebuffer) ansiOSCSize() []byte {
+	return []byte(fmt.Sprintf("%c%c%s;%d;%d%c", ESC, ESC_OSC, OSC_SETSIZE, f.getRows(), f.getCols(), ESC_ST))
+}
+
 func (f *framebuffer) copy() *framebuffer {
 	rows := f.getRows()
 	cols := f.getCols()
