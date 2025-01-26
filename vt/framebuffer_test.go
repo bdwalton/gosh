@@ -2,7 +2,9 @@ package vt
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
+	"slices"
 	"testing"
 )
 
@@ -21,6 +23,50 @@ func fillBuffer(fb *framebuffer) *framebuffer {
 	}
 
 	return fb
+}
+
+func TestCellDiff(t *testing.T) {
+	cases := []struct {
+		src, dest cell
+		want      []byte
+	}{
+		{
+			defaultCell(),
+			defaultCell(),
+			[]byte{},
+		},
+		{
+			defaultCell(),
+			fragCell('世', defFmt, FRAG_SECONDARY),
+			[]byte{},
+		},
+		{
+			newCell('a', defFmt),
+			newCell(' ', defFmt),
+			[]byte{' '},
+		},
+		{
+			newCell('b', format{fg: standardColors[FG_BLUE]}),
+			newCell(' ', defFmt),
+			[]byte{ESC, ESC_CSI, CSI_SGR, ' '},
+		},
+		{
+			newCell('b', format{italic: true}),
+			newCell('b', defFmt),
+			[]byte{ESC, ESC_CSI, CSI_SGR, 'b'},
+		},
+		{
+			newCell('b', defFmt),
+			newCell('b', format{italic: true}),
+			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, ESC_CSI, ITALIC_ON, CSI_SGR, 'b')),
+		},
+	}
+
+	for i, c := range cases {
+		if got := c.src.diff(c.dest); !slices.Equal(got, c.want) {
+			t.Errorf("\n%d: Got: %v\nWanted: %v", i, got, c.want)
+		}
+	}
 }
 
 func TestCellEquality(t *testing.T) {

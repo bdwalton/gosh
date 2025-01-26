@@ -55,6 +55,34 @@ func (c cell) equal(other cell) bool {
 	return c.r == other.r && c.frag == other.frag && c.getFormat().equal(other.getFormat())
 }
 
+func (c cell) diff(dest cell) []byte {
+	// Rely on consumer of the diff having accepted the
+	// FRAG_SECONDARY already and doing the right things with
+	// that.
+	if dest.frag == FRAG_SECONDARY {
+		return []byte{}
+	}
+
+	var sb strings.Builder
+
+	cf, df := c.getFormat(), dest.getFormat()
+	fe := cf.equal(df)
+
+	if !fe {
+		sb.Write(cf.diff(df))
+	}
+
+	// When computing cell difference, rewrite the rune if it's
+	// different _or_ if the format is different. If we only
+	// rewrite the format, the pen color will change, but the cell
+	// wouldn't actually be updated.
+	if dest.r != c.r || !fe {
+		sb.WriteRune(dest.r)
+	}
+
+	return []byte(sb.String())
+}
+
 func (c cell) String() string {
 	return fmt.Sprintf("%s (f:%d) (%s)", string(c.r), c.frag, c.f.String())
 }
