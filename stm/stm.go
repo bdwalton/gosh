@@ -203,21 +203,21 @@ func (s *stmObj) handleWinCh() {
 
 		select {
 		case <-sig:
-			w, h, err := term.GetSize(int(os.Stdin.Fd()))
+			cols, rows, err := term.GetSize(int(os.Stdin.Fd()))
 			if err != nil {
 				slog.Error("couldn't get terminal size", "err", err)
 				continue
 			}
 
 			sz := goshpb.Resize_builder{
-				Width:  proto.Int32(int32(w)),
-				Height: proto.Int32(int32(h)),
+				Cols: proto.Int32(int32(cols)),
+				Rows: proto.Int32(int32(rows)),
 			}.Build()
 			msg := s.buildPayload(goshpb.PayloadType_WINDOW_RESIZE.Enum())
 			msg.SetSize(sz)
 
 			s.sendPayload(msg)
-			slog.Info("change window size", "rows", sz.GetHeight(), "cols", sz.GetWidth())
+			slog.Info("change window size", "rows", sz.GetRows(), "cols", sz.GetCols())
 		case <-t.C:
 			// Just a catch to ensure we don't block
 			// forever on the WINCH signal and get a
@@ -330,7 +330,7 @@ func (s *stmObj) handleRemote() {
 			}
 		case goshpb.PayloadType_WINDOW_RESIZE:
 			sz := msg.GetSize()
-			rows, cols := sz.GetHeight(), sz.GetWidth()
+			rows, cols := sz.GetRows(), sz.GetCols()
 			s.term.Resize(int(rows), int(cols))
 			pts := &pty.Winsize{
 				Rows: uint16(rows),

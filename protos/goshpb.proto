@@ -35,6 +35,6 @@ message Payload {
 }
 
 message Resize {
-  int32 width = 1;
-  int32 height = 2;
+  int32 cols = 1;
+  int32 rows = 2;
 }
