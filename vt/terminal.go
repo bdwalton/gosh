@@ -178,6 +178,8 @@ func (t *Terminal) handleOSC(act pAction, lastbyte byte) {
 					}
 
 				}
+			default:
+				slog.Error("Unknown OSC entity", "data", t.oscTemp)
 			}
 			t.oscTemp = t.oscTemp[:0]
 		}
