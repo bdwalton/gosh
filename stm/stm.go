@@ -330,11 +330,13 @@ func (s *stmObj) handleRemote() {
 			}
 		case goshpb.PayloadType_WINDOW_RESIZE:
 			sz := msg.GetSize()
-			h, w := sz.GetHeight(), sz.GetWidth()
+			rows, cols := sz.GetHeight(), sz.GetWidth()
+			s.term.Resize(int(rows), int(cols))
 			pts := &pty.Winsize{
-				Rows: uint16(h),
-				Cols: uint16(w),
+				Rows: uint16(rows),
+				Cols: uint16(cols),
 			}
+
 			if err := pty.Setsize(s.ptmx, pts); err != nil {
 				slog.Error("couldn't set size on pty", "err", err)
 			}
@@ -345,7 +347,7 @@ func (s *stmObj) handleRemote() {
 			if err := syscall.SetNonblock(pfd, true); err != nil {
 				slog.Error("couldn't set pty to nonblocking", "err", err)
 			}
-			slog.Info("changed window size", "rows", h, "cols", w)
+			slog.Info("changed window size", "rows", rows, "cols", rows)
 		case goshpb.PayloadType_SERVER_OUTPUT:
 			o := msg.GetData()
 			n, err := s.ptyIO.Write(o)
