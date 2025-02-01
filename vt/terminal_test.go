@@ -2,6 +2,7 @@ package vt
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 )
 
@@ -251,6 +252,48 @@ func TestCursorMoveTo(t *testing.T) {
 	for i, c := range cases {
 		if got := c.cur.moveTo(); got != c.want {
 			t.Errorf("%d: Got %q, wanted %q", i, got, c.want)
+		}
+	}
+}
+
+func TestTerminalDiff(t *testing.T) {
+	t1 := NewTerminal(nil, 10, 10)
+	t2 := NewTerminal(nil, 10, 10)
+	t3 := NewTerminal(nil, 20, 15)
+	t4 := t3.Copy()
+	t4.fb.setCell(5, 7, newCell('a', format{fg: standardColors[FG_RED]}))
+	t5 := t4.Copy()
+	t5.title = "mytitle"
+	t6 := t5.Copy()
+	t6.icon = "mytitle"
+	t7 := t4.Copy()
+	t7.icon = "myicon"
+	t8 := t7.Copy()
+	t8.Resize(10, 6)
+	t9 := t8.Copy()
+	t9.privAutowrap = true
+	t10 := t9.Copy()
+	t10.privAutowrap = false
+	t10.privNewLineMode = true
+
+	cases := []struct {
+		src, dest *Terminal
+		want      []byte
+	}{
+		{t1, t2, []byte{}},
+		{t2, t3, []byte(fmt.Sprintf("%c%c%s;%d;%d%c%c%c%c%c", ESC, ESC_OSC, OSC_SETSIZE, 20, 15, ESC_ST, ESC, ESC_CSI, ';', CSI_CUP))},
+		{t3, t4, []byte(fmt.Sprintf("%s%c%c%d%c%c%s", cursor{5, 7}.moveTo(), ESC, ESC_CSI, FG_RED, CSI_SGR, 'a', cursor{}.moveTo()))},
+		{t4, t5, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_TITLE, "mytitle", ESC_ST))},
+		{t4, t6, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON_TITLE, "mytitle", ESC_ST))},
+		{t4, t7, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON, "myicon", ESC_ST))},
+		{t1, t8, []byte(fmt.Sprintf("%c%c%s;%s%c%c%c%s;%d;%d%c%c%c;%c", ESC, ESC_OSC, OSC_ICON, "myicon", ESC_ST, ESC, ESC_OSC, OSC_SETSIZE, 10, 6, ESC_ST, ESC, ESC_CSI, CSI_CUP))},
+		{t8, t9, []byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_ENABLE))},
+		{t9, t10, []byte(fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
+	}
+
+	for i, c := range cases {
+		if got := c.src.Diff(c.dest); !slices.Equal(got, c.want) {
+			t.Errorf("%d: Got\n\t%q, wanted\n\t%q", i, string(got), string(c.want))
 		}
 	}
 }

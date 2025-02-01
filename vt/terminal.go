@@ -76,6 +76,68 @@ func NewTerminal(pio io.Reader, rows, cols int) *Terminal {
 	return t
 }
 
+func (t *Terminal) Copy() *Terminal {
+	t.mux.Lock()
+	defer t.mux.Unlock()
+	return &Terminal{
+		fb:              t.fb.copy(),
+		title:           t.title,
+		icon:            t.icon,
+		cur:             t.cur,
+		curF:            t.curF,
+		privAutowrap:    t.privAutowrap,
+		privNewLineMode: t.privNewLineMode,
+	}
+}
+
+func (src *Terminal) Diff(dest *Terminal) []byte {
+	var sb strings.Builder
+
+	if src.title != dest.title || src.icon != dest.icon {
+		switch {
+		case dest.title == dest.icon:
+			sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON_TITLE, string(dest.title), ESC_ST))
+		default:
+			if src.icon != dest.icon {
+				sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON, string(dest.icon), ESC_ST))
+			}
+			if src.title != dest.title {
+				sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_TITLE, string(dest.title), ESC_ST))
+			}
+		}
+	}
+
+	if src.privAutowrap != dest.privAutowrap {
+		b := CSI_PRIV_DISABLE
+		if dest.privAutowrap {
+			b = CSI_PRIV_ENABLE
+		}
+		sb.WriteString(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_DECAWM, b))
+	}
+
+	if src.privNewLineMode != dest.privNewLineMode {
+		b := CSI_PRIV_DISABLE
+		if dest.privNewLineMode {
+			b = CSI_PRIV_ENABLE
+		}
+		sb.WriteString(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_LNM, b))
+	}
+
+	// we always generate diffs as from previous to current
+	fbd := src.fb.diff(dest.fb)
+	if len(fbd) > 0 {
+		sb.Write(fbd)
+		// Always reset the cursor
+		sb.WriteString(dest.cur.moveTo())
+		// We assume that the pen was changed during the
+		// writing of the framebuffer diff, so always generate
+		// a full format reset for the diff
+		sb.Write(defFmt.diff(dest.curF))
+	}
+
+	return []byte(sb.String())
+}
+
 func (t *Terminal) Run() {
 	rr := bufio.NewReader(t.ptyIO)
 
