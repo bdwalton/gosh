@@ -361,7 +361,7 @@ func (t *Terminal) print(r rune) {
 		}
 
 		t.fb.setCell(row, col, c)
-	case 1, 2: // default (1 colume), wide (2 columns)
+	case 1, 2: // default (1 column), wide (2 columns)
 		if col <= t.fb.getCols()-rw {
 			t.clearFrags(row, col)
 			nc := newCell(r, t.curF)
