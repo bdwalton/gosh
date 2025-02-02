@@ -98,8 +98,7 @@ func (c cell) String() string {
 }
 
 type framebuffer struct {
-	top, bottom, left, right int // scroll window parameters
-	data                     [][]cell
+	data [][]cell
 }
 
 func newFramebuffer(rows, cols int) *framebuffer {
@@ -155,11 +154,7 @@ func (f *framebuffer) copy() *framebuffer {
 	cols := f.getCols()
 
 	nf := &framebuffer{
-		top:    f.top,
-		bottom: f.bottom,
-		left:   f.left,
-		right:  f.right,
-		data:   make([][]cell, rows, rows),
+		data: make([][]cell, rows, rows),
 	}
 
 	for row := range f.data {
@@ -193,10 +188,6 @@ func (f *framebuffer) String() string {
 
 func (f *framebuffer) equal(other *framebuffer) bool {
 	if f.getCols() != other.getCols() || f.getRows() != other.getRows() {
-		return false
-	}
-
-	if f.top != other.top || f.bottom != other.bottom || f.left != other.left || f.right != other.right {
 		return false
 	}
 
@@ -255,16 +246,6 @@ func (f *framebuffer) resize(rows, cols int) bool {
 	}
 
 	return true
-}
-
-func (f *framebuffer) setTBScroll(top, bottom int) {
-	f.top = top
-	f.bottom = bottom
-}
-
-func (f *framebuffer) setLRScroll(left, right int) {
-	f.left = left
-	f.right = right
 }
 
 func (f *framebuffer) resetRows(from, to int) bool {

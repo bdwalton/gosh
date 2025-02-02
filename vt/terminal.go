@@ -57,6 +57,9 @@ type Terminal struct {
 	// Temp
 	oscTemp []rune
 
+	// scroll region parameters
+	top, bottom, left, right int
+
 	// CSI private flags
 	privAutowrap    bool // default reset (false)
 	privNewLineMode bool // default reset (false)
@@ -423,7 +426,8 @@ func (t *Terminal) setTopBottom(params *parameters) {
 		return // matches xterm
 	}
 
-	t.fb.setTBScroll(top-1, bottom-1)
+	t.top = top - 1
+	t.bottom = bottom - 1
 }
 
 func (t *Terminal) setLeftRight(params *parameters) {
@@ -434,7 +438,8 @@ func (t *Terminal) setLeftRight(params *parameters) {
 		return // matches xterm
 	}
 
-	t.fb.setLRScroll(left-1, right-1)
+	t.left = left - 1
+	t.right = right - 1
 }
 
 func (t *Terminal) cursorMove(params *parameters, moveType byte) {
