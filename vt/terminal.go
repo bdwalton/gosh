@@ -42,6 +42,39 @@ func (c cursor) String() string {
 	return fmt.Sprintf("(%d, %d)", c.row, c.col)
 }
 
+type margin struct {
+	val1, val2 int
+	set        bool
+}
+
+func newMargin(val1, val2 int) margin {
+	return margin{val1: val1, val2: val2, set: true}
+}
+
+func (m margin) isSet() bool {
+	return m.set
+}
+
+func (m margin) getVal1() int {
+	return m.val1
+}
+
+func (m margin) getVal2() int {
+	return m.val2
+}
+
+func (m margin) equal(other margin) bool {
+	if m.set != other.set || m.val1 != other.val2 || m.val2 != other.val2 {
+		return false
+	}
+
+	return true
+}
+
+func (m margin) String() string {
+	return fmt.Sprintf("(%d,%d)/%t", m.val1, m.val2, m.set)
+}
+
 type Terminal struct {
 	// Functional members
 	p  *parser
@@ -57,8 +90,8 @@ type Terminal struct {
 	// Temp
 	oscTemp []rune
 
-	// scroll region parameters
-	top, bottom, left, right int
+	// scroll margin/region parameters
+	vertMargin, horizMargin margin
 
 	// CSI private flags
 	privAutowrap    bool // default reset (false)
@@ -426,8 +459,10 @@ func (t *Terminal) setTopBottom(params *parameters) {
 		return // matches xterm
 	}
 
-	t.top = top - 1
-	t.bottom = bottom - 1
+	// https://vt100.net/docs/vt510-rm/DECSTBM.html
+	// STBM sets the cursor to 1,1 (0,0)
+	t.vertMargin = newMargin(top-1, bottom-1)
+	t.cursorMoveAbs(0, 0)
 }
 
 func (t *Terminal) setLeftRight(params *parameters) {
@@ -438,8 +473,10 @@ func (t *Terminal) setLeftRight(params *parameters) {
 		return // matches xterm
 	}
 
-	t.left = left - 1
-	t.right = right - 1
+	// https://vt100.net/docs/vt510-rm/DECSLRM.html
+	// STBM sets the cursor to 1,1 (0,0)
+	t.horizMargin = newMargin(left-1, right-1)
+	t.cursorMoveAbs(0, 0)
 }
 
 func (t *Terminal) cursorMove(params *parameters, moveType byte) {
