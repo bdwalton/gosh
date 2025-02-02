@@ -51,6 +51,13 @@ func newMargin(val1, val2 int) margin {
 	return margin{val1: val1, val2: val2, set: true}
 }
 
+func (m margin) contains(v int) bool {
+	if !m.isSet() || (m.val1 <= v && v <= m.val2) {
+		return true
+	}
+	return false
+}
+
 func (m margin) isSet() bool {
 	return m.set
 }

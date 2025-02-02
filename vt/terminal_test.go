@@ -328,3 +328,21 @@ func TestMarginEqual(t *testing.T) {
 		}
 	}
 }
+
+func TestMarginContains(t *testing.T) {
+	cases := []struct {
+		m    margin
+		v    int
+		want bool
+	}{
+		{margin{}, 10, true}, // isSet == false, so everything contained
+		{margin{val1: 5, val2: 7, set: true}, 10, false},
+		{margin{val1: 5, val2: 7, set: true}, 6, true},
+	}
+
+	for i, c := range cases {
+		if got := c.m.contains(c.v); got != c.want {
+			t.Errorf("%d: Got %t, wanted %t when calling %q.contains(%d)", i, got, c.want, c.m, c.v)
+		}
+	}
+}
