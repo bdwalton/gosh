@@ -275,6 +275,13 @@ func TestTerminalDiff(t *testing.T) {
 	t10 := t9.Copy()
 	t10.privAutowrap = false
 	t10.privNewLineMode = true
+	t11 := t10.Copy()
+	t11.vertMargin = newMargin(2, 5)
+	t12 := t10.Copy()
+	t12.horizMargin = newMargin(3, 7)
+	t13 := t10.Copy()
+	t13.horizMargin = newMargin(0, 4)
+	t13.vertMargin = newMargin(1, 6)
 
 	cases := []struct {
 		src, dest *Terminal
@@ -289,6 +296,11 @@ func TestTerminalDiff(t *testing.T) {
 		{t1, t8, []byte(fmt.Sprintf("%c%c%s;%s%c%c%c%s;%d;%d%c%c%c;%c", ESC, ESC_OSC, OSC_ICON, "myicon", ESC_ST, ESC, ESC_OSC, OSC_SETSIZE, 10, 6, ESC_ST, ESC, ESC_CSI, CSI_CUP))},
 		{t8, t9, []byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_ENABLE))},
 		{t9, t10, []byte(fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
+		{t10, t11, []byte(fmt.Sprintf("%c%c%d;%d%c", ESC, ESC_CSI, 3, 6, CSI_DECSTBM))},
+		{t10, t12, []byte(fmt.Sprintf("%c%c%d;%d%c", ESC, ESC_CSI, 4, 8, CSI_DECSLRM))},
+		{t9, t11, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c%d%c%c%c%d%c", ESC, ESC_CSI, 3, 6, CSI_DECSTBM, ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
+		{t9, t12, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c%d%c%c%c%d%c", ESC, ESC_CSI, 4, 8, CSI_DECSLRM, ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
+		{t9, t13, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c%d;%d%c%c%c%d%c%c%c%d%c", ESC, ESC_CSI, 1, 5, CSI_DECSLRM, ESC, ESC_CSI, 2, 7, CSI_DECSTBM, ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
 	}
 
 	for i, c := range cases {

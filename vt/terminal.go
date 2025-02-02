@@ -71,6 +71,11 @@ func (m margin) equal(other margin) bool {
 	return true
 }
 
+func (m margin) getAnsi(csi rune) string {
+	// +1 because we're zero based internally
+	return fmt.Sprintf("%c%c%d;%d%c", ESC, ESC_CSI, m.val1+1, m.val2+1, csi)
+}
+
 func (m margin) String() string {
 	return fmt.Sprintf("(%d,%d)/%t", m.val1, m.val2, m.set)
 }
@@ -141,6 +146,14 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 				sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_TITLE, string(dest.title), ESC_ST))
 			}
 		}
+	}
+
+	if !src.horizMargin.equal(dest.horizMargin) {
+		sb.WriteString(dest.horizMargin.getAnsi(CSI_DECSLRM))
+	}
+
+	if !src.vertMargin.equal(dest.vertMargin) {
+		sb.WriteString(dest.vertMargin.getAnsi(CSI_DECSTBM))
 	}
 
 	if src.privAutowrap != dest.privAutowrap {
