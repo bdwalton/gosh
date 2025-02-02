@@ -210,47 +210,48 @@ func TestPrint(t *testing.T) {
 	wfb13 := dfb()
 	wfb13.setCell(5, 5, newCell('a', defFmt))
 
+	dterm := func(c cursor, fb *framebuffer, wrap bool) *Terminal {
+		t := NewTerminal(nil, 10, 10)
+		t.fb = fb
+		t.cur = c
+		t.privAutowrap = wrap
+		return t
+	}
+
 	cases := []struct {
-		cur      cursor
-		autowrap bool
-		fb       *framebuffer
-		r        []rune
-		wantCur  cursor
-		wantFb   *framebuffer
+		t       *Terminal
+		r       []rune
+		wantCur cursor
+		wantFb  *framebuffer
 	}{
-		{cursor{0, 0}, false, dfb(), []rune("a"), cursor{0, 1}, wfb1},
-		{cursor{0, 0}, false, dfb(), []rune("ab"), cursor{0, 2}, wfb2},
-		{cursor{0, 0}, false, dfb(), []rune("u\u0308"), cursor{0, 1}, wfb3},
-		{cursor{0, 9}, false, dfb(), []rune("u\u0308"), cursor{0, 10}, wfb4},
-		{cursor{0, 9}, true, dfb(), []rune("u\u0308"), cursor{0, 10}, wfb4},
-		{cursor{0, 10}, false, dfb(), []rune("z"), cursor{0, 10}, wfb5},
-		{cursor{0, 10}, true, dfb(), []rune("z"), cursor{1, 1}, wfb6},
-		{cursor{0, 10}, false, dfb(), []rune("世"), cursor{0, 10}, wfb7},
-		{cursor{0, 10}, true, dfb(), []rune("世"), cursor{1, 2}, wfb8},
-		{cursor{0, 5}, true, dfb(), []rune("世"), cursor{0, 7}, wfb9},
-		{cursor{5, 6}, false, ffb, []rune("u\u0308"), cursor{5, 7}, wffb},
-		{cursor{5, 6}, false, ffb2, []rune("u\u0308"), cursor{5, 7}, wffb2},
-		{cursor{9, 10}, true, sfb, []rune("u\u0308"), cursor{9, 1}, wsfb},
-		{cursor{9, 10}, false, dfb(), []rune("u\u0308"), cursor{9, 10}, wfb10},
-		{cursor{5, 5}, false, fb13, []rune("a"), cursor{5, 6}, wfb13},
+		{dterm(cursor{0, 0}, dfb(), false), []rune("a"), cursor{0, 1}, wfb1},
+		{dterm(cursor{0, 0}, dfb(), false), []rune("ab"), cursor{0, 2}, wfb2},
+		{dterm(cursor{0, 0}, dfb(), false), []rune("u\u0308"), cursor{0, 1}, wfb3},
+		{dterm(cursor{0, 9}, dfb(), false), []rune("u\u0308"), cursor{0, 10}, wfb4},
+		{dterm(cursor{0, 9}, dfb(), true), []rune("u\u0308"), cursor{0, 10}, wfb4},
+		{dterm(cursor{0, 10}, dfb(), false), []rune("z"), cursor{0, 10}, wfb5},
+		{dterm(cursor{0, 10}, dfb(), true), []rune("z"), cursor{1, 1}, wfb6},
+		{dterm(cursor{0, 10}, dfb(), false), []rune("世"), cursor{0, 10}, wfb7},
+		{dterm(cursor{0, 10}, dfb(), true), []rune("世"), cursor{1, 2}, wfb8},
+		{dterm(cursor{0, 5}, dfb(), true), []rune("世"), cursor{0, 7}, wfb9},
+		{dterm(cursor{5, 6}, ffb, false), []rune("u\u0308"), cursor{5, 7}, wffb},
+		{dterm(cursor{5, 6}, ffb2, false), []rune("u\u0308"), cursor{5, 7}, wffb2},
+		{dterm(cursor{9, 10}, sfb, true), []rune("u\u0308"), cursor{9, 1}, wsfb},
+		{dterm(cursor{9, 10}, dfb(), false), []rune("u\u0308"), cursor{9, 10}, wfb10},
+		{dterm(cursor{5, 5}, fb13, false), []rune("a"), cursor{5, 6}, wfb13},
 	}
 
 	for i, c := range cases {
-		term := NewTerminal(nil, 10, 10)
-		term.fb = c.fb
-		term.privAutowrap = c.autowrap
-		term.cur = c.cur
-
 		for _, r := range c.r {
-			term.print(r)
+			c.t.print(r)
 		}
 
-		if !term.cur.equal(c.wantCur) {
-			t.Errorf("%d: Got %q, wanted %q", i, term.cur, c.wantCur)
+		if !c.t.cur.equal(c.wantCur) {
+			t.Errorf("%d: Got %q, wanted %q", i, c.t.cur, c.wantCur)
 		}
 
-		if !term.fb.equal(c.wantFb) {
-			t.Errorf("%d: Got:\n%s\nWant:\n%s", i, term.fb, c.wantFb)
+		if !c.t.fb.equal(c.wantFb) {
+			t.Errorf("%d: Got:\n%s\nWant:\n%s", i, c.t.fb, c.wantFb)
 		}
 	}
 }
