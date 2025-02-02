@@ -138,20 +138,24 @@ func TestResetCells(t *testing.T) {
 	cases := []struct {
 		fb              *framebuffer
 		row, start, end int
+		fm              format
 		want            bool
 	}{
-		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 5, true},
-		{fillBuffer(newFramebuffer(10, 10)), 0, 5, 9, true},
-		{fillBuffer(newFramebuffer(10, 10)), -1, 5, 9, false},
-		{fillBuffer(newFramebuffer(10, 10)), 10, 5, 9, false},
-		{fillBuffer(newFramebuffer(10, 10)), 5, 9, 5, false},
-		{fillBuffer(newFramebuffer(10, 10)), 5, 9, 9, true},
+		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 5, defFmt, true},
+		{fillBuffer(newFramebuffer(10, 10)), 0, 5, 9, defFmt, true},
+		{fillBuffer(newFramebuffer(10, 10)), -1, 5, 9, defFmt, false},
+		{fillBuffer(newFramebuffer(10, 10)), 10, 5, 9, defFmt, false},
+		{fillBuffer(newFramebuffer(10, 10)), 5, 9, 5, defFmt, false},
+		{fillBuffer(newFramebuffer(10, 10)), 5, 9, 9, defFmt, true},
+		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 5, format{bg: standardColors[BG_BLUE]}, true},
+		{fillBuffer(newFramebuffer(10, 10)), 5, 9, 9, format{bg: standardColors[BG_RED]}, true},
 	}
 
-	empty := defaultCell()
-
 	for i, c := range cases {
-		resetWorked := c.fb.resetCells(c.row, c.start, c.end)
+		empty := defaultCell()
+		empty.f = c.fm
+
+		resetWorked := c.fb.resetCells(c.row, c.start, c.end, c.fm)
 		if resetWorked != c.want {
 			t.Errorf("%d: Got %t, wanted %t", i, resetWorked, c.want)
 		} else {

@@ -262,7 +262,7 @@ func (f *framebuffer) resetRows(from, to int) bool {
 	return true
 }
 
-func (f *framebuffer) resetCells(row, from, to int) bool {
+func (f *framebuffer) resetCells(row, from, to int, fm format) bool {
 	nr := len(f.data)
 	nc := len(f.data[0])
 	switch {
@@ -275,8 +275,10 @@ func (f *framebuffer) resetCells(row, from, to int) bool {
 	case from > to:
 		return false
 	default:
+		resetCell := defaultCell()
+		resetCell.f = fm
 		for col := from; col < to; col++ {
-			f.setCell(row, col, defaultCell())
+			f.setCell(row, col, resetCell)
 		}
 	}
 

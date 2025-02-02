@@ -555,11 +555,11 @@ func (t *Terminal) eraseLine(params *parameters) {
 	nc := t.fb.getCols()
 	switch m {
 	case 0: // to end of line
-		t.fb.resetCells(t.cur.row, t.cur.col, nc)
+		t.fb.resetCells(t.cur.row, t.cur.col, nc, t.curF)
 	case 1: // to start of line
-		t.fb.resetCells(t.cur.row, 0, t.cur.col)
+		t.fb.resetCells(t.cur.row, 0, t.cur.col, t.curF)
 	case 2: // entire line
-		t.fb.resetCells(t.cur.row, 0, nc)
+		t.fb.resetCells(t.cur.row, 0, nc, t.curF)
 	}
 }
 
