@@ -255,6 +255,26 @@ func TestPrint(t *testing.T) {
 	}
 }
 
+func TestCarriageReturn(t *testing.T) {
+	cases := []struct {
+		cur  cursor
+		m    margin
+		want cursor
+	}{
+		{cursor{10, 10}, margin{}, cursor{10, 0}},
+		{cursor{10, 10}, newMargin(5, 15), cursor{10, 5}},
+		{cursor{10, 4}, newMargin(5, 15), cursor{10, 0}},
+	}
+
+	for i, c := range cases {
+		term := &Terminal{fb: newFramebuffer(24, 80), horizMargin: c.m, cur: c.cur}
+		term.carriageReturn()
+		if got := term.cur; !got.equal(c.want) {
+			t.Errorf("%d: Got %v, wanted %v", i, got, c.want)
+		}
+	}
+}
+
 func TestCursorMoveTo(t *testing.T) {
 	cases := []struct {
 		cur  cursor

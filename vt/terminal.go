@@ -418,7 +418,7 @@ func (t *Terminal) handleExecute(lastbyte byte) {
 	case CTRL_BS:
 		t.cursorMoveAbs(t.cur.row, t.cur.col-1)
 	case CTRL_CR:
-		t.cursorMoveAbs(t.cur.row, 0)
+		t.carriageReturn()
 	case CTRL_LF, CTRL_FF: // libvte treats lf and ff the same, so we do too
 		t.lineFeed()
 
@@ -446,6 +446,15 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, lastbyte byte) {
 	default:
 		slog.Debug("unimplemented CSI code", "lastbyte", lastbyte, "params", params, "data", data)
 	}
+}
+
+func (t *Terminal) carriageReturn() {
+	nc := 0
+	if c := t.horizMargin.getMin(); t.horizMargin.isSet() && t.cur.col > c {
+		nc = c
+	}
+
+	t.cursorMoveAbs(t.cur.row, nc)
 }
 
 func (t *Terminal) lineFeed() {
