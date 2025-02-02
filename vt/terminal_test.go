@@ -316,9 +316,9 @@ func TestMarginEqual(t *testing.T) {
 		want   bool
 	}{
 		{margin{}, margin{}, true},
-		{newMargin(0, 0), margin{}, false}, // one set specifically
-		{margin{}, newMargin(0, 0), false}, // one set specifically
-		{newMargin(1, 1), newMargin(1, 1), true},
+		{newMargin(0, 1), margin{}, false}, // one set specifically
+		{margin{}, newMargin(0, 1), false}, // one set specifically
+		{newMargin(1, 2), newMargin(1, 2), true},
 		{newMargin(1, 2), newMargin(1, 3), false},
 	}
 
@@ -336,8 +336,8 @@ func TestMarginContains(t *testing.T) {
 		want bool
 	}{
 		{margin{}, 10, true}, // isSet == false, so everything contained
-		{margin{val1: 5, val2: 7, set: true}, 10, false},
-		{margin{val1: 5, val2: 7, set: true}, 6, true},
+		{newMargin(5, 7), 10, false},
+		{newMargin(5, 7), 6, true},
 	}
 
 	for i, c := range cases {

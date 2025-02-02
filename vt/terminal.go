@@ -48,11 +48,15 @@ type margin struct {
 }
 
 func newMargin(val1, val2 int) margin {
+	if val1 >= val2 {
+		slog.Error("invalid margin creation request val1 must be < val2", "val1", val1, "val2", val2)
+		return margin{}
+	}
 	return margin{val1: val1, val2: val2, set: true}
 }
 
 func (m margin) contains(v int) bool {
-	if !m.isSet() || (m.val1 <= v && v <= m.val2) {
+	if !m.isSet() || (m.getMin() <= v && v <= m.getMax()) {
 		return true
 	}
 	return false
@@ -62,16 +66,16 @@ func (m margin) isSet() bool {
 	return m.set
 }
 
-func (m margin) getVal1() int {
+func (m margin) getMin() int {
 	return m.val1
 }
 
-func (m margin) getVal2() int {
+func (m margin) getMax() int {
 	return m.val2
 }
 
 func (m margin) equal(other margin) bool {
-	if m.set != other.set || m.val1 != other.val2 || m.val2 != other.val2 {
+	if m.isSet() != other.isSet() || m.getMin() != other.getMin() || m.getMax() != other.getMax() {
 		return false
 	}
 
