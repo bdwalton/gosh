@@ -503,6 +503,20 @@ func (t *Terminal) setLeftRight(params *parameters) {
 	t.cursorMoveAbs(0, 0)
 }
 
+func minInt(i1, i2 int) int {
+	if i1 <= i2 {
+		return i1
+	}
+	return i2
+}
+
+func maxInt(i1, i2 int) int {
+	if i1 >= i2 {
+		return i1
+	}
+	return i2
+}
+
 func (t *Terminal) cursorMove(params *parameters, moveType byte) {
 	// No paramter indicates a 0 paramter, but for cursor
 	// movement, we always default to 1. That allows more
@@ -515,13 +529,57 @@ func (t *Terminal) cursorMove(params *parameters, moveType byte) {
 
 	switch moveType {
 	case CSI_CUU:
-		row -= n
+		if t.vertMargin.isSet() {
+			mRow := t.vertMargin.getMin()
+			// If we're already above the top of the
+			// scroll region, just move
+			if row < mRow {
+				row -= n
+			} else {
+				row = maxInt(mRow, row-n)
+			}
+		} else {
+			row -= n
+		}
 	case CSI_CUD:
-		row += n
+		if t.vertMargin.isSet() {
+			mRow := t.vertMargin.getMax()
+			// If we're already below the bottom of the
+			// scroll region, just move
+			if row > mRow {
+				row += n
+			} else {
+				row = minInt(mRow, row+n)
+			}
+		} else {
+			row += n
+		}
 	case CSI_CUB:
-		col -= n
+		if t.horizMargin.isSet() {
+			mCol := t.horizMargin.getMin()
+			// If we're already left of the scroll region,
+			// just move
+			if col < mCol {
+				col -= n
+			} else {
+				col = maxInt(mCol, col-n)
+			}
+		} else {
+			col -= n
+		}
 	case CSI_CUF:
-		col += n
+		if t.horizMargin.isSet() {
+			mCol := t.horizMargin.getMax()
+			// If we're already right of the scroll
+			// region, just move
+			if col > mCol {
+				col += n
+			} else {
+				col = minInt(mCol, col+n)
+			}
+		} else {
+			col += n
+		}
 	case CSI_CNL:
 		col = 0
 		row += n
