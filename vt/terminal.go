@@ -335,6 +335,7 @@ func (t *Terminal) print(r rune) {
 			// the first position but hadn't wrapped, we
 			// don't have something to combine with, so
 			// just punt.
+			slog.Debug("Punting on 0 width rune", "r", r)
 			return
 		}
 
