@@ -20,7 +20,7 @@ type cursor struct {
 	row, col int
 }
 
-func (c cursor) moveTo() string {
+func (c cursor) getMoveToAnsi() string {
 	var sb strings.Builder
 	sb.Write([]byte{ESC, ESC_CSI})
 	if c.row != 0 {
@@ -188,7 +188,7 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 	if len(fbd) > 0 {
 		sb.Write(fbd)
 		// Always reset the cursor
-		sb.WriteString(dest.cur.moveTo())
+		sb.WriteString(dest.cur.getMoveToAnsi())
 		// We assume that the pen was changed during the
 		// writing of the framebuffer diff, so always generate
 		// a full format reset for the diff

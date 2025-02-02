@@ -250,7 +250,7 @@ func TestCursorMoveTo(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		if got := c.cur.moveTo(); got != c.want {
+		if got := c.cur.getMoveToAnsi(); got != c.want {
 			t.Errorf("%d: Got %q, wanted %q", i, got, c.want)
 		}
 	}
@@ -289,7 +289,7 @@ func TestTerminalDiff(t *testing.T) {
 	}{
 		{t1, t2, []byte{}},
 		{t2, t3, []byte(fmt.Sprintf("%c%c%s;%d;%d%c%c%c%c%c", ESC, ESC_OSC, OSC_SETSIZE, 20, 15, ESC_ST, ESC, ESC_CSI, ';', CSI_CUP))},
-		{t3, t4, []byte(fmt.Sprintf("%s%c%c%d%c%c%s", cursor{5, 7}.moveTo(), ESC, ESC_CSI, FG_RED, CSI_SGR, 'a', cursor{}.moveTo()))},
+		{t3, t4, []byte(fmt.Sprintf("%s%c%c%d%c%c%s", cursor{5, 7}.getMoveToAnsi(), ESC, ESC_CSI, FG_RED, CSI_SGR, 'a', cursor{}.getMoveToAnsi()))},
 		{t4, t5, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_TITLE, "mytitle", ESC_ST))},
 		{t4, t6, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON_TITLE, "mytitle", ESC_ST))},
 		{t4, t7, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON, "myicon", ESC_ST))},
