@@ -159,9 +159,7 @@ func (f *framebuffer) copy() *framebuffer {
 
 	for row := range f.data {
 		nf.data[row] = make([]cell, cols, cols)
-		for col, c := range f.data[row] {
-			nf.data[row][col] = c
-		}
+		nf.setRowRegion(row, 0, cols, f.getRow(row))
 	}
 
 	return nf
@@ -310,13 +308,13 @@ func (f *framebuffer) validPoint(row, col int) bool {
 
 func (f *framebuffer) setCell(row, col int, c cell) {
 	if f.validPoint(row, col) {
-		f.data[row][col] = c
+		f.getRow(row)[col] = c
 	}
 }
 
 func (f *framebuffer) getCell(row, col int) (cell, error) {
 	if f.validPoint(row, col) {
-		return f.data[row][col], nil
+		return f.getRow(row)[col], nil
 	}
 
 	return defaultCell(), fmt.Errorf("invalid coordinates (%d, %d): %w", col, row, fbInvalidCell)
