@@ -439,3 +439,60 @@ func TestFrameBufferDiff(t *testing.T) {
 		}
 	}
 }
+
+func TestGetRowRegion(t *testing.T) {
+	ac := newCell('a', format{fg: standardColors[FG_RED]})
+	bc := newCell('b', format{fg: standardColors[FG_BLUE]})
+	fb := newFramebuffer(10, 10)
+	fb.setCell(3, 5, ac)
+	fb.setCell(4, 3, bc)
+	fb.setCell(4, 4, ac)
+
+	cases := []struct {
+		fb               *framebuffer
+		row, left, right int
+		want             []cell
+	}{
+		{fb, 2, 5, 7, make([]cell, 2)},
+		{fb, 3, 5, 7, []cell{ac, defaultCell()}},
+		{fb, 3, 5, 7, []cell{ac, defaultCell()}},
+		{fb, 4, 3, 6, []cell{bc, ac, defaultCell()}},
+	}
+
+	for i, c := range cases {
+		if got := c.fb.getRowRegion(c.row, c.left, c.right); !slices.Equal(got, c.want) {
+			t.Errorf("%d: Got\n\t%v, wanted\n\t%v", i, got, c.want)
+		}
+	}
+}
+
+func TestSetRowRegion(t *testing.T) {
+	ac := newCell('a', format{fg: standardColors[FG_RED]})
+	bc := newCell('b', format{fg: standardColors[FG_BLUE]})
+	fb := newFramebuffer(10, 10)
+	fb.setCell(3, 5, ac)
+	fb.setCell(4, 3, bc)
+	fb.setCell(4, 4, ac)
+
+	cases := []struct {
+		fb               *framebuffer
+		row, left, right int
+		new              []cell
+		want             []cell
+		wantErr          error
+	}{
+		{fb, 2, 5, 7, []cell{defaultCell(), ac}, []cell{defaultCell(), ac}, nil},
+		{fb, 3, 5, 7, []cell{ac, ac}, []cell{ac, ac}, nil},
+		{fb, 3, 5, 7, []cell{bc, ac}, []cell{bc, ac}, nil},
+		{fb, 4, 3, 6, []cell{ac, bc, bc}, []cell{ac, bc, bc}, nil},
+		{fb, 5, 3, 6, []cell{ac, bc, bc, defaultCell()}, make([]cell, 3), setRowRegionErr},
+	}
+
+	for i, c := range cases {
+		err := c.fb.setRowRegion(c.row, c.left, c.right, c.new)
+		got := c.fb.getRowRegion(c.row, c.left, c.right)
+		if !errors.Is(err, c.wantErr) || !slices.Equal(got, c.want) {
+			t.Errorf("%d: Got\n\t%v (err=%v), wanted\n\t%v (err=%v)", i, got, err, c.want, c.wantErr)
+		}
+	}
+}
