@@ -202,10 +202,20 @@ func (f *framebuffer) equal(other *framebuffer) bool {
 
 func (f *framebuffer) scrollRows(n int) {
 	nc := f.getCols()
-	for i := 0; i < n; i++ {
-		f.data = append(f.data, newRow(nc))
+	nr := f.getRows()
+	for i := 0; i < nr-n; i++ {
+		x := i + n
+		switch x < nr {
+		case true:
+			copy(f.data[i], f.getRow(x))
+		default:
+			copy(f.data[i], newRow(nc))
+		}
 	}
-	f.data = f.data[n:]
+
+	for i := nr - n; i < nr; i++ {
+		copy(f.data[i], newRow(nc))
+	}
 }
 
 func (f *framebuffer) resize(rows, cols int) bool {

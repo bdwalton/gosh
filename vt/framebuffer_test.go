@@ -305,32 +305,22 @@ func TestResize(t *testing.T) {
 }
 
 func TestScrollRows(t *testing.T) {
+	fb1 := numberedFBForTest(2, 6, 10, 2)
+
 	cases := []struct {
-		rows, cols int
-		scroll     int
-		c          cell
-		wantErr    error
+		fb     *framebuffer
+		scroll int
+		want   *framebuffer
 	}{
-		{10, 10, 2, newCell('a', defFmt), nil},
-		{10, 10, 10, newCell('z', defFmt), fbInvalidCell},
+		{numberedFBForTest(0, 8, 10, 0), 0, numberedFBForTest(0, 8, 10, 0)},
+		{numberedFBForTest(0, 8, 10, 0), 2, fb1},
+		{numberedFBForTest(0, 8, 10, 0), 8, newFramebuffer(8, 10)},
 	}
 
 	for i, c := range cases {
-		fb := newFramebuffer(c.rows, c.cols)
-		fb.setCell(fb.getRows()-1, 0, c.c)
-		fb.scrollRows(c.scroll)
-		r := fb.getRows() - 1 - c.scroll
-		got, err := fb.getCell(r, 0)
-		if c.wantErr != nil && !errors.Is(err, c.wantErr) {
-			t.Errorf("%d: Got error %v, wanted %v", i, err, c.wantErr)
-		}
-		if err == nil && !got.equal(c.c) {
-			t.Errorf("%d: Got %v, wanted %v at (%d,0): %v", i, got, c.c, r, err)
-		}
-
-		nr, nc := fb.getRows(), fb.getCols()
-		if nr != c.rows || nc != c.cols {
-			t.Errorf("%d: Got (%d, %d), wanted (%d, %d)", i, nr, nc, c.rows, c.cols)
+		c.fb.scrollRows(c.scroll)
+		if !c.fb.equal(c.want) {
+			t.Errorf("%d: Got\n%v, wanted\n%v", i, c.fb, c.want)
 		}
 	}
 }
