@@ -501,3 +501,46 @@ func TestSetRowRegion(t *testing.T) {
 		}
 	}
 }
+
+// Assumes 0-7 for rows so we can a) make cell content to a rune
+// representing original row and b) index into the standard foreground
+// colors; start indicates the numeric rune we start from when
+// creating the framebuffer and defaults indicates how many empty rows
+// to add at the end.
+func numberedFBForTest(start, rows, cols, defaults int) *framebuffer {
+	fb := newFramebuffer(rows, cols)
+	for r, row := range fb.data {
+		for c := range row {
+			fb.setCell(r, c, newCell(rune(r+start+'0'), format{fg: standardColors[30+start+r]}))
+		}
+	}
+
+	for i := 0; i < defaults; i++ {
+		fb.data = append(fb.data, newRow(cols))
+	}
+	return fb
+}
+
+func TestGetRegion(t *testing.T) {
+	dfb := numberedFBForTest(0, 8, 10, 0)
+	cases := []struct {
+		fb         *framebuffer
+		t, b, l, r int
+		want       *framebuffer
+		wantErr    error
+	}{
+		{newFramebuffer(10, 10), 0, 10, 0, 10, newFramebuffer(10, 10), nil},
+		{newFramebuffer(10, 10), 0, 11, 0, 10, newFramebuffer(10, 10), invalidRegion},
+		{dfb, 0, 8, 0, 10, numberedFBForTest(0, 8, 10, 0), nil},
+		{dfb, 1, 8, 0, 10, numberedFBForTest(1, 7, 10, 0), nil},
+		{dfb, 1, 8, 1, 9, numberedFBForTest(1, 7, 8, 0), nil},
+		{dfb, 1, 8, 1, 9, numberedFBForTest(1, 7, 8, 0), nil},
+	}
+
+	for i, c := range cases {
+
+		if got, err := c.fb.getRegion(c.t, c.b, c.l, c.r); !errors.Is(err, c.wantErr) || (got != nil && !got.equal(c.want)) {
+			t.Errorf("%d: Got\n%v (%v) wanted:\n%v (%v)", i, got, err, c.want, c.wantErr)
+		}
+	}
+}

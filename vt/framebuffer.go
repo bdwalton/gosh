@@ -320,11 +320,30 @@ func (f *framebuffer) getCell(row, col int) (cell, error) {
 	return defaultCell(), fmt.Errorf("invalid coordinates (%d, %d): %w", col, row, fbInvalidCell)
 }
 
-var invalidRegion = errors.New("invalid region specified")
+var invalidRegion = errors.New("invalid region specification")
 var setRowRegionErr = errors.New("setRegion dest and src length don't match")
 
 func (f *framebuffer) getRow(row int) []cell {
 	return f.data[row]
+}
+
+func (f *framebuffer) getRegion(t, b, l, r int) (*framebuffer, error) {
+	if t < 0 || t >= b || b > f.getRows() {
+		return nil, invalidRegion
+	}
+
+	if l < 0 || l >= r || r > f.getCols() {
+		return nil, invalidRegion
+	}
+
+	fb := &framebuffer{
+		data: f.data[t:b],
+	}
+
+	for row := range fb.data {
+		fb.data[row] = fb.data[row][l:r]
+	}
+	return fb, nil
 }
 
 func (f *framebuffer) getRowRegion(row, start, end int) ([]cell, error) {
