@@ -452,16 +452,18 @@ func TestGetRowRegion(t *testing.T) {
 		fb               *framebuffer
 		row, left, right int
 		want             []cell
+		wantErr          error
 	}{
-		{fb, 2, 5, 7, make([]cell, 2)},
-		{fb, 3, 5, 7, []cell{ac, defaultCell()}},
-		{fb, 3, 5, 7, []cell{ac, defaultCell()}},
-		{fb, 4, 3, 6, []cell{bc, ac, defaultCell()}},
+		{fb, 2, 5, 7, make([]cell, 2), nil},
+		{fb, 3, 5, 7, []cell{ac, defaultCell()}, nil},
+		{fb, 3, 5, 7, []cell{ac, defaultCell()}, nil},
+		{fb, 4, 3, 6, []cell{bc, ac, defaultCell()}, nil},
+		{fb, 4, 3, 11, nil, invalidRegion},
 	}
 
 	for i, c := range cases {
-		if got := c.fb.getRowRegion(c.row, c.left, c.right); !slices.Equal(got, c.want) {
-			t.Errorf("%d: Got\n\t%v, wanted\n\t%v", i, got, c.want)
+		if got, err := c.fb.getRowRegion(c.row, c.left, c.right); !errors.Is(err, c.wantErr) || !slices.Equal(got, c.want) {
+			t.Errorf("%d: Got\n\t%v (%v), wanted\n\t%v (%v)", i, got, err, c.want, c.wantErr)
 		}
 	}
 }
@@ -490,8 +492,11 @@ func TestSetRowRegion(t *testing.T) {
 
 	for i, c := range cases {
 		err := c.fb.setRowRegion(c.row, c.left, c.right, c.new)
-		got := c.fb.getRowRegion(c.row, c.left, c.right)
-		if !errors.Is(err, c.wantErr) || !slices.Equal(got, c.want) {
+		if !errors.Is(err, c.wantErr) {
+			t.Errorf("%d: Wanted err %v, got %v", i, c.wantErr, err)
+		}
+		got, _ := c.fb.getRowRegion(c.row, c.left, c.right)
+		if !slices.Equal(got, c.want) {
 			t.Errorf("%d: Got\n\t%v (err=%v), wanted\n\t%v (err=%v)", i, got, err, c.want, c.wantErr)
 		}
 	}
