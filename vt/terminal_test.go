@@ -280,7 +280,7 @@ func TestCarriageReturn(t *testing.T) {
 	}
 }
 
-func TestCursorMoveTo(t *testing.T) {
+func TestCursorMoveToAnsi(t *testing.T) {
 	cases := []struct {
 		cur  cursor
 		want string
