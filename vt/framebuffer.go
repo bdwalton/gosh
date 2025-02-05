@@ -112,7 +112,7 @@ func newFramebuffer(rows, cols int) *framebuffer {
 }
 
 func (f *framebuffer) ansiOSCSize() []byte {
-	return []byte(fmt.Sprintf("%c%c%s;%d;%d%c", ESC, ESC_OSC, OSC_SETSIZE, f.getRows(), f.getCols(), ESC_ST))
+	return []byte(fmt.Sprintf("%c%c%s;%d;%d%c", ESC, ESC_OSC, OSC_SETSIZE, f.getNumRows(), f.getNumCols(), ESC_ST))
 }
 
 func (src *framebuffer) diff(dest *framebuffer) []byte {
@@ -150,8 +150,8 @@ func (src *framebuffer) diff(dest *framebuffer) []byte {
 }
 
 func (f *framebuffer) copy() *framebuffer {
-	rows := f.getRows()
-	cols := f.getCols()
+	rows := f.getNumRows()
+	cols := f.getNumCols()
 
 	nf := &framebuffer{
 		data: make([][]cell, rows, rows),
@@ -185,7 +185,7 @@ func (f *framebuffer) String() string {
 }
 
 func (f *framebuffer) equal(other *framebuffer) bool {
-	if f.getCols() != other.getCols() || f.getRows() != other.getRows() {
+	if f.getNumCols() != other.getNumCols() || f.getNumRows() != other.getNumRows() {
 		return false
 	}
 
@@ -201,8 +201,8 @@ func (f *framebuffer) equal(other *framebuffer) bool {
 }
 
 func (f *framebuffer) scrollRows(n int) {
-	nc := f.getCols()
-	nr := f.getRows()
+	nc := f.getNumCols()
+	nr := f.getNumRows()
 	for i := 0; i < nr-n; i++ {
 		x := i + n
 		switch x < nr {
@@ -257,7 +257,7 @@ func (f *framebuffer) resize(rows, cols int) bool {
 }
 
 func (f *framebuffer) resetRows(from, to int) bool {
-	if from > to || from < 0 || to >= f.getRows() {
+	if from > to || from < 0 || to >= f.getNumRows() {
 		return false
 	}
 
@@ -301,16 +301,16 @@ func newRow(cols int) []cell {
 	return row
 }
 
-func (f *framebuffer) getRows() int {
+func (f *framebuffer) getNumRows() int {
 	return len(f.data)
 }
 
-func (f *framebuffer) getCols() int {
+func (f *framebuffer) getNumCols() int {
 	return len(f.data[0])
 }
 
 func (f *framebuffer) validPoint(row, col int) bool {
-	if row < 0 || row >= f.getRows() || col < 0 || col >= f.getCols() {
+	if row < 0 || row >= f.getNumRows() || col < 0 || col >= f.getNumCols() {
 		return false
 	}
 	return true
@@ -338,11 +338,11 @@ func (f *framebuffer) getRow(row int) []cell {
 }
 
 func (f *framebuffer) getRegion(t, b, l, r int) (*framebuffer, error) {
-	if t < 0 || t >= b || b > f.getRows() {
+	if t < 0 || t >= b || b > f.getNumRows() {
 		return nil, invalidRegion
 	}
 
-	if l < 0 || l >= r || r > f.getCols() {
+	if l < 0 || l >= r || r > f.getNumCols() {
 		return nil, invalidRegion
 	}
 

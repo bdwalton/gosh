@@ -341,10 +341,10 @@ func (t *Terminal) print(r rune) {
 
 		switch {
 		case col == 0 && t.privAutowrap: // we wrapped
-			col = t.fb.getCols() - 1
+			col = t.fb.getNumCols() - 1
 			row -= 1
-		case col >= t.fb.getCols(): // we're at the end of a row but didn't wrap
-			col = t.fb.getCols() - 1
+		case col >= t.fb.getNumCols(): // we're at the end of a row but didn't wrap
+			col = t.fb.getNumCols() - 1
 		default:
 			col -= 1
 		}
@@ -362,7 +362,7 @@ func (t *Terminal) print(r rune) {
 
 		t.fb.setCell(row, col, c)
 	case 1, 2: // default (1 column), wide (2 columns)
-		if col <= t.fb.getCols()-rw {
+		if col <= t.fb.getNumCols()-rw {
 			t.clearFrags(row, col)
 			nc := newCell(r, t.curF)
 
@@ -379,14 +379,14 @@ func (t *Terminal) print(r rune) {
 
 		if t.privAutowrap {
 			col = 0
-			if row == t.fb.getRows()-1 {
+			if row == t.fb.getNumRows()-1 {
 				t.fb.scrollRows(1)
 			} else {
 				row += 1
 			}
 		} else {
 			// overwrite chars at the end
-			col = t.fb.getRows() - rw
+			col = t.fb.getNumRows() - rw
 		}
 
 		t.clearFrags(row, col)
@@ -486,7 +486,7 @@ func (t *Terminal) setPriv(params *parameters, data []rune, val bool) {
 }
 
 func (t *Terminal) setTopBottom(params *parameters) {
-	nr := t.fb.getRows()
+	nr := t.fb.getNumRows()
 	top, _ := params.getItem(0, 1)
 	bottom, _ := params.getItem(1, nr)
 	if bottom <= top || top > nr || (top == 0 && bottom == 1) {
@@ -500,7 +500,7 @@ func (t *Terminal) setTopBottom(params *parameters) {
 }
 
 func (t *Terminal) setLeftRight(params *parameters) {
-	nc := t.fb.getCols()
+	nc := t.fb.getNumCols()
 	left, _ := params.getItem(0, 1)
 	right, _ := params.getItem(1, nc)
 	if right <= left || left >= nc || (left == 0 && right == 1) {
@@ -610,7 +610,7 @@ func (t *Terminal) cursorMoveAbs(row, col int) {
 	t.cur.col = col
 	t.cur.row = row
 
-	nc := t.fb.getCols()
+	nc := t.fb.getNumCols()
 	switch {
 	case t.cur.col < 0:
 		t.cur.col = 0
@@ -618,7 +618,7 @@ func (t *Terminal) cursorMoveAbs(row, col int) {
 		t.cur.col = nc - 1
 	}
 
-	nr := t.fb.getRows()
+	nr := t.fb.getNumRows()
 	// TODO: Fix this
 	switch {
 	case t.cur.row < 0:
@@ -631,7 +631,7 @@ func (t *Terminal) cursorMoveAbs(row, col int) {
 func (t *Terminal) eraseLine(params *parameters) {
 	m, _ := params.getItem(0, 0)
 
-	nc := t.fb.getCols()
+	nc := t.fb.getNumCols()
 	switch m {
 	case 0: // to end of line
 		t.fb.resetCells(t.cur.row, t.cur.col, nc, t.curF)
@@ -645,7 +645,7 @@ func (t *Terminal) eraseLine(params *parameters) {
 func (t *Terminal) eraseInDisplay(params *parameters) {
 	m, _ := params.getItem(0, 0)
 
-	nr := t.fb.getRows()
+	nr := t.fb.getNumRows()
 	switch m {
 	case 0: // active position to end of screen, inclusive
 		t.fb.resetRows(t.cur.row, nr)

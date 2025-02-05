@@ -16,8 +16,8 @@ var nonDefFmt = format{
 }
 
 func fillBuffer(fb *framebuffer) *framebuffer {
-	for row := 0; row < fb.getRows(); row++ {
-		for col := 0; col < fb.getCols(); col++ {
+	for row := 0; row < fb.getNumRows(); row++ {
+		for col := 0; col < fb.getNumCols(); col++ {
 			fb.setCell(row, col, newCell('a'+rune(rand.Intn(26)), nonDefFmt))
 		}
 	}
@@ -160,8 +160,8 @@ func TestResetCells(t *testing.T) {
 			t.Errorf("%d: Got %t, wanted %t", i, resetWorked, c.want)
 		} else {
 			if resetWorked {
-				nr := c.fb.getRows()
-				nc := c.fb.getCols()
+				nr := c.fb.getNumRows()
+				nc := c.fb.getNumCols()
 				for row := 0; row < nr; row++ {
 					for col := 0; col < nc; col++ {
 						got, _ := c.fb.getCell(row, col)
@@ -209,8 +209,8 @@ func TestResetRows(t *testing.T) {
 			t.Errorf("%d: Got %t, wanted %t", i, resetWorked, c.want)
 		} else {
 			if resetWorked {
-				nr := c.fb.getRows()
-				nc := c.fb.getCols()
+				nr := c.fb.getNumRows()
+				nc := c.fb.getNumCols()
 				for row := 0; row < nr; row++ {
 					for col := 0; col < nc; col++ {
 						got, _ := c.fb.getCell(row, col)
@@ -283,8 +283,8 @@ func TestResize(t *testing.T) {
 		if got != c.want {
 			t.Errorf("%d: Expected %t resize, but got %t", i, c.want, got)
 		} else {
-			if got && (c.fb.getRows() != c.nrows || c.fb.getCols() != c.ncols) {
-				t.Errorf("%d: Expected (%d, %d), got (%d, %d)", i, c.nrows, c.ncols, c.fb.getRows(), c.fb.getCols())
+			if got && (c.fb.getNumRows() != c.nrows || c.fb.getNumCols() != c.ncols) {
+				t.Errorf("%d: Expected (%d, %d), got (%d, %d)", i, c.nrows, c.ncols, c.fb.getNumRows(), c.fb.getNumCols())
 			}
 		}
 	}

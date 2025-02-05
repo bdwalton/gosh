@@ -25,8 +25,8 @@ func TestCursorMove(t *testing.T) {
 		{&Terminal{fb: fb1, vertMargin: newMargin(5, 15), cur: cursor{10, 0}}, paramsFromInts([]int{6}), CSI_CUU, 5, 0},
 		{&Terminal{fb: fb1, vertMargin: newMargin(5, 15), cur: cursor{4, 0}}, paramsFromInts([]int{2}), CSI_CUU, 2, 0},
 		// CUD - cursor down
-		{&Terminal{fb: fb1, cur: cursor{fb1.getRows() - 1, 1}}, paramsFromInts([]int{}), CSI_CUD, fb1.getRows() - 1, 1},
-		{&Terminal{fb: fb1, cur: cursor{fb1.getRows() - 1, 1}}, paramsFromInts([]int{3}), CSI_CUD, fb1.getRows() - 1, 1},
+		{&Terminal{fb: fb1, cur: cursor{fb1.getNumRows() - 1, 1}}, paramsFromInts([]int{}), CSI_CUD, fb1.getNumRows() - 1, 1},
+		{&Terminal{fb: fb1, cur: cursor{fb1.getNumRows() - 1, 1}}, paramsFromInts([]int{3}), CSI_CUD, fb1.getNumRows() - 1, 1},
 		{&Terminal{fb: fb1, cur: cursor{0, 0}}, paramsFromInts([]int{}), CSI_CUD, 1, 0},
 		{&Terminal{fb: fb1, cur: cursor{0, 0}}, paramsFromInts([]int{3}), CSI_CUD, 3, 0},
 		{&Terminal{fb: fb1, vertMargin: newMargin(5, 15), cur: cursor{10, 0}}, paramsFromInts([]int{2}), CSI_CUD, 12, 0},
@@ -44,8 +44,8 @@ func TestCursorMove(t *testing.T) {
 		{&Terminal{fb: fb1, horizMargin: newMargin(5, 15), cur: cursor{10, 4}}, paramsFromInts([]int{2}), CSI_CUB, 10, 2},
 
 		// CUF - cursor forward
-		{&Terminal{fb: fb1, cur: cursor{15, fb1.getCols() - 1}}, paramsFromInts([]int{}), CSI_CUF, 15, fb1.getCols() - 1},
-		{&Terminal{fb: fb1, cur: cursor{15, fb1.getCols() - 1}}, paramsFromInts([]int{10}), CSI_CUF, 15, fb1.getCols() - 1},
+		{&Terminal{fb: fb1, cur: cursor{15, fb1.getNumCols() - 1}}, paramsFromInts([]int{}), CSI_CUF, 15, fb1.getNumCols() - 1},
+		{&Terminal{fb: fb1, cur: cursor{15, fb1.getNumCols() - 1}}, paramsFromInts([]int{10}), CSI_CUF, 15, fb1.getNumCols() - 1},
 		{&Terminal{fb: fb1, cur: cursor{15, 0}}, paramsFromInts([]int{}), CSI_CUF, 15, 1},
 		{&Terminal{fb: fb1, cur: cursor{15, 0}}, paramsFromInts([]int{10}), CSI_CUF, 15, 10},
 		{&Terminal{fb: fb1, horizMargin: newMargin(5, 15), cur: cursor{15, 0}}, paramsFromInts([]int{2}), CSI_CUF, 15, 2},
@@ -59,29 +59,29 @@ func TestCursorMove(t *testing.T) {
 		{&Terminal{fb: fb1, cur: cursor{21, 10}}, paramsFromInts([]int{20}), CSI_CPL, 1, 0},
 
 		// CNL - next line
-		{&Terminal{fb: fb1, cur: cursor{fb1.getRows() - 1, 0}}, paramsFromInts([]int{}), CSI_CNL, fb1.getRows() - 1, 0},
-		{&Terminal{fb: fb1, cur: cursor{fb1.getRows() - 1, 0}}, paramsFromInts([]int{2}), CSI_CNL, fb1.getRows() - 1, 0},
+		{&Terminal{fb: fb1, cur: cursor{fb1.getNumRows() - 1, 0}}, paramsFromInts([]int{}), CSI_CNL, fb1.getNumRows() - 1, 0},
+		{&Terminal{fb: fb1, cur: cursor{fb1.getNumRows() - 1, 0}}, paramsFromInts([]int{2}), CSI_CNL, fb1.getNumRows() - 1, 0},
 		{&Terminal{fb: fb1, cur: cursor{0, 0}}, paramsFromInts([]int{}), CSI_CNL, 1, 0},
 		{&Terminal{fb: fb1, cur: cursor{0, 0}}, paramsFromInts([]int{10}), CSI_CNL, 10, 0},
 		// CHA - cursor horizontal absolute
 		{&Terminal{fb: fb1, cur: cursor{0, 0}}, paramsFromInts([]int{}), CSI_CHA, 0, 0},
 		{&Terminal{fb: fb1, cur: cursor{0, 0}}, paramsFromInts([]int{10}), CSI_CHA, 0, 9},  // 0 vs 1 based
 		{&Terminal{fb: fb1, cur: cursor{0, 10}}, paramsFromInts([]int{10}), CSI_CHA, 0, 9}, // 0 vs 1 based
-		{&Terminal{fb: fb1, cur: cursor{0, 10}}, paramsFromInts([]int{fb1.getCols() + 10}), CSI_CHA, 0, fb1.getCols() - 1},
+		{&Terminal{fb: fb1, cur: cursor{0, 10}}, paramsFromInts([]int{fb1.getNumCols() + 10}), CSI_CHA, 0, fb1.getNumCols() - 1},
 		// CUP - cursor position
 		{&Terminal{fb: fb1, cur: cursor{0, 0}}, paramsFromInts([]int{}), CSI_CUP, 0, 0},
 		{&Terminal{fb: fb1, cur: cursor{10, 25}}, paramsFromInts([]int{}), CSI_CUP, 0, 0},
 		{&Terminal{fb: fb1, cur: cursor{0, 0}}, paramsFromInts([]int{}), CSI_CUP, 0, 0},
 		{&Terminal{fb: fb1, cur: cursor{10, 25}}, paramsFromInts([]int{0, 16}), CSI_CUP, 0, 15},
 		{&Terminal{fb: fb1, cur: cursor{10, 25}}, paramsFromInts([]int{16}), CSI_CUP, 15, 0},
-		{&Terminal{fb: fb1, cur: cursor{10, 25}}, paramsFromInts([]int{1000, 1000}), CSI_CUP, fb1.getRows() - 1, fb1.getCols() - 1},
+		{&Terminal{fb: fb1, cur: cursor{10, 25}}, paramsFromInts([]int{1000, 1000}), CSI_CUP, fb1.getNumRows() - 1, fb1.getNumCols() - 1},
 		// HVP - horizontal vertical position
 		{&Terminal{fb: fb1, cur: cursor{0, 0}}, paramsFromInts([]int{}), CSI_HVP, 0, 0},
 		{&Terminal{fb: fb1, cur: cursor{10, 25}}, paramsFromInts([]int{}), CSI_HVP, 0, 0},
 		{&Terminal{fb: fb1, cur: cursor{0, 0}}, paramsFromInts([]int{}), CSI_HVP, 0, 0},
 		{&Terminal{fb: fb1, cur: cursor{10, 25}}, paramsFromInts([]int{0, 16}), CSI_HVP, 0, 15},
 		{&Terminal{fb: fb1, cur: cursor{10, 25}}, paramsFromInts([]int{16}), CSI_HVP, 15, 0},
-		{&Terminal{fb: fb1, cur: cursor{10, 25}}, paramsFromInts([]int{1000, 1000}), CSI_HVP, fb1.getRows() - 1, fb1.getCols() - 1},
+		{&Terminal{fb: fb1, cur: cursor{10, 25}}, paramsFromInts([]int{1000, 1000}), CSI_HVP, fb1.getNumRows() - 1, fb1.getNumCols() - 1},
 	}
 
 	for i, c := range cases {
