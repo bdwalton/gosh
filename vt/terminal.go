@@ -527,6 +527,13 @@ func maxInt(i1, i2 int) int {
 	return i2
 }
 
+func (t *Terminal) cursorInScrollingRegion() bool {
+	return t.horizMargin.isSet() &&
+		t.vertMargin.isSet() &&
+		t.horizMargin.contains(t.cur.row) &&
+		t.vertMargin.contains(t.cur.col)
+}
+
 func (t *Terminal) cursorMove(params *parameters, moveType byte) {
 	// No paramter indicates a 0 paramter, but for cursor
 	// movement, we always default to 1. That allows more

@@ -6,6 +6,27 @@ import (
 	"testing"
 )
 
+func TestCursorInScrollingRegion(t *testing.T) {
+	cases := []struct {
+		t    *Terminal
+		want bool
+	}{
+		{&Terminal{}, false},
+		{&Terminal{horizMargin: newMargin(0, 10)}, false},
+		{&Terminal{vertMargin: newMargin(0, 10)}, false},
+		{&Terminal{vertMargin: newMargin(5, 10), horizMargin: newMargin(5, 10)}, false},
+		{&Terminal{cur: cursor{5, 5}, vertMargin: newMargin(5, 10), horizMargin: newMargin(5, 10)}, true},
+		{&Terminal{cur: cursor{10, 10}, vertMargin: newMargin(5, 10), horizMargin: newMargin(5, 10)}, true},
+		{&Terminal{cur: cursor{11, 11}, vertMargin: newMargin(5, 10), horizMargin: newMargin(5, 10)}, false},
+	}
+
+	for i, c := range cases {
+		if got := c.t.cursorInScrollingRegion(); got != c.want {
+			t.Errorf("%d: Got %t, wanted %t for %v", i, got, c.want, c.t)
+		}
+	}
+}
+
 func TestCursorMove(t *testing.T) {
 	fb1 := newFramebuffer(24, 80)
 
