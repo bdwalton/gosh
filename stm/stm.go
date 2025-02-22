@@ -347,7 +347,7 @@ func (s *stmObj) handleRemote() {
 			if err := syscall.SetNonblock(pfd, true); err != nil {
 				slog.Error("couldn't set pty to nonblocking", "err", err)
 			}
-			slog.Info("changed window size", "rows", rows, "cols", rows)
+			slog.Debug("changed window size", "rows", rows, "cols", rows)
 		case goshpb.PayloadType_SERVER_OUTPUT:
 			o := msg.GetData()
 			n, err := s.ptyIO.Write(o)
