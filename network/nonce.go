@@ -2,7 +2,7 @@ package network
 
 import (
 	"encoding/binary"
-	"fmt"
+	"log/slog"
 	"math"
 	"sync"
 )
@@ -24,7 +24,8 @@ func (n *nonce) nextId() uint64 {
 func (n *nonce) nextGCMNonce(dir uint8) []byte {
 	nce := n.nextId()
 	if nce > uint64(math.MaxUint32) {
-		panic(fmt.Sprintf("nonce pool exceeded %d", nce))
+		slog.Error("nonce pool exceeded", "nonce", nce)
+		panic("nonce pool exceeded")
 	}
 	b := make([]byte, 12)
 	b[0] = byte(dir)
@@ -36,11 +37,13 @@ func (n *nonce) nextGCMNonce(dir uint8) []byte {
 // nonce, which should match either CLIENT or SERVER
 func nonceFromBytes(b []byte) (uint64, uint8) {
 	if len(b) != 12 {
-		panic("invalid nonce bytes passed in")
+		slog.Error("invalid nonce bytes")
+		panic("invalid nonce bytes")
 	}
 	n := binary.LittleEndian.Uint64(b[4:])
 	if n > uint64(math.MaxUint32) {
-		panic(fmt.Sprintf("nonce pool exceeded %d", n))
+		slog.Error("nonce pool exceeded", "nonce", n)
+		panic("nonce pool exceeded")
 	}
 	return n, uint8(b[0])
 }
