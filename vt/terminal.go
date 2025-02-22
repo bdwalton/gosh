@@ -237,6 +237,8 @@ func (t *Terminal) Run() {
 				t.handleCSI(a.params, a.data, a.b)
 			case VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
 				t.handleOSC(a.act, a.b)
+			case VTPARSE_ACTION_PRINT:
+				t.print(a.r)
 			default:
 				slog.Debug("unhandled action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.r, "byte", a.b)
 			}
