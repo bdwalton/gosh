@@ -202,8 +202,7 @@ func (t *Terminal) Run() {
 	rr := bufio.NewReader(t.ptyIO)
 
 	for {
-		var actions []*action
-
+		var r rune
 		r, sz, err := rr.ReadRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
@@ -214,33 +213,31 @@ func (t *Terminal) Run() {
 			}
 			continue
 		}
+
 		if r == utf8.RuneError && sz == 1 {
 			rr.UnreadRune()
 			b, err := rr.ReadByte()
 			if err != nil {
 				slog.Error("pty ReadByte", "b", b, "err", err)
 				continue
-
-			} else {
-				actions = t.p.parseByte(b)
 			}
-		} else {
-			actions = t.p.parseRune(r)
+
+			r = rune(b)
 		}
 
-		for _, a := range actions {
+		for _, a := range t.p.parse(r) {
 			t.mux.Lock()
 			switch a.act {
 			case VTPARSE_ACTION_EXECUTE:
-				t.handleExecute(a.b)
+				t.handleExecute(a.r)
 			case VTPARSE_ACTION_CSI_DISPATCH:
-				t.handleCSI(a.params, a.data, a.b)
+				t.handleCSI(a.params, a.data, a.r)
 			case VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
-				t.handleOSC(a.act, a.b)
+				t.handleOSC(a.act, a.r)
 			case VTPARSE_ACTION_PRINT:
 				t.print(a.r)
 			default:
-				slog.Debug("unhandled action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.r, "byte", a.b)
+				slog.Debug("unhandled action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.r)
 			}
 			t.mux.Unlock()
 		}
@@ -254,10 +251,10 @@ func (t *Terminal) Resize(rows, cols int) {
 	t.fb.resize(rows, cols)
 }
 
-func (t *Terminal) handleOSC(act pAction, lastbyte byte) {
+func (t *Terminal) handleOSC(act pAction, last rune) {
 	switch act {
 	case VTPARSE_ACTION_OSC_PUT:
-		t.oscTemp = append(t.oscTemp, rune(lastbyte))
+		t.oscTemp = append(t.oscTemp, last)
 	case VTPARSE_ACTION_OSC_END:
 		// https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
 		// is a good description of many of the options
@@ -414,8 +411,8 @@ func (t *Terminal) print(r rune) {
 	}
 }
 
-func (t *Terminal) handleExecute(lastbyte byte) {
-	switch lastbyte {
+func (t *Terminal) handleExecute(last rune) {
+	switch last {
 	case CTRL_BEL:
 		// just swallow this for now
 	case CTRL_BS:
@@ -428,8 +425,8 @@ func (t *Terminal) handleExecute(lastbyte byte) {
 	}
 }
 
-func (t *Terminal) handleCSI(params *parameters, data []rune, lastbyte byte) {
-	switch lastbyte {
+func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
+	switch last {
 	case CSI_PRIV_ENABLE:
 		t.setPriv(params, data, true)
 	case CSI_PRIV_DISABLE:
@@ -443,11 +440,11 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, lastbyte byte) {
 	case CSI_ED:
 		t.eraseInDisplay(params)
 	case CSI_CUP, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
-		t.cursorMove(params, lastbyte)
+		t.cursorMove(params, last)
 	case CSI_SGR:
 		t.curF = formatFromParams(t.curF, params)
 	default:
-		slog.Debug("unimplemented CSI code", "lastbyte", lastbyte, "params", params, "data", data)
+		slog.Debug("unimplemented CSI code", "last", last, "params", params, "data", data)
 	}
 }
 
@@ -536,7 +533,7 @@ func (t *Terminal) cursorInScrollingRegion() bool {
 		t.vertMargin.contains(t.cur.col)
 }
 
-func (t *Terminal) cursorMove(params *parameters, moveType byte) {
+func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 	// No paramter indicates a 0 paramter, but for cursor
 	// movement, we always default to 1. That allows more
 	// efficient specification of the common movements.

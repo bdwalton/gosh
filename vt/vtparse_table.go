@@ -93,8 +93,8 @@ var EXIT_ACTIONS map[pState]pAction = map[pState]pAction{
 
 // For each state, build a map of input byte to encoded
 // state+action transition.
-var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
-	VTPARSE_STATE_CSI_ENTRY: map[byte]transition{ // state 1
+var STATE_TABLE map[pState]map[rune]transition = map[pState]map[rune]transition{
+	VTPARSE_STATE_CSI_ENTRY: map[rune]transition{ // state 1
 		0x00: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
@@ -256,7 +256,7 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x9e: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 		0x9f: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 	},
-	VTPARSE_STATE_CSI_IGNORE: map[byte]transition{ // state 2
+	VTPARSE_STATE_CSI_IGNORE: map[rune]transition{ // state 2
 		0x00: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
@@ -418,7 +418,7 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x9e: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 		0x9f: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 	},
-	VTPARSE_STATE_CSI_INTERMEDIATE: map[byte]transition{ // state 3
+	VTPARSE_STATE_CSI_INTERMEDIATE: map[rune]transition{ // state 3
 		0x00: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
@@ -580,7 +580,7 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x9e: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 		0x9f: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 	},
-	VTPARSE_STATE_CSI_PARAM: map[byte]transition{ // state 4
+	VTPARSE_STATE_CSI_PARAM: map[rune]transition{ // state 4
 		0x00: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
@@ -742,7 +742,7 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x9e: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 		0x9f: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 	},
-	VTPARSE_STATE_DCS_ENTRY: map[byte]transition{ // state 5
+	VTPARSE_STATE_DCS_ENTRY: map[rune]transition{ // state 5
 		0x00: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
@@ -904,7 +904,7 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x9e: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 		0x9f: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 	},
-	VTPARSE_STATE_DCS_IGNORE: map[byte]transition{ // state 6
+	VTPARSE_STATE_DCS_IGNORE: map[rune]transition{ // state 6
 		0x00: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
@@ -1066,7 +1066,7 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x9e: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 		0x9f: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 	},
-	VTPARSE_STATE_DCS_INTERMEDIATE: map[byte]transition{ // state 7
+	VTPARSE_STATE_DCS_INTERMEDIATE: map[rune]transition{ // state 7
 		0x00: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
@@ -1228,7 +1228,7 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x9e: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 		0x9f: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 	},
-	VTPARSE_STATE_DCS_PARAM: map[byte]transition{ // state 8
+	VTPARSE_STATE_DCS_PARAM: map[rune]transition{ // state 8
 		0x00: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
@@ -1390,7 +1390,7 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x9e: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 		0x9f: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 	},
-	VTPARSE_STATE_DCS_PASSTHROUGH: map[byte]transition{ // state 9
+	VTPARSE_STATE_DCS_PASSTHROUGH: map[rune]transition{ // state 9
 		0x00: newTransition(VTPARSE_ACTION_PUT, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_PUT, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_PUT, VTPARSE_STATE_NONE),
@@ -1552,7 +1552,7 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x9e: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 		0x9f: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 	},
-	VTPARSE_STATE_ESCAPE: map[byte]transition{ // state 10
+	VTPARSE_STATE_ESCAPE: map[rune]transition{ // state 10
 		0x00: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
@@ -1714,7 +1714,7 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x9e: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 		0x9f: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 	},
-	VTPARSE_STATE_ESCAPE_INTERMEDIATE: map[byte]transition{ // state 11
+	VTPARSE_STATE_ESCAPE_INTERMEDIATE: map[rune]transition{ // state 11
 		0x00: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
@@ -1876,7 +1876,7 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x9e: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 		0x9f: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 	},
-	VTPARSE_STATE_GROUND: map[byte]transition{ // state 12
+	VTPARSE_STATE_GROUND: map[rune]transition{ // state 12
 		0x00: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_EXECUTE, VTPARSE_STATE_NONE),
@@ -2038,7 +2038,7 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x9e: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 		0x9f: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 	},
-	VTPARSE_STATE_OSC_STRING: map[byte]transition{ // state 13
+	VTPARSE_STATE_OSC_STRING: map[rune]transition{ // state 13
 		0x00: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
@@ -2203,7 +2203,7 @@ var STATE_TABLE map[pState]map[byte]transition = map[pState]map[byte]transition{
 		0x9e: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 		0x9f: newTransition(VTPARSE_ACTION_NOP, VTPARSE_STATE_SOS_PM_APC_STRING),
 	},
-	VTPARSE_STATE_SOS_PM_APC_STRING: map[byte]transition{ // state 14
+	VTPARSE_STATE_SOS_PM_APC_STRING: map[rune]transition{ // state 14
 		0x00: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x01: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),
 		0x02: newTransition(VTPARSE_ACTION_IGNORE, VTPARSE_STATE_NONE),

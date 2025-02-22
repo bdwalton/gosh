@@ -87,19 +87,21 @@ func newParser() *parser {
 	}
 }
 
-func (p *parser) parseRune(r rune) []*action {
-	switch p.state {
-	case VTPARSE_STATE_GROUND:
-		return []*action{
-			&action{VTPARSE_ACTION_PRINT, p.params, p.intermediate, 0, r},
+func (p *parser) parse(r rune) []*action {
+	trans, ok := STATE_TABLE[p.state][r]
+	if !ok {
+		switch p.state {
+		case VTPARSE_STATE_GROUND:
+			return []*action{p.action(VTPARSE_ACTION_PRINT, r)}
+		case VTPARSE_STATE_OSC_STRING:
+			return []*action{p.action(VTPARSE_ACTION_OSC_PUT, r)}
+		default:
+			slog.Debug("Unhandled state for failed rune lookup", "state", STATE_NAME[p.state], "r", r)
 		}
+
 	}
 
-	return nil
-}
-
-func (p *parser) parseByte(b byte) []*action {
-	return p.stateChange(STATE_TABLE[p.state][b], b)
+	return p.stateChange(trans, r)
 }
 
 // action is what we'll return to our clients to udpate and manage
@@ -108,25 +110,22 @@ type action struct {
 	act    pAction
 	params *parameters
 	data   []rune
-	// only 1 of b or r should be used by consumers. this is still
-	// an ugly wart we should fix with utf8 handling
-	b byte
-	r rune
+	r      rune
 }
 
-func (p *parser) action(act pAction, b byte) *action {
+func (p *parser) action(act pAction, r rune) *action {
 	switch act {
 	case VTPARSE_ACTION_PRINT, VTPARSE_ACTION_EXECUTE, VTPARSE_ACTION_HOOK, VTPARSE_ACTION_PUT, VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END, VTPARSE_ACTION_UNHOOK, VTPARSE_ACTION_CSI_DISPATCH, VTPARSE_ACTION_ESC_DISPATCH:
-		return &action{act, p.params, p.intermediate, b, rune(b)}
+		return &action{act, p.params, p.intermediate, r}
 	case VTPARSE_ACTION_IGNORE:
 		// Do nothing
 	case VTPARSE_ACTION_COLLECT:
-		p.intermediate = append(p.intermediate, rune(b))
+		p.intermediate = append(p.intermediate, r)
 	case VTPARSE_ACTION_PARAM:
 		// State table only covers ; for param separator, but
 		// : should be allowed.
 		// TODO: Add : support later when we get to vttest level.
-		if b == ';' {
+		if r == ';' {
 			if p.params.numItems() == 0 {
 				p.params.addItem(0)
 			}
@@ -134,22 +133,22 @@ func (p *parser) action(act pAction, b byte) *action {
 		} else {
 			switch p.params.numItems() {
 			case 0:
-				p.params.addItem(int(b - '0'))
+				p.params.addItem(int(r - '0'))
 			default:
-				p.params.alterItem(p.params.lastItem()*10 + int(b-'0'))
+				p.params.alterItem(p.params.lastItem()*10 + int(r-'0'))
 			}
 		}
 	case VTPARSE_ACTION_CLEAR:
 		p.intermediate = p.intermediate[:0]
 		p.params.reset()
 	default:
-		return &action{VTPARSE_ACTION_ERROR, nil, nil, 0, 0}
+		return &action{VTPARSE_ACTION_ERROR, nil, nil, 0}
 	}
 
 	return nil
 }
 
-func (p *parser) stateChange(t transition, b byte) []*action {
+func (p *parser) stateChange(t transition, r rune) []*action {
 	newState := t.state()
 	act := t.action()
 
@@ -160,26 +159,26 @@ func (p *parser) stateChange(t transition, b byte) []*action {
 		enter := ENTRY_ACTIONS[newState]
 
 		if exit != VTPARSE_ACTION_NOP {
-			if a := p.action(exit, b); a != nil {
+			if a := p.action(exit, r); a != nil {
 				ret = append(ret, a)
 			}
 		}
 
 		if act != VTPARSE_ACTION_NOP {
-			if a := p.action(act, b); a != nil {
+			if a := p.action(act, r); a != nil {
 				ret = append(ret, a)
 			}
 		}
 
 		if enter != VTPARSE_ACTION_NOP {
-			if a := p.action(enter, b); a != nil {
+			if a := p.action(enter, r); a != nil {
 				ret = append(ret, a)
 			}
 		}
 
 		p.state = newState
 	} else {
-		if a := p.action(act, b); a != nil {
+		if a := p.action(act, r); a != nil {
 			ret = append(ret, a)
 		}
 	}

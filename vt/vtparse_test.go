@@ -9,7 +9,7 @@ type dummyD struct {
 	actions      []pAction
 	params       *parameters
 	intermediate []rune
-	lastbyte     byte
+	last         rune
 	oscTemp      []rune
 	oscString    []rune
 }
@@ -31,17 +31,17 @@ func (d *dummyD) getActions() []string {
 	return acts
 }
 
-func (d *dummyD) handle(act pAction, params *parameters, intermediate []rune, lastbyte byte) {
+func (d *dummyD) handle(act pAction, params *parameters, intermediate []rune, last rune) {
 	d.actions = append(d.actions, act)
 	switch act {
 	case VTPARSE_ACTION_OSC_PUT:
-		d.oscTemp = append(d.oscTemp, rune(lastbyte))
+		d.oscTemp = append(d.oscTemp, last)
 	case VTPARSE_ACTION_OSC_END:
 		d.oscString = d.oscTemp
 	default:
 		d.params = params
 		d.intermediate = intermediate
-		d.lastbyte = lastbyte
+		d.last = last
 	}
 }
 
@@ -66,7 +66,7 @@ func TestFirstParamEmpty(t *testing.T) {
 	for i, c := range cases {
 		p := newParser()
 		for _, b := range c.input {
-			p.parseByte(b)
+			p.parse(rune(b))
 		}
 		if p.params.numItems() != c.wantParams.numItems() || !slices.Equal(p.params.items, c.wantParams.items) {
 			t.Errorf("%d: Got %v, want %v", i, p.params, c.wantParams)
@@ -76,49 +76,49 @@ func TestFirstParamEmpty(t *testing.T) {
 
 func TestCSIParsing(t *testing.T) {
 	cases := []struct {
-		input            []byte
+		input            []rune
 		wantActions      []pAction
 		wantParams       *parameters
 		wantIntermediate []rune
-		wantLast         byte
+		wantLast         rune
 	}{
 		{
-			[]byte{C1_CSI, ';', 'm'},
+			[]rune{C1_CSI, ';', 'm'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{0, 0}),
 			[]rune{},
 			CSI_SGR,
 		},
 		{
-			[]byte{C1_CSI, 'm'},
+			[]rune{C1_CSI, 'm'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{}),
 			[]rune{},
 			CSI_SGR,
 		},
 		{
-			[]byte{C1_CSI, '1', '0', 'A'},
+			[]rune{C1_CSI, '1', '0', 'A'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{10}),
 			[]rune{},
 			CSI_CUU,
 		},
 		{
-			[]byte{C1_CSI, '1', '0', ';', '3', 'H'},
+			[]rune{C1_CSI, '1', '0', ';', '3', 'H'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{10, 3}),
 			[]rune{},
 			CSI_CUP,
 		},
 		{
-			[]byte{C1_CSI, '6', 'n'},
+			[]rune{C1_CSI, '6', 'n'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{6}),
 			[]rune{},
 			CSI_DSR,
 		},
 		{
-			[]byte{C1_CSI, '?', '2', '0', '0', '4', 'l'},
+			[]rune{C1_CSI, '?', '2', '0', '0', '4', 'l'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{2004}),
 			[]rune{'?'},
@@ -129,9 +129,9 @@ func TestCSIParsing(t *testing.T) {
 	for i, c := range cases {
 		p := newParser()
 		d := newDummy()
-		for _, b := range c.input {
-			for _, a := range p.parseByte(b) {
-				d.handle(a.act, a.params, a.data, a.b)
+		for _, r := range c.input {
+			for _, a := range p.parse(r) {
+				d.handle(a.act, a.params, a.data, a.r)
 			}
 		}
 
@@ -144,29 +144,29 @@ func TestCSIParsing(t *testing.T) {
 		if !slices.Equal(d.intermediate, c.wantIntermediate) {
 			t.Errorf("%d: Invalid params. Got %v, want %v", i, p.intermediate, c.wantIntermediate)
 		}
-		if d.lastbyte != c.wantLast {
-			t.Errorf("%d: Invalid last byte. Got %02x, want %02x", i, d.lastbyte, c.wantLast)
+		if d.last != c.wantLast {
+			t.Errorf("%d: Invalid last byte. Got %02x, want %02x", i, d.last, c.wantLast)
 		}
 	}
 }
 
 func TestOSCString(t *testing.T) {
 	cases := []struct {
-		input   []byte
+		input   []rune
 		wantOSC string
 	}{
-		{[]byte{C1_OSC, '0', ';', 'i', 'c', 'o', 'n', 't', 'i', 't', 'l', 'e', CTRL_BEL}, "0;icontitle"},
-		{[]byte{C1_OSC, '1', ';', 'i', 'c', 'o', 'n', CTRL_ST}, "1;icon"},
-		{[]byte{ESC, ESC_OSC, '2', ';', 't', 'i', 't', 'l', 'e', CTRL_ST}, "2;title"},
-		{[]byte{ESC, ESC_OSC, '3', ';', 'F', 'o', 'O', CTRL_BEL}, "3;FoO"},
+		{[]rune{C1_OSC, '0', ';', 'i', 'c', 'o', 'n', 't', 'i', 't', 'l', 'e', CTRL_BEL}, "0;icontitle"},
+		{[]rune{C1_OSC, '1', ';', 'i', 'c', 'o', 'n', CTRL_ST}, "1;icon"},
+		{[]rune{ESC, ESC_OSC, '2', ';', 't', 'i', 't', 'l', 'e', CTRL_ST}, "2;title"},
+		{[]rune{ESC, ESC_OSC, '3', ';', 'F', 'o', 'O', CTRL_BEL}, "3;FoO"},
 	}
 
 	for i, c := range cases {
 		d := newDummy()
 		p := newParser()
-		for _, b := range c.input {
-			for _, a := range p.parseByte(b) {
-				d.handle(a.act, a.params, a.data, a.b)
+		for _, r := range c.input {
+			for _, a := range p.parse(r) {
+				d.handle(a.act, a.params, a.data, a.r)
 			}
 		}
 		if string(d.oscString) != c.wantOSC {

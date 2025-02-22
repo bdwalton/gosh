@@ -33,7 +33,7 @@ func TestCursorMove(t *testing.T) {
 	cases := []struct {
 		t                *Terminal
 		params           *parameters
-		mt               byte // move type
+		mt               rune // move type
 		wantRow, wantCol int
 	}{
 		// CUU - cursor up
