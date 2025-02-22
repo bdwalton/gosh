@@ -238,7 +238,7 @@ func (t *Terminal) Run() {
 			case VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
 				t.handleOSC(a.act, a.b)
 			default:
-				panic(fmt.Sprintf("unhandled action: %q - data:%v, byte:%c", ACTION_NAMES[a.act], a.data, a.b))
+				slog.Debug("unhandled action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.r, "byte", a.b)
 			}
 			t.mux.Unlock()
 		}
