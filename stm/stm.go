@@ -28,12 +28,6 @@ const (
 	SERVER
 )
 
-const (
-	// Like it's 1975 baby!
-	DEF_ROWS = 24
-	DEF_COLS = 80
-)
-
 type stmObj struct {
 	gc     *network.GConn
 	origSz *term.State // original state of the client pty
@@ -68,7 +62,7 @@ func NewClient(gc *network.GConn) (*stmObj, error) {
 		gc:     gc,
 		origSz: orig,
 		st:     CLIENT,
-		term:   vt.NewTerminal(pr, DEF_ROWS, DEF_COLS),
+		term:   vt.NewTerminal(pr),
 		ptyIO:  pw,
 	}
 
@@ -86,7 +80,7 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 	// TODO: We should probably clean this a bit, but for now,
 	// just pass it all through.
 	cmd.Env = os.Environ()
-	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: DEF_ROWS, Cols: DEF_COLS})
+	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: vt.DEF_ROWS, Cols: vt.DEF_COLS})
 	if err != nil {
 		return nil, fmt.Errorf("couldn't start pty: %v", err)
 	}
@@ -105,7 +99,7 @@ func NewServer(gc *network.GConn) (*stmObj, error) {
 		cancelPty: cancel,
 		st:        SERVER,
 		cmd:       cmd,
-		term:      vt.NewTerminal(ptmx, DEF_ROWS, DEF_COLS),
+		term:      vt.NewTerminal(ptmx),
 	}
 
 	return s, nil

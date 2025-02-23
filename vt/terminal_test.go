@@ -236,7 +236,7 @@ func TestPrint(t *testing.T) {
 	wfb13.setCell(5, 5, newCell('a', defFmt))
 
 	dterm := func(c cursor, fb *framebuffer, wrap bool) *Terminal {
-		t := NewTerminal(nil, 10, 10)
+		t := NewTerminal(nil)
 		t.fb = fb
 		t.cur = c
 		t.privAutowrap = wrap
@@ -320,9 +320,12 @@ func TestCursorMoveToAnsi(t *testing.T) {
 }
 
 func TestTerminalDiff(t *testing.T) {
-	t1 := NewTerminal(nil, 10, 10)
-	t2 := NewTerminal(nil, 10, 10)
-	t3 := NewTerminal(nil, 20, 15)
+	t1 := NewTerminal(nil)
+	t1.Resize(10, 10)
+	t2 := NewTerminal(nil)
+	t2.Resize(10, 10)
+	t3 := NewTerminal(nil)
+	t3.Resize(20, 15)
 	t4 := t3.Copy()
 	t4.fb.setCell(5, 7, newCell('a', format{fg: standardColors[FG_RED]}))
 	t5 := t4.Copy()

@@ -1,6 +1,12 @@
 package vt
 
 const (
+	// Like it's 1975 baby!
+	DEF_ROWS = 24
+	DEF_COLS = 80
+)
+
+const (
 	ESC     = 0x1b
 	ESC_DCS = 'P'
 	C1_DCS  = 0x8f

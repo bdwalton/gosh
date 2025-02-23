@@ -117,9 +117,9 @@ type Terminal struct {
 	mux sync.Mutex
 }
 
-func NewTerminal(pio io.Reader, rows, cols int) *Terminal {
+func NewTerminal(pio io.Reader) *Terminal {
 	t := &Terminal{
-		fb:      newFramebuffer(rows, cols),
+		fb:      newFramebuffer(DEF_ROWS, DEF_COLS),
 		oscTemp: make([]rune, 0),
 		ptyIO:   pio,
 	}
