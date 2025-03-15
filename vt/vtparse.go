@@ -1,6 +1,9 @@
 package vt
 
-import "log/slog"
+import (
+	"fmt"
+	"log/slog"
+)
 
 const (
 	MAX_EXPECTED_INTERMEDIATE = 10
@@ -28,6 +31,10 @@ type parameters struct {
 
 func newParams() *parameters {
 	return &parameters{items: make([]int, 0, MAX_EXPECTED_PARAMS)}
+}
+
+func (p *parameters) String() string {
+	return fmt.Sprintf("n=%d %v", p.num, p.items)
 }
 
 func (p *parameters) addItem(item int) {
