@@ -232,7 +232,7 @@ func (t *Terminal) Run() {
 				t.handleExecute(a.r)
 			case VTPARSE_ACTION_CSI_DISPATCH:
 				t.handleCSI(a.params, a.data, a.r)
-			case VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
+			case VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
 				t.handleOSC(a.act, a.r)
 			case VTPARSE_ACTION_PRINT:
 				t.print(a.r)
@@ -263,6 +263,8 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 
 func (t *Terminal) handleOSC(act pAction, last rune) {
 	switch act {
+	case VTPARSE_ACTION_OSC_START:
+		t.oscTemp = make([]rune, 0)
 	case VTPARSE_ACTION_OSC_PUT:
 		t.oscTemp = append(t.oscTemp, last)
 	case VTPARSE_ACTION_OSC_END:
@@ -310,7 +312,7 @@ func (t *Terminal) handleOSC(act pAction, last rune) {
 
 				}
 			default:
-				slog.Error("Unknown OSC entity", "data", t.oscTemp)
+				slog.Error("Unknown OSC entity", "data", string(t.oscTemp))
 			}
 			t.oscTemp = t.oscTemp[:0]
 		}
