@@ -236,6 +236,8 @@ func (t *Terminal) Run() {
 				t.handleOSC(a.act, a.r)
 			case VTPARSE_ACTION_PRINT:
 				t.print(a.r)
+			case VTPARSE_ACTION_ESC_DISPATCH:
+				t.handleESC(a.params, a.data, a.r)
 			default:
 				slog.Debug("unhandled action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.r)
 			}
@@ -249,6 +251,14 @@ func (t *Terminal) Resize(rows, cols int) {
 	defer t.mux.Unlock()
 
 	t.fb.resize(rows, cols)
+}
+
+func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
+	switch r {
+	default:
+		slog.Debug("ignoring ESC", "r", string(r), "params", params, "data", data)
+	}
+
 }
 
 func (t *Terminal) handleOSC(act pAction, last rune) {
