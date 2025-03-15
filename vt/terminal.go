@@ -20,6 +20,10 @@ type cursor struct {
 	row, col int
 }
 
+func (c cursor) Copy() cursor {
+	return cursor{row: c.row, col: c.col}
+}
+
 func (c cursor) getMoveToAnsi() string {
 	var sb strings.Builder
 	sb.Write([]byte{ESC, ESC_CSI})
@@ -99,9 +103,9 @@ type Terminal struct {
 	ptyIO io.Reader
 
 	// State
-	title, icon string
-	cur         cursor
-	curF        format
+	title, icon   string
+	cur, savedCur cursor
+	curF          format
 
 	// Temp
 	oscTemp []rune
@@ -255,6 +259,10 @@ func (t *Terminal) Resize(rows, cols int) {
 
 func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	switch r {
+	case '7': // save cursor
+		t.savedCur = t.cur.Copy()
+	case '8': // restore cursor
+		t.cur = t.savedCur.Copy()
 	default:
 		slog.Debug("ignoring ESC", "r", string(r), "params", params, "data", data)
 	}
@@ -285,6 +293,7 @@ func (t *Terminal) handleOSC(act pAction, last rune) {
 		// prefer to ship it back via "diff" which will be in
 		// the form of ANSI code using this capability.)
 		if len(t.oscTemp) > 0 {
+			slog.Debug("Handling OSC data", "data", string(t.oscTemp))
 			parts := strings.SplitN(string(t.oscTemp), ";", 2)
 			switch parts[0] {
 			case OSC_ICON_TITLE:
