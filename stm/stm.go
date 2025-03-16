@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path/filepath"
 	"sync"
 	"syscall"
 	"time"
@@ -69,17 +68,7 @@ func NewClient(gc *network.GConn) (*stmObj, error) {
 	return s, nil
 }
 
-func NewServer(gc *network.GConn) (*stmObj, error) {
-	ctx, cancel := context.WithCancel(context.Background())
-
-	// Start a login shell with a pty.
-	shell := os.Getenv("SHELL")
-	lshell := "-" + filepath.Base(shell)
-	cmd := exec.CommandContext(ctx, shell)
-	cmd.Args = []string{lshell}
-	// TODO: We should probably clean this a bit, but for now,
-	// just pass it all through.
-	cmd.Env = os.Environ()
+func NewServer(gc *network.GConn, cmd *exec.Cmd, cancel context.CancelFunc) (*stmObj, error) {
 	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: vt.DEF_ROWS, Cols: vt.DEF_COLS})
 	if err != nil {
 		return nil, fmt.Errorf("couldn't start pty: %v", err)

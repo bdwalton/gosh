@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"syscall"
 
 	"github.com/bdwalton/gosh/logging"
@@ -53,7 +55,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	s, err := stm.NewServer(gc)
+	cmd, cancel := getCmd()
+	s, err := stm.NewServer(gc, cmd, cancel)
 	if err != nil {
 		slog.Error("Couldn't setup STM server", "err", err)
 		os.Exit(1)
@@ -93,4 +96,19 @@ func runDetached() error {
 	}
 
 	return cmd.Process.Release()
+}
+
+func getCmd() (*exec.Cmd, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Start a login shell with a pty.
+	shell := os.Getenv("SHELL")
+	lshell := "-" + filepath.Base(shell)
+	cmd := exec.CommandContext(ctx, shell)
+	cmd.Args = []string{lshell}
+	// TODO: We should probably clean this a bit, but for now,
+	// just pass it all through.
+	cmd.Env = os.Environ()
+
+	return cmd, cancel
 }
