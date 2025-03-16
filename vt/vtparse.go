@@ -71,7 +71,6 @@ func (p *parameters) lastItem() int {
 
 func (p *parameters) consumeItem() (int, bool) {
 	if p.num < 1 {
-		slog.Debug("consumed from empty params")
 		return 0, false
 	}
 	n := p.items[0]
