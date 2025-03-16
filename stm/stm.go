@@ -16,7 +16,6 @@ import (
 	"github.com/bdwalton/gosh/network"
 	"github.com/bdwalton/gosh/protos/goshpb"
 	"github.com/bdwalton/gosh/vt"
-	"github.com/creack/pty"
 	"golang.org/x/term"
 	"google.golang.org/protobuf/proto"
 	tspb "google.golang.org/protobuf/types/known/timestamppb"
@@ -286,34 +285,19 @@ func (s *stmObj) handleRemote() {
 			s.Shutdown()
 		case goshpb.PayloadType_CLIENT_INPUT:
 			keys := msg.GetData()
-			if n, err := s.ptmx.Write(keys); err != nil || n != len(keys) {
-				slog.Error("couldn't write to pty", "n", n, "len(keys)", len(keys), "err", err)
+			if n, err := s.term.Write(keys); err != nil || n != len(keys) {
+				slog.Error("couldn't write to terminal", "n", n, "len(keys)", len(keys), "err", err)
 			}
 		case goshpb.PayloadType_WINDOW_RESIZE:
 			sz := msg.GetSize()
 			rows, cols := sz.GetRows(), sz.GetCols()
 			s.term.Resize(int(rows), int(cols))
-			pts := &pty.Winsize{
-				Rows: uint16(rows),
-				Cols: uint16(cols),
-			}
 
-			if err := pty.Setsize(s.ptmx, pts); err != nil {
-				slog.Error("couldn't set size on pty", "err", err)
-			}
-			// Any use of Fd(), including in the InheritSize call above,
-			// will set the descriptor non-blocking, so we need to change
-			// that here.
-			pfd := int(s.ptmx.Fd())
-			if err := syscall.SetNonblock(pfd, true); err != nil {
-				slog.Error("couldn't set pty to nonblocking", "err", err)
-			}
-			slog.Debug("changed window size", "rows", rows, "cols", rows)
 		case goshpb.PayloadType_SERVER_OUTPUT:
 			o := msg.GetData()
-			n, err := s.ptyW.Write(o)
+			n, err := s.term.Write(o)
 			if err != nil || n != len(o) {
-				slog.Error("couldn't write to stdout", "err", err)
+				slog.Error("couldn't write to terminal", "err", err)
 				break
 			}
 		}

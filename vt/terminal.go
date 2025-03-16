@@ -16,6 +16,7 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/mattn/go-runewidth"
+	"github.com/robertkrimen/isatty"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -81,6 +82,14 @@ func NewTerminal(r, w *os.File) *Terminal {
 	t.ptyW = w
 
 	return t
+}
+
+func (t *Terminal) Read(p []byte) (int, error) {
+	return t.ptyR.Read(p)
+}
+
+func (t *Terminal) Write(p []byte) (int, error) {
+	return t.ptyW.Write(p)
 }
 
 func (t *Terminal) Copy() *Terminal {
@@ -203,10 +212,30 @@ func (t *Terminal) Run() {
 }
 
 func (t *Terminal) Resize(rows, cols int) {
+	pts := &pty.Winsize{
+		Rows: uint16(rows),
+		Cols: uint16(cols),
+	}
+
+	if isatty.Check(t.ptyW.Fd()) {
+		if err := pty.Setsize(t.ptyW, pts); err != nil {
+			slog.Error("couldn't set size on pty", "err", err)
+		}
+		// Any use of Fd(), including in the InheritSize call above,
+		// will set the descriptor non-blocking, so we need to change
+		// that here.
+		pfd := int(t.ptyW.Fd())
+		if err := syscall.SetNonblock(pfd, true); err != nil {
+			slog.Error("couldn't set pty to nonblocking", "err", err)
+			return
+		}
+	}
+
 	t.mux.Lock()
 	defer t.mux.Unlock()
 
 	t.fb.resize(rows, cols)
+	slog.Debug("changed window size", "rows", rows, "cols", rows)
 }
 
 func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
