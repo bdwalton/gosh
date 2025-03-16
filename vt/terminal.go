@@ -131,13 +131,13 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 	if src.title != dest.title || src.icon != dest.icon {
 		switch {
 		case dest.title == dest.icon:
-			sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON_TITLE, string(dest.title), ESC_ST))
+			sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON_TITLE, string(dest.title), CTRL_BEL))
 		default:
 			if src.icon != dest.icon {
-				sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON, string(dest.icon), ESC_ST))
+				sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON, string(dest.icon), CTRL_BEL))
 			}
 			if src.title != dest.title {
-				sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_TITLE, string(dest.title), ESC_ST))
+				sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_TITLE, string(dest.title), CTRL_BEL))
 			}
 		}
 	}
