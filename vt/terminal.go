@@ -2,6 +2,7 @@ package vt
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -20,12 +21,16 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
+type manageFunc func()
+
 type Terminal struct {
 	// Functional members
 	p  *parser
 	fb *framebuffer
 
 	ptyR, ptyW *os.File
+
+	start, stop manageFunc
 
 	// State
 	title, icon   string
@@ -53,10 +58,12 @@ func newBasicTerminal(r, w *os.File) *Terminal {
 		p:       newParser(),
 		ptyR:    r,
 		ptyW:    w,
+		start:   func() {},
+		stop:    func() {},
 	}
 }
 
-func NewTerminalWithPty(cmd *exec.Cmd) (*Terminal, error) {
+func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc) (*Terminal, error) {
 	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: DEF_ROWS, Cols: DEF_COLS})
 	if err != nil {
 		return nil, fmt.Errorf("couldn't start pty: %v", err)
@@ -70,7 +77,9 @@ func NewTerminalWithPty(cmd *exec.Cmd) (*Terminal, error) {
 		return nil, fmt.Errorf("couldn't set ptmx non-blocking: %v", err)
 	}
 
-	return newBasicTerminal(ptmx, ptmx), nil
+	t := newBasicTerminal(ptmx, ptmx)
+	t.stop = func() { cancel() }
+	return t, nil
 
 }
 
@@ -83,6 +92,10 @@ func NewTerminal() (*Terminal, error) {
 	}
 
 	return newBasicTerminal(pr, pw), nil
+}
+
+func (t *Terminal) Stop() {
+	t.stop()
 }
 
 func (t *Terminal) Read(p []byte) (int, error) {

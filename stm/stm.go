@@ -56,16 +56,15 @@ func NewClient(gc *network.GConn) (*stmObj, error) {
 }
 
 func NewServer(gc *network.GConn, cmd *exec.Cmd, cancel context.CancelFunc) (*stmObj, error) {
-	t, err := vt.NewTerminalWithPty(cmd)
+	t, err := vt.NewTerminalWithPty(cmd, cancel)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create terminal with pty: %v", err)
 	}
 	s := &stmObj{
-		gc:        gc,
-		cancelPty: cancel,
-		st:        SERVER,
-		cmd:       cmd,
-		term:      t,
+		gc:   gc,
+		st:   SERVER,
+		cmd:  cmd,
+		term: t,
 	}
 
 	return s, nil
@@ -127,7 +126,7 @@ func (s *stmObj) Shutdown() {
 	slog.Info("sending shutdown to remote peer")
 
 	if s.st == SERVER {
-		s.cancelPty()
+		s.term.Stop()
 	}
 
 	go func() {
