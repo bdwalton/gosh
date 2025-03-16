@@ -28,8 +28,7 @@ const (
 )
 
 type stmObj struct {
-	gc     *network.GConn
-	origSz *term.State // original state of the client pty
+	gc *network.GConn
 
 	ctx       context.Context
 	ptmx      *os.File
@@ -46,10 +45,6 @@ type stmObj struct {
 }
 
 func NewClient(gc *network.GConn) (*stmObj, error) {
-	orig, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		return nil, fmt.Errorf("couldn't make terminal raw: %v", err)
-	}
 
 	// On the client end, we will read from the network and ship
 	// the diff into the locally running terminal. To do that,
@@ -61,11 +56,10 @@ func NewClient(gc *network.GConn) (*stmObj, error) {
 	}
 
 	s := &stmObj{
-		gc:     gc,
-		origSz: orig,
-		st:     CLIENT,
-		term:   vt.NewTerminal(pr, pw),
-		ptyW:   pw,
+		gc:   gc,
+		st:   CLIENT,
+		term: vt.NewTerminal(pr, pw),
+		ptyW: pw,
 	}
 
 	return s, nil
@@ -142,16 +136,7 @@ func (s *stmObj) Shutdown() {
 	s.sendPayload(s.buildPayload(goshpb.PayloadType_SHUTDOWN.Enum()))
 	slog.Info("sending shutdown to remote peer")
 
-	switch s.st {
-	case CLIENT:
-		if err := term.Restore(int(os.Stdin.Fd()), s.origSz); err != nil {
-			slog.Error("couldn't restore terminal mode", "err", err)
-		}
-
-		if err := os.Stdin.Close(); err != nil {
-			slog.Debug("error closing stdin", "err", err)
-		}
-	case SERVER:
+	if s.st == SERVER {
 		s.cancelPty()
 	}
 
