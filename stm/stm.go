@@ -29,7 +29,6 @@ const (
 type stmObj struct {
 	gc *network.GConn
 
-	ctx       context.Context
 	cmd       *exec.Cmd
 	cancelPty context.CancelFunc
 
