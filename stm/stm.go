@@ -33,7 +33,7 @@ type stmObj struct {
 
 	ctx       context.Context
 	ptmx      *os.File
-	ptyIO     *io.PipeWriter
+	ptyW      *os.File
 	cmd       *exec.Cmd
 	cancelPty context.CancelFunc
 
@@ -55,40 +55,33 @@ func NewClient(gc *network.GConn) (*stmObj, error) {
 	// the diff into the locally running terminal. To do that,
 	// we'll tell the terminal we create that it's pty is the pr
 	// end of the pipe we'll write into.
-	pr, pw := io.Pipe()
+	pr, pw, err := os.Pipe()
+	if err != nil {
+		return nil, fmt.Errorf("couldn't open a pipe: %v", err)
+	}
 
 	s := &stmObj{
 		gc:     gc,
 		origSz: orig,
 		st:     CLIENT,
-		term:   vt.NewTerminal(pr),
-		ptyIO:  pw,
+		term:   vt.NewTerminal(pr, pw),
+		ptyW:   pw,
 	}
 
 	return s, nil
 }
 
 func NewServer(gc *network.GConn, cmd *exec.Cmd, cancel context.CancelFunc) (*stmObj, error) {
-	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: vt.DEF_ROWS, Cols: vt.DEF_COLS})
+	t, err := vt.NewTerminalWithPty(cmd)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't start pty: %v", err)
+		return nil, fmt.Errorf("couldn't create terminal with pty: %v", err)
 	}
-
-	// Any use of Fd(), including indirectly via the Setsize call
-	// above, will set the descriptor non-blocking, so we need to
-	// change that here.
-	pfd := int(ptmx.Fd())
-	if err := syscall.SetNonblock(pfd, true); err != nil {
-		return nil, fmt.Errorf("couldn't set ptmx non-blocking: %v", err)
-	}
-
 	s := &stmObj{
 		gc:        gc,
-		ptmx:      ptmx,
 		cancelPty: cancel,
 		st:        SERVER,
 		cmd:       cmd,
-		term:      vt.NewTerminal(ptmx),
+		term:      t,
 	}
 
 	return s, nil
@@ -333,7 +326,7 @@ func (s *stmObj) handleRemote() {
 			slog.Debug("changed window size", "rows", rows, "cols", rows)
 		case goshpb.PayloadType_SERVER_OUTPUT:
 			o := msg.GetData()
-			n, err := s.ptyIO.Write(o)
+			n, err := s.ptyW.Write(o)
 			if err != nil || n != len(o) {
 				slog.Error("couldn't write to stdout", "err", err)
 				break

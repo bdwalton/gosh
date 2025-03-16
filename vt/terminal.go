@@ -7,11 +7,14 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"unicode/utf8"
 
+	"github.com/creack/pty"
 	"github.com/mattn/go-runewidth"
 	"golang.org/x/text/unicode/norm"
 )
@@ -21,7 +24,7 @@ type Terminal struct {
 	p  *parser
 	fb *framebuffer
 
-	ptyIO io.Reader
+	ptyR, ptyW *os.File
 
 	// State
 	title, icon   string
@@ -42,13 +45,40 @@ type Terminal struct {
 	mux sync.Mutex
 }
 
-func NewTerminal(pio io.Reader) *Terminal {
-	t := &Terminal{
+func newBasicTerminal() *Terminal {
+	return &Terminal{
 		fb:      newFramebuffer(DEF_ROWS, DEF_COLS),
 		oscTemp: make([]rune, 0),
-		ptyIO:   pio,
+		p:       newParser(),
 	}
-	t.p = newParser()
+}
+
+func NewTerminalWithPty(cmd *exec.Cmd) (*Terminal, error) {
+	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: DEF_ROWS, Cols: DEF_COLS})
+	if err != nil {
+		return nil, fmt.Errorf("couldn't start pty: %v", err)
+	}
+
+	// Any use of Fd(), including indirectly via the Setsize call
+	// above, will set the descriptor non-blocking, so we need to
+	// change that here.
+	pfd := int(ptmx.Fd())
+	if err := syscall.SetNonblock(pfd, true); err != nil {
+		return nil, fmt.Errorf("couldn't set ptmx non-blocking: %v", err)
+	}
+
+	t := newBasicTerminal()
+	t.ptyR = ptmx
+	t.ptyW = ptmx
+
+	return t, nil
+
+}
+
+func NewTerminal(r, w *os.File) *Terminal {
+	t := newBasicTerminal()
+	t.ptyR = r
+	t.ptyW = w
 
 	return t
 }
@@ -124,7 +154,7 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 }
 
 func (t *Terminal) Run() {
-	rr := bufio.NewReader(t.ptyIO)
+	rr := bufio.NewReader(t.ptyR)
 
 	for {
 		var r rune
