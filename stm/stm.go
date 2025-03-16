@@ -82,9 +82,11 @@ func (s *stmObj) Run() {
 			s.wg.Done()
 		}()
 
-		// Don't put this in a goroutine or count it as we'll
-		// just let it get torn down by the runtime.
-		go s.handleInput()
+		s.wg.Add(1)
+		go func() {
+			s.handleInput()
+			s.wg.Done()
+		}()
 	case SERVER:
 		s.wg.Add(1)
 		go func() {
