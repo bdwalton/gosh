@@ -5,7 +5,6 @@ go 1.22.7
 require (
 	github.com/creack/pty v1.1.24
 	github.com/mattn/go-runewidth v0.0.16
-	github.com/robertkrimen/isatty v0.0.0-20130325233602-e10c441e3f8c
 	golang.org/x/term v0.27.0
 	golang.org/x/text v0.21.0
 	google.golang.org/protobuf v1.36.0

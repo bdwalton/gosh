@@ -17,7 +17,7 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/mattn/go-runewidth"
-	"github.com/robertkrimen/isatty"
+	"golang.org/x/term"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -236,7 +236,7 @@ func (t *Terminal) Resize(rows, cols int) {
 		Cols: uint16(cols),
 	}
 
-	if isatty.Check(t.ptyW.Fd()) {
+	if term.IsTerminal(int(t.ptyW.Fd())) {
 		if err := pty.Setsize(t.ptyW, pts); err != nil {
 			slog.Error("couldn't set size on pty", "err", err)
 		}
