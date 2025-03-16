@@ -76,8 +76,8 @@ func (s *stmObj) Run() {
 	switch s.st {
 	case CLIENT:
 		s.ping()
+		s.wg.Add(1)
 		go func() {
-			s.wg.Add(1)
 			s.handleWinCh()
 			s.wg.Done()
 		}()
