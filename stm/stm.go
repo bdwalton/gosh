@@ -30,8 +30,6 @@ type stmObj struct {
 	gc *network.GConn
 
 	ctx       context.Context
-	ptmx      *os.File
-	ptyW      *os.File
 	cmd       *exec.Cmd
 	cancelPty context.CancelFunc
 
@@ -44,21 +42,15 @@ type stmObj struct {
 }
 
 func NewClient(gc *network.GConn) (*stmObj, error) {
-
-	// On the client end, we will read from the network and ship
-	// the diff into the locally running terminal. To do that,
-	// we'll tell the terminal we create that it's pty is the pr
-	// end of the pipe we'll write into.
-	pr, pw, err := os.Pipe()
+	t, err := vt.NewTerminal()
 	if err != nil {
-		return nil, fmt.Errorf("couldn't open a pipe: %v", err)
+		return nil, fmt.Errorf("couldn't create terminal without a pty: %v", err)
 	}
 
 	s := &stmObj{
 		gc:   gc,
 		st:   CLIENT,
-		term: vt.NewTerminal(pr, pw),
-		ptyW: pw,
+		term: t,
 	}
 
 	return s, nil

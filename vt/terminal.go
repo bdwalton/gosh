@@ -46,11 +46,13 @@ type Terminal struct {
 	mux sync.Mutex
 }
 
-func newBasicTerminal() *Terminal {
+func newBasicTerminal(r, w *os.File) *Terminal {
 	return &Terminal{
 		fb:      newFramebuffer(DEF_ROWS, DEF_COLS),
 		oscTemp: make([]rune, 0),
 		p:       newParser(),
+		ptyR:    r,
+		ptyW:    w,
 	}
 }
 
@@ -68,20 +70,19 @@ func NewTerminalWithPty(cmd *exec.Cmd) (*Terminal, error) {
 		return nil, fmt.Errorf("couldn't set ptmx non-blocking: %v", err)
 	}
 
-	t := newBasicTerminal()
-	t.ptyR = ptmx
-	t.ptyW = ptmx
-
-	return t, nil
+	return newBasicTerminal(ptmx, ptmx), nil
 
 }
 
-func NewTerminal(r, w *os.File) *Terminal {
-	t := newBasicTerminal()
-	t.ptyR = r
-	t.ptyW = w
+func NewTerminal() (*Terminal, error) {
+	// On the client end, we will read from the network and ship
+	// the diff into the locally running terminal. To do that, we'll ensure we have a local pipe to work through.
+	pr, pw, err := os.Pipe()
+	if err != nil {
+		return nil, fmt.Errorf("couldn't open a pipe: %v", err)
+	}
 
-	return t
+	return newBasicTerminal(pr, pw), nil
 }
 
 func (t *Terminal) Read(p []byte) (int, error) {
