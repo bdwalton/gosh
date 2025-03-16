@@ -87,6 +87,8 @@ func (s *stmObj) Run() {
 			s.wg.Done()
 		}()
 	case SERVER:
+		lastT := s.term.Copy()
+
 		s.wg.Add(1)
 		go func() {
 			s.term.Run()
@@ -101,6 +103,25 @@ func (s *stmObj) Run() {
 			s.Shutdown()
 			s.wg.Done()
 		}()
+
+		tick := time.NewTicker(100 * time.Millisecond)
+		for {
+			if s.shutdown {
+				break
+			}
+
+			select {
+			case <-tick.C:
+				nowT := s.term.Copy()
+				diff := lastT.Diff(nowT)
+				if len(diff) > 0 {
+					msg := s.buildPayload(goshpb.PayloadType_SERVER_OUTPUT.Enum())
+					msg.SetData(diff)
+					s.sendPayload(msg)
+					lastT = nowT
+				}
+			}
+		}
 	}
 
 	s.wg.Wait()
@@ -270,6 +291,7 @@ func (s *stmObj) handleRemote() {
 				slog.Error("couldn't write to terminal", "err", err)
 				break
 			}
+			os.Stdout.Write(o)
 		}
 	}
 }
