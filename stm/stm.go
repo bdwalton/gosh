@@ -81,11 +81,10 @@ func (s *stmObj) Run() {
 			s.wg.Done()
 		}()
 
-		s.wg.Add(1)
-		go func() {
-			s.handleInput()
-			s.wg.Done()
-		}()
+		// We don't try to gracefully shut this one down
+		// because it'll be blocked on a Read() and using
+		// non-blocking is very cpu intensive.
+		go s.handleInput()
 	case SERVER:
 		lastT := s.term.Copy()
 
@@ -156,6 +155,7 @@ func (s *stmObj) handleWinCh() {
 
 	for {
 		if s.shutdown {
+			slog.Debug("exiting SIGWINCH watcher")
 			return
 		}
 
@@ -199,12 +199,12 @@ func (s *stmObj) handleInput() {
 		n, err := os.Stdin.Read(char)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				slog.Debug("os.stdin eof. shutting down")
+				slog.Debug("os.stdin eof, shutting down and exiting input handler")
 				s.Shutdown()
 				return
 			}
 
-			slog.Debug("stdin readbyte error", "err", err)
+			slog.Debug("stdin Read() error", "err", err)
 			continue
 		}
 
