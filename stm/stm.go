@@ -28,10 +28,9 @@ type stmObj struct {
 
 	term *vt.Terminal
 
-	st         uint8
-	shutdown   bool
-	ptyRunning bool
-	wg         sync.WaitGroup
+	st       uint8 // stm type (client or server)
+	shutdown bool
+	wg       sync.WaitGroup
 }
 
 func NewClient(gc *network.GConn, t *vt.Terminal) *stmObj {
@@ -88,6 +87,12 @@ func (s *stmObj) Run() {
 			s.wg.Done()
 		}()
 	case SERVER:
+		s.wg.Add(1)
+		go func() {
+			s.term.Run()
+			s.wg.Done()
+		}()
+
 		s.wg.Add(1)
 		go func() {
 			// If the process in the pty dies, we need to
@@ -245,14 +250,7 @@ func (s *stmObj) handleRemote() {
 
 		switch msg.GetType() {
 		case goshpb.PayloadType_PING:
-			if s.st == SERVER && !s.ptyRunning {
-				s.wg.Add(1)
-				go func() {
-					s.term.Run()
-					s.wg.Done()
-				}()
-				s.ptyRunning = true
-			}
+			// TODO: Update a last seen timestamp here
 		case goshpb.PayloadType_SHUTDOWN:
 			s.Shutdown()
 		case goshpb.PayloadType_CLIENT_INPUT:
