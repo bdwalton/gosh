@@ -82,7 +82,6 @@ func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc) (*Terminal, er
 	t.stop = func() { cancel() }
 
 	return t, nil
-
 }
 
 func NewTerminal() (*Terminal, error) {
