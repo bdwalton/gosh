@@ -159,7 +159,7 @@ func (s *stmObj) Shutdown() {
 			slog.Debug("error closing stdin", "err", err)
 		}
 	case SERVER:
-		s.ptyIO.CloseWithError(io.EOF)
+		s.cancelPty()
 	}
 
 	go func() {

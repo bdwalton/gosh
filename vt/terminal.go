@@ -214,6 +214,7 @@ func (t *Terminal) Run() {
 			}
 			if !errors.Is(err, os.ErrDeadlineExceeded) {
 				slog.Error("pty ReadRune", "r", r, "sz", sz, "err", err)
+				break
 			}
 			continue
 		}
