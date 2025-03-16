@@ -30,7 +30,7 @@ type Terminal struct {
 
 	ptyR, ptyW *os.File
 
-	start, stop manageFunc
+	wait, stop manageFunc
 
 	// State
 	title, icon   string
@@ -58,7 +58,7 @@ func newBasicTerminal(r, w *os.File) *Terminal {
 		p:       newParser(),
 		ptyR:    r,
 		ptyW:    w,
-		start:   func() {},
+		wait:    func() {},
 		stop:    func() {},
 	}
 }
@@ -78,7 +78,9 @@ func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc) (*Terminal, er
 	}
 
 	t := newBasicTerminal(ptmx, ptmx)
+	t.wait = func() { cmd.Wait() }
 	t.stop = func() { cancel() }
+
 	return t, nil
 
 }
@@ -92,6 +94,10 @@ func NewTerminal() (*Terminal, error) {
 	}
 
 	return newBasicTerminal(pr, pw), nil
+}
+
+func (t *Terminal) Wait() {
+	t.wait()
 }
 
 func (t *Terminal) Stop() {

@@ -1,13 +1,10 @@
 package stm
 
 import (
-	"context"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 	"os"
-	"os/exec"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -29,9 +26,6 @@ const (
 type stmObj struct {
 	gc *network.GConn
 
-	cmd       *exec.Cmd
-	cancelPty context.CancelFunc
-
 	term *vt.Terminal
 
 	st         uint8
@@ -40,34 +34,20 @@ type stmObj struct {
 	wg         sync.WaitGroup
 }
 
-func NewClient(gc *network.GConn) (*stmObj, error) {
-	t, err := vt.NewTerminal()
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create terminal without a pty: %v", err)
-	}
-
-	s := &stmObj{
+func NewClient(gc *network.GConn, t *vt.Terminal) *stmObj {
+	return &stmObj{
 		gc:   gc,
 		st:   CLIENT,
 		term: t,
 	}
-
-	return s, nil
 }
 
-func NewServer(gc *network.GConn, cmd *exec.Cmd, cancel context.CancelFunc) (*stmObj, error) {
-	t, err := vt.NewTerminalWithPty(cmd, cancel)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create terminal with pty: %v", err)
-	}
-	s := &stmObj{
+func NewServer(gc *network.GConn, t *vt.Terminal) *stmObj {
+	return &stmObj{
 		gc:   gc,
 		st:   SERVER,
-		cmd:  cmd,
 		term: t,
 	}
-
-	return s, nil
 }
 
 func (s *stmObj) sendPayload(msg *goshpb.Payload) {
@@ -110,7 +90,7 @@ func (s *stmObj) Run() {
 		go func() {
 			// If the process in the pty dies, we need to
 			// shut down.
-			s.cmd.Wait()
+			s.term.Wait()
 			s.Shutdown()
 			s.wg.Done()
 		}()

@@ -9,6 +9,7 @@ import (
 	"github.com/bdwalton/gosh/logging"
 	"github.com/bdwalton/gosh/network"
 	"github.com/bdwalton/gosh/stm"
+	"github.com/bdwalton/gosh/vt"
 	"golang.org/x/term"
 )
 
@@ -49,12 +50,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	c, err := stm.NewClient(gc)
+	t, err := vt.NewTerminal()
 	if err != nil {
-		slog.Error("Couldn't setup STM client", "err", err)
+		slog.Error("Couldn't setup terminal", "err", err)
 		os.Exit(1)
 	}
 
+	c := stm.NewClient(gc, t)
 	c.Run()
 
 	slog.Info("Shutting down")

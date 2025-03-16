@@ -13,6 +13,7 @@ import (
 	"github.com/bdwalton/gosh/logging"
 	"github.com/bdwalton/gosh/network"
 	"github.com/bdwalton/gosh/stm"
+	"github.com/bdwalton/gosh/vt"
 )
 
 var (
@@ -56,11 +57,13 @@ func main() {
 	}
 
 	cmd, cancel := getCmd()
-	s, err := stm.NewServer(gc, cmd, cancel)
+	t, err := vt.NewTerminalWithPty(cmd, cancel)
 	if err != nil {
-		slog.Error("Couldn't setup STM server", "err", err)
+		slog.Error("Couldn't setup terminal", "err", err)
 		os.Exit(1)
 	}
+
+	s := stm.NewServer(gc, t)
 
 	port, pid := gc.LocalPort(), os.Getpid()
 	slog.Info("Running", "port", port)
