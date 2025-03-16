@@ -18,3 +18,5 @@ golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 h1:E7g+9GITq07hpfrRu66IV
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 google.golang.org/protobuf v1.36.0 h1:mjIs9gYtt56AzC4ZaffQuh88TZurBGhIJMBZGSxNerQ=
 google.golang.org/protobuf v1.36.0/go.mod h1:9fA7Ob0pmnwhb644+1+CVWFRbNajQ6iRojtC/QF5bRE=
+zgo.at/termfo v0.0.0-20240522162355-df5e07d67a5a h1:xUxSj/In2mmaBYwNcmDZyyh+lMv9MpYnAUskTdjtJhc=
+zgo.at/termfo v0.0.0-20240522162355-df5e07d67a5a/go.mod h1:p6tU/Jw86OwNL/dvosR/GtaB+ABfGMB5U0wQgxBVstA=

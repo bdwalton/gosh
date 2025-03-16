@@ -11,6 +11,8 @@ import (
 	"github.com/bdwalton/gosh/stm"
 	"github.com/bdwalton/gosh/vt"
 	"golang.org/x/term"
+	"zgo.at/termfo"
+	"zgo.at/termfo/caps"
 )
 
 var (
@@ -50,6 +52,9 @@ func main() {
 		os.Exit(1)
 	}
 
+	undoAlt := maybeAltScreen()
+	defer undoAlt()
+
 	t, err := vt.NewTerminal()
 	if err != nil {
 		slog.Error("Couldn't setup terminal", "err", err)
@@ -60,4 +65,25 @@ func main() {
 	c.Run()
 
 	slog.Info("Shutting down")
+
+}
+
+func maybeAltScreen() func() {
+	if ti, err := termfo.New(""); err == nil {
+		s, ok := ti.Strings[caps.EnterCaMode]
+		if ok {
+			os.Stdout.Write([]byte(s))
+		}
+
+		return func() {
+			s, ok := ti.Strings[caps.ExitCaMode]
+			if ok {
+				os.Stdout.Write([]byte(s))
+			}
+		}
+	} else {
+		slog.Warn("error determining terminfo, proceeding without", "err", err)
+	}
+
+	return func() {}
 }
