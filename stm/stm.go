@@ -72,6 +72,12 @@ func (s *stmObj) Run() {
 		s.wg.Done()
 	}()
 
+	s.wg.Add(1)
+	go func() {
+		s.term.Run()
+		s.wg.Done()
+	}()
+
 	switch s.st {
 	case CLIENT:
 		s.ping()
@@ -87,12 +93,6 @@ func (s *stmObj) Run() {
 		go s.handleInput()
 	case SERVER:
 		lastT := s.term.Copy()
-
-		s.wg.Add(1)
-		go func() {
-			s.term.Run()
-			s.wg.Done()
-		}()
 
 		s.wg.Add(1)
 		go func() {
@@ -132,9 +132,7 @@ func (s *stmObj) Shutdown() {
 	s.sendPayload(s.buildPayload(goshpb.PayloadType_SHUTDOWN.Enum()))
 	slog.Info("sending shutdown to remote peer")
 
-	if s.st == SERVER {
-		s.term.Stop()
-	}
+	s.term.Stop()
 
 	go func() {
 		s.wg.Add(1)

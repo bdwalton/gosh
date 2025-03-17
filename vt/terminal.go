@@ -101,6 +101,7 @@ func (t *Terminal) Wait() {
 
 func (t *Terminal) Stop() {
 	t.stop()
+	t.ptyR.Close() // ensure Run() stops
 }
 
 func (t *Terminal) Write(p []byte) (int, error) {
