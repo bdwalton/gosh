@@ -435,7 +435,8 @@ func (t *Terminal) handleExecute(last rune) {
 		t.carriageReturn()
 	case CTRL_LF, CTRL_FF: // libvte treats lf and ff the same, so we do too
 		t.lineFeed()
-
+	default:
+		slog.Debug("handleExecute: UNHANDLED Command", "last", string(last))
 	}
 }
 
