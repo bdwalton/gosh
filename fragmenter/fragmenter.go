@@ -16,13 +16,13 @@ import (
 // payload is 100 bytes or more.
 const COMPRESS_THRESHOLD = 100
 
-type fragmenter struct {
+type Fragger struct {
 	id    uint32 // Increment for each new batch
 	size  int    // How much data we can include in each fragment
 	idMux sync.Mutex
 }
 
-func (f *fragmenter) getUniqueId() uint32 {
+func (f *Fragger) getUniqueId() uint32 {
 	f.idMux.Lock()
 	defer f.idMux.Unlock()
 	i := f.id
@@ -30,8 +30,8 @@ func (f *fragmenter) getUniqueId() uint32 {
 	return i
 }
 
-func New(size int) *fragmenter {
-	return &fragmenter{size: size}
+func New(size int) *Fragger {
+	return &Fragger{size: size}
 }
 
 func compress(buf []byte) ([]byte, error) {
@@ -46,7 +46,7 @@ func compress(buf []byte) ([]byte, error) {
 	return gbuf.Bytes(), nil
 }
 
-func (f *fragmenter) CreateFragments(buf []byte) ([]*goshpb.Fragment, error) {
+func (f *Fragger) CreateFragments(buf []byte) ([]*goshpb.Fragment, error) {
 	fcomp := len(buf) > COMPRESS_THRESHOLD
 
 	var err error

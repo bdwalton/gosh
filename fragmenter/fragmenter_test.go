@@ -14,7 +14,7 @@ func TestCreateFragments(t *testing.T) {
 	rbytes := make([]byte, COMPRESS_THRESHOLD+1)
 	rand.Read(rbytes)
 	cases := []struct {
-		f         *fragmenter
+		f         *Fragger
 		input     []byte
 		wantId    uint32
 		wantTotal int
