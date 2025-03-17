@@ -1,7 +1,7 @@
 package fragmenter
 
 import (
-	"math/rand"
+	"crypto/rand"
 	"slices"
 	"testing"
 )
