@@ -103,10 +103,6 @@ func (t *Terminal) Stop() {
 	t.stop()
 }
 
-func (t *Terminal) Read(p []byte) (int, error) {
-	return t.ptyR.Read(p)
-}
-
 func (t *Terminal) Write(p []byte) (int, error) {
 	return t.ptyW.Write(p)
 }
