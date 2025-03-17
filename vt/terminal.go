@@ -381,7 +381,7 @@ func (t *Terminal) print(r rune) {
 		}
 
 		t.fb.setCell(row, col, c)
-	case 1, 2: // default (1 column), wide (2 columns)
+	default: // default (1 column), wide (2 columns)
 		if col <= t.fb.getNumCols()-rw {
 			t.clearFrags(row, col)
 			nc := newCell(r, t.curF)
@@ -424,10 +424,6 @@ func (t *Terminal) print(r rune) {
 		t.cur.row = row
 
 		// punt, otherwise
-		return
-	default:
-		// We could panic, but since we punt on other unknowns
-		// here, let's do that for a wonky width, too.
 		return
 	}
 }
