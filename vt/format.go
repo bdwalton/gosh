@@ -90,7 +90,7 @@ func (src format) diff(dest format) []byte {
 	ts.Reset()
 
 	if src.brightness != dest.brightness {
-		switch src.brightness {
+		switch dest.brightness {
 		case FONT_BOLD:
 			ts.WriteString(fmt.Sprintf("%d", INTENSITY_BOLD))
 		case FONT_DIM:
@@ -104,7 +104,7 @@ func (src format) diff(dest format) []byte {
 		if ts.Len() > 0 {
 			ts.WriteByte(';')
 		}
-		switch src.underline {
+		switch dest.underline {
 		case UNDERLINE_SINGLE:
 			ts.WriteString(fmt.Sprintf("%d", UNDERLINE_ON))
 		case UNDERLINE_DOUBLE:
