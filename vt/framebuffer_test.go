@@ -444,7 +444,7 @@ func TestGetRowRegion(t *testing.T) {
 		want             []cell
 		wantErr          error
 	}{
-		{fb, 2, 5, 7, make([]cell, 2), nil},
+		{fb, 2, 5, 7, []cell{defaultCell(), defaultCell()}, nil},
 		{fb, 3, 5, 7, []cell{ac, defaultCell()}, nil},
 		{fb, 3, 5, 7, []cell{ac, defaultCell()}, nil},
 		{fb, 4, 3, 6, []cell{bc, ac, defaultCell()}, nil},
@@ -477,7 +477,7 @@ func TestSetRowRegion(t *testing.T) {
 		{fb, 3, 5, 7, []cell{ac, ac}, []cell{ac, ac}, nil},
 		{fb, 3, 5, 7, []cell{bc, ac}, []cell{bc, ac}, nil},
 		{fb, 4, 3, 6, []cell{ac, bc, bc}, []cell{ac, bc, bc}, nil},
-		{fb, 5, 3, 6, []cell{ac, bc, bc, defaultCell()}, make([]cell, 3), setRowRegionErr},
+		{fb, 5, 3, 6, []cell{ac, bc, bc, defaultCell()}, []cell{defaultCell(), defaultCell(), defaultCell()}, setRowRegionErr},
 	}
 
 	for i, c := range cases {

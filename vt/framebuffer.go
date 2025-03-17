@@ -25,8 +25,9 @@ const (
 )
 
 type cell struct {
-	r rune
-	f format
+	set bool // true if non-default
+	r   rune
+	f   format
 	// when non-zero, indicates this cell participates in width 2 character
 	// 1 = primary rune
 	// 2 = spare/empty cell next to primary
@@ -34,7 +35,7 @@ type cell struct {
 }
 
 func defaultCell() cell {
-	return cell{f: defFmt}
+	return cell{r: ' '} // set == false, so our placeholder rune is a space
 }
 
 // fragCell returns a cell tagged as a fragment (number = fn), with
@@ -46,7 +47,11 @@ func fragCell(r rune, f format, fn int) cell {
 }
 
 func newCell(r rune, f format) cell {
-	return cell{r: r, f: f}
+	return cell{set: true, r: r, f: f}
+}
+
+func (c cell) copy() cell {
+	return cell{r: c.r, set: c.set, f: c.f, frag: c.frag}
 }
 
 func (c cell) getFormat() format {
@@ -54,7 +59,7 @@ func (c cell) getFormat() format {
 }
 
 func (c cell) equal(other cell) bool {
-	return c.r == other.r && c.frag == other.frag && c.getFormat().equal(other.getFormat())
+	return c.set == other.set && c.r == other.r && c.frag == other.frag && c.getFormat().equal(other.getFormat())
 }
 
 func (c cell) diff(dest cell) []byte {
@@ -78,7 +83,7 @@ func (c cell) diff(dest cell) []byte {
 	// different _or_ if the format is different. If we only
 	// rewrite the format, the pen color will change, but the cell
 	// wouldn't actually be updated.
-	if dest.r != c.r || !fe {
+	if dest.set != c.set || dest.r != c.r || !fe {
 		sb.WriteRune(dest.r)
 	}
 
@@ -86,10 +91,8 @@ func (c cell) diff(dest cell) []byte {
 }
 
 func (c cell) efficientDiff(dest cell, f format) []byte {
-	nc := newCell(c.r, f)
-	if c.frag != FRAG_NONE {
-		nc.frag = c.frag
-	}
+	nc := c.copy()
+	nc.f = f
 	return nc.diff(dest)
 }
 
