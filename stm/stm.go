@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bdwalton/gosh/network"
 	"github.com/bdwalton/gosh/protos/goshpb"
 	"github.com/bdwalton/gosh/vt"
 	"golang.org/x/term"
@@ -24,7 +23,7 @@ const (
 )
 
 type stmObj struct {
-	gc *network.GConn
+	remote io.ReadWriteCloser
 
 	term *vt.Terminal
 
@@ -33,19 +32,19 @@ type stmObj struct {
 	wg       sync.WaitGroup
 }
 
-func NewClient(gc *network.GConn, t *vt.Terminal) *stmObj {
+func NewClient(remote io.ReadWriteCloser, t *vt.Terminal) *stmObj {
 	return &stmObj{
-		gc:   gc,
-		st:   CLIENT,
-		term: t,
+		remote: remote,
+		st:     CLIENT,
+		term:   t,
 	}
 }
 
-func NewServer(gc *network.GConn, t *vt.Terminal) *stmObj {
+func NewServer(remote io.ReadWriteCloser, t *vt.Terminal) *stmObj {
 	return &stmObj{
-		gc:   gc,
-		st:   SERVER,
-		term: t,
+		remote: remote,
+		st:     SERVER,
+		term:   t,
 	}
 }
 
@@ -55,7 +54,7 @@ func (s *stmObj) sendPayload(msg *goshpb.Payload) {
 		slog.Error("couldn't marshal message")
 		return
 	}
-	_, err = s.gc.Write(p)
+	_, err = s.remote.Write(p)
 	if err != nil {
 		slog.Error("couldn't write to network", "err", err)
 	}
@@ -136,7 +135,9 @@ func (s *stmObj) Shutdown() {
 
 	go func() {
 		s.wg.Add(1)
-		s.gc.Close()
+		if err := s.remote.Close(); err != nil {
+			slog.Error("Error closing remote", "err", err)
+		}
 		s.wg.Done()
 	}()
 }
@@ -249,7 +250,7 @@ func (s *stmObj) handleRemote() {
 			return
 		}
 
-		n, err := s.gc.Read(buf)
+		n, err := s.remote.Read(buf)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				slog.Debug("EOF from remote, so shutting down")

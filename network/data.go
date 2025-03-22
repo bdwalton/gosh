@@ -136,8 +136,8 @@ func (gc *GConn) LocalPort() int {
 	return gc.c.LocalAddr().(*net.UDPAddr).Port
 }
 
-func (gc *GConn) Close() {
-	gc.c.Close()
+func (gc *GConn) Close() error {
+	return gc.c.Close()
 }
 
 func (gc *GConn) Write(msg []byte) (int, error) {
