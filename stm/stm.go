@@ -64,13 +64,28 @@ func NewServer(remote io.ReadWriteCloser, t *vt.Terminal) *stmObj {
 func (s *stmObj) sendPayload(msg *goshpb.Payload) {
 	p, err := proto.Marshal(msg)
 	if err != nil {
-		slog.Error("couldn't marshal message")
+		slog.Error("couldn't marshal message", "err", err)
 		return
 	}
-	_, err = s.remote.Write(p)
+
+	frags, err := s.frag.CreateFragments(p)
 	if err != nil {
-		slog.Error("couldn't write to network", "err", err)
+		slog.Error("couldn't fragment payload", "err", err)
+		return
 	}
+
+	for i, f := range frags {
+		pf, err := proto.Marshal(f)
+		if err != nil {
+			slog.Error("couldn't marshal fragment", "i", i, "err", err)
+			return
+		}
+
+		if n, err := s.remote.Write(pf); err != nil || n < len(pf) {
+			slog.Error("failed or parial write to remote", "n", n, "err", err)
+		}
+	}
+
 }
 
 func (s *stmObj) ping() {
@@ -256,6 +271,44 @@ func (s *stmObj) buildPayload(t *goshpb.PayloadType) *goshpb.Payload {
 	}.Build()
 }
 
+func (s *stmObj) consumePayload(id uint32) {
+	buf, err := s.frag.Assemble(id)
+	if err != nil {
+		slog.Error("couldn't assemble fragmented payload", "err", err)
+		return
+	}
+
+	var msg goshpb.Payload
+	if err = proto.Unmarshal(buf, &msg); err != nil {
+		slog.Error("couldn't unmarshal proto", "err", err)
+		return
+	}
+
+	switch msg.GetType() {
+	case goshpb.PayloadType_PING:
+		// TODO: Update a last seen timestamp here
+	case goshpb.PayloadType_SHUTDOWN:
+		s.Shutdown()
+	case goshpb.PayloadType_CLIENT_INPUT:
+		keys := msg.GetData()
+		if n, err := s.term.Write(keys); err != nil || n != len(keys) {
+			slog.Error("couldn't write to terminal", "n", n, "len(keys)", len(keys), "err", err)
+		}
+	case goshpb.PayloadType_WINDOW_RESIZE:
+		sz := msg.GetSize()
+		rows, cols := sz.GetRows(), sz.GetCols()
+		s.term.Resize(int(rows), int(cols))
+	case goshpb.PayloadType_SERVER_OUTPUT:
+		o := msg.GetData()
+		n, err := s.term.Write(o)
+		if err != nil || n != len(o) {
+			slog.Error("couldn't write to terminal", "err", err)
+			break
+		}
+		os.Stdout.Write(o)
+	}
+}
+
 func (s *stmObj) handleRemote() {
 	buf := make([]byte, 2048)
 	for {
@@ -275,34 +328,14 @@ func (s *stmObj) handleRemote() {
 			continue
 		}
 
-		var msg goshpb.Payload
-		if err = proto.Unmarshal(buf[:n], &msg); err != nil {
-			slog.Error("couldn't unmarshal proto", "err", err)
+		var frag goshpb.Fragment
+		if err = proto.Unmarshal(buf[:n], &frag); err != nil {
+			slog.Error("couldn't unmarshal fragment proto", "err", err)
 			continue
 		}
 
-		switch msg.GetType() {
-		case goshpb.PayloadType_PING:
-			// TODO: Update a last seen timestamp here
-		case goshpb.PayloadType_SHUTDOWN:
-			s.Shutdown()
-		case goshpb.PayloadType_CLIENT_INPUT:
-			keys := msg.GetData()
-			if n, err := s.term.Write(keys); err != nil || n != len(keys) {
-				slog.Error("couldn't write to terminal", "n", n, "len(keys)", len(keys), "err", err)
-			}
-		case goshpb.PayloadType_WINDOW_RESIZE:
-			sz := msg.GetSize()
-			rows, cols := sz.GetRows(), sz.GetCols()
-			s.term.Resize(int(rows), int(cols))
-		case goshpb.PayloadType_SERVER_OUTPUT:
-			o := msg.GetData()
-			n, err := s.term.Write(o)
-			if err != nil || n != len(o) {
-				slog.Error("couldn't write to terminal", "err", err)
-				break
-			}
-			os.Stdout.Write(o)
+		if s.frag.Store(&frag) {
+			s.consumePayload(frag.GetId())
 		}
 	}
 }
