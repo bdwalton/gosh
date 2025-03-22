@@ -35,7 +35,7 @@ const (
 )
 
 type stmObj struct {
-	remote io.ReadWriteCloser
+	remote io.ReadWriter
 	term   *vt.Terminal
 	frag   *fragmenter.Fragger
 
@@ -44,7 +44,7 @@ type stmObj struct {
 	wg       sync.WaitGroup
 }
 
-func new(remote io.ReadWriteCloser, t *vt.Terminal, st uint8) *stmObj {
+func new(remote io.ReadWriter, t *vt.Terminal, st uint8) *stmObj {
 	return &stmObj{
 		remote: remote,
 		st:     st,
@@ -53,11 +53,11 @@ func new(remote io.ReadWriteCloser, t *vt.Terminal, st uint8) *stmObj {
 	}
 }
 
-func NewClient(remote io.ReadWriteCloser, t *vt.Terminal) *stmObj {
+func NewClient(remote io.ReadWriter, t *vt.Terminal) *stmObj {
 	return new(remote, t, CLIENT)
 }
 
-func NewServer(remote io.ReadWriteCloser, t *vt.Terminal) *stmObj {
+func NewServer(remote io.ReadWriter, t *vt.Terminal) *stmObj {
 	return new(remote, t, SERVER)
 }
 
@@ -160,14 +160,6 @@ func (s *stmObj) Shutdown() {
 	slog.Info("sending shutdown to remote peer")
 
 	s.term.Stop()
-
-	go func() {
-		s.wg.Add(1)
-		if err := s.remote.Close(); err != nil {
-			slog.Error("Error closing remote", "err", err)
-		}
-		s.wg.Done()
-	}()
 }
 
 func (s *stmObj) handleWinCh() {

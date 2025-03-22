@@ -55,6 +55,11 @@ func main() {
 		slog.Error("Couldn't setup network connection", "err", err)
 		os.Exit(1)
 	}
+	defer func() {
+		if err := gc.Close(); err != nil {
+			slog.Error("error closing gosh conn", "err", err)
+		}
+	}()
 
 	cmd, cancel := getCmd()
 	t, err := vt.NewTerminalWithPty(cmd, cancel)
