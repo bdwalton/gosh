@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/bdwalton/gosh/fragmenter"
 	"github.com/bdwalton/gosh/protos/goshpb"
 	"github.com/bdwalton/gosh/vt"
 	"golang.org/x/term"
@@ -22,10 +23,21 @@ const (
 	SERVER
 )
 
+const (
+	// 1280 is as much data as we want to send, so we allow room
+	// for some overheads around packet size, proto message data,
+	// etc. This is conservative for now.
+	//
+	// TODO: Make this more
+	// dynamic and based somehow on the underlying remote
+	// capabilities.
+	MAX_PACKET_SIZE = 1100
+)
+
 type stmObj struct {
 	remote io.ReadWriteCloser
-
-	term *vt.Terminal
+	term   *vt.Terminal
+	frag   *fragmenter.Fragger
 
 	st       uint8 // stm type (client or server)
 	shutdown bool
@@ -37,6 +49,7 @@ func new(remote io.ReadWriteCloser, t *vt.Terminal, st uint8) *stmObj {
 		remote: remote,
 		st:     st,
 		term:   t,
+		frag:   fragmenter.New(MAX_PACKET_SIZE),
 	}
 }
 
