@@ -32,20 +32,20 @@ type stmObj struct {
 	wg       sync.WaitGroup
 }
 
-func NewClient(remote io.ReadWriteCloser, t *vt.Terminal) *stmObj {
+func new(remote io.ReadWriteCloser, t *vt.Terminal, st uint8) *stmObj {
 	return &stmObj{
 		remote: remote,
-		st:     CLIENT,
+		st:     st,
 		term:   t,
 	}
 }
 
+func NewClient(remote io.ReadWriteCloser, t *vt.Terminal) *stmObj {
+	return new(remote, t, CLIENT)
+}
+
 func NewServer(remote io.ReadWriteCloser, t *vt.Terminal) *stmObj {
-	return &stmObj{
-		remote: remote,
-		st:     SERVER,
-		term:   t,
-	}
+	return new(remote, t, SERVER)
 }
 
 func (s *stmObj) sendPayload(msg *goshpb.Payload) {
