@@ -3,10 +3,14 @@ package fragmenter
 import (
 	"bytes"
 	"compress/gzip"
+	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"math"
+	"slices"
 	"sync"
+	"time"
 
 	"github.com/bdwalton/gosh/protos/goshpb"
 	"google.golang.org/protobuf/proto"
@@ -16,10 +20,39 @@ import (
 // payload is 100 bytes or more.
 const COMPRESS_THRESHOLD = 100
 
+type fragSet struct {
+	first, last   time.Time // Used for GC on stale fragments we've stored
+	cnt, expected uint32
+	frags         []*goshpb.Fragment
+}
+
+func newFragSet(size uint32) *fragSet {
+	t := time.Now()
+
+	return &fragSet{
+		first:    t,
+		last:     t,
+		expected: size,
+		frags:    make([]*goshpb.Fragment, int(size), (size)),
+	}
+}
+
+func (f *fragSet) add(frag *goshpb.Fragment) {
+	f.last = time.Now()
+	f.frags[frag.GetThisFrag()] = frag
+	f.cnt += 1
+}
+
+func (f *fragSet) complete() bool {
+	return f.cnt == f.expected
+}
+
 type Fragger struct {
 	id    uint32 // Increment for each new batch
 	size  int    // How much data we can include in each fragment
 	idMux sync.Mutex
+
+	asmbl map[uint32]*fragSet
 }
 
 func (f *Fragger) getUniqueId() uint32 {
@@ -31,7 +64,7 @@ func (f *Fragger) getUniqueId() uint32 {
 }
 
 func New(size int) *Fragger {
-	return &Fragger{size: size}
+	return &Fragger{size: size, asmbl: make(map[uint32]*fragSet)}
 }
 
 func compress(buf []byte) ([]byte, error) {
@@ -44,6 +77,20 @@ func compress(buf []byte) ([]byte, error) {
 	}
 	gz.Close()
 	return gbuf.Bytes(), nil
+}
+
+func decompress(buf []byte) ([]byte, error) {
+	gz, err := gzip.NewReader(bytes.NewBuffer(buf))
+	if err != nil {
+		return nil, err
+	}
+
+	var obuf bytes.Buffer
+	if _, err := io.Copy(&obuf, gz); err != nil {
+		return nil, err
+	}
+
+	return obuf.Bytes(), nil
 }
 
 func (f *Fragger) CreateFragments(buf []byte) ([]*goshpb.Fragment, error) {
@@ -76,4 +123,60 @@ func (f *Fragger) CreateFragments(buf []byte) ([]*goshpb.Fragment, error) {
 	}
 
 	return fragments, nil
+}
+
+// Store accepts a fragment and returns a bool indicating whether we
+// have all fragments to complete the set for the fragment's id.
+func (f *Fragger) Store(frag *goshpb.Fragment) bool {
+	id := frag.GetId()
+
+	fset, ok := f.asmbl[id]
+	if !ok {
+		fset = newFragSet(frag.GetTotalFrags())
+		f.asmbl[id] = fset
+	}
+
+	fset.add(frag)
+
+	return fset.complete()
+}
+
+var unknownFragSet = errors.New("unknown fragement set")
+var incompleteFragSet = errors.New("incomplete fragement set")
+
+// Assemble will consume a fragment set and uncompress it as required,
+// returning the bytes of the fragments in the expected order. An
+// error is returned if the id is unknown or incomplete or if the data
+// is compressed and decompression fails.
+func (f *Fragger) Assemble(id uint32) ([]byte, error) {
+	var err error
+	var ret []byte
+	fset, ok := f.asmbl[id]
+	if !ok {
+		return nil, unknownFragSet
+	}
+
+	if !fset.complete() {
+		return nil, incompleteFragSet
+	}
+
+	data := make([][]byte, fset.expected, fset.expected)
+
+	for i := 0; i < int(fset.cnt); i++ {
+		data[i] = fset.frags[uint32(i)].GetData()
+	}
+
+	d := slices.Concat(data...)
+	if fset.frags[0].GetCompressed() {
+		ret, err = decompress(d)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		ret = d
+	}
+
+	delete(f.asmbl, id)
+
+	return ret, nil
 }
