@@ -282,7 +282,6 @@ func (s *stmObj) handleRemote() {
 			sz := msg.GetSize()
 			rows, cols := sz.GetRows(), sz.GetCols()
 			s.term.Resize(int(rows), int(cols))
-
 		case goshpb.PayloadType_SERVER_OUTPUT:
 			o := msg.GetData()
 			n, err := s.term.Write(o)
