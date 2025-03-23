@@ -19,9 +19,29 @@ var (
 	useSystemd = flag.Bool("use_systemd", true, "If true, execute the remote server under systemd so the detached process outlives the ssh connection.")
 )
 
+type connectData struct {
+	port string
+	key  string
+}
+
 func main() {
 	flag.Parse()
 
+	connectData, err := runServer()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error running server: %v", err)
+		os.Exit(1)
+	}
+
+	runClient(connectData)
+}
+
+// runServer will ssh to the remote machine and setup a gosh-server
+// process there. On success it will return the port to connect to and
+// the session key for the encryption. It will return an error if it
+// can't run the remote process or if the remote process doesn't
+// return viable connection data.
+func runServer() (*connectData, error) {
 	args := []string{*host}
 
 	if *useSystemd {
@@ -41,24 +61,28 @@ func main() {
 	cmd := exec.Command("ssh", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't run remote server %q: %v", cmd, err)
-		os.Exit(1)
+		return nil, fmt.Errorf("%s: %w", cmd, err)
 	}
 
 	re := regexp.MustCompile("GOSH CONNECT (\\d+) ([^\\s]+).*")
 	m := re.FindStringSubmatch(string(out))
 	if len(m) != 3 {
-		fmt.Fprintf(os.Stderr, "Couldn't extract port and key. Got %v from %q.", m, string(out))
-		os.Exit(1)
+		return nil, fmt.Errorf("couldn't extract port and key; got %v from %q", m, string(out))
 	}
 
-	args = []string{*goshClient, "--remote_port", m[1], "--remote_host", *host}
+	return &connectData{port: m[1], key: m[2]}, nil
+}
+
+// runClient never returns. It execs gosh-client with the right args
+// and environment.
+func runClient(connD *connectData) {
+	args := []string{*goshClient, "--remote_port", connD.port, "--remote_host", *host}
 	if *logfile != "" {
 		args = append(args, "--logfile", *logfile)
 	}
 	if *debug {
 		args = append(args, "--debug")
 	}
-	envv := append(os.Environ(), fmt.Sprintf("GOSH_KEY=%s", m[2]))
+	envv := append(os.Environ(), fmt.Sprintf("GOSH_KEY=%s", connD.key))
 	syscall.Exec(*goshClient, args, envv)
 }
