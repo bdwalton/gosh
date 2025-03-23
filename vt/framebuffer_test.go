@@ -372,9 +372,9 @@ func TestAnsiOSCSize(t *testing.T) {
 		fb   *framebuffer
 		want []byte
 	}{
-		{newFramebuffer(10, 10), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, ESC_OSC, 10, 10, ESC_ST))},
-		{newFramebuffer(10, 5), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, ESC_OSC, 10, 5, ESC_ST))},
-		{newFramebuffer(15, 22), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, ESC_OSC, 15, 22, ESC_ST))},
+		{newFramebuffer(10, 10), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, ESC_OSC, 10, 10, CTRL_BEL))},
+		{newFramebuffer(10, 5), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, ESC_OSC, 10, 5, CTRL_BEL))},
+		{newFramebuffer(15, 22), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, ESC_OSC, 15, 22, CTRL_BEL))},
 	}
 
 	for i, c := range cases {
@@ -409,7 +409,7 @@ func TestFrameBufferDiff(t *testing.T) {
 		// no diff
 		{fb1, fb2, ""},
 		// set size, move cursor, write rune
-		{fb2, fb3, "\x1b]X;10;20\\\x1b[6;12Ha"},
+		{fb2, fb3, "\x1b]X;10;20\a\x1b[6;12Ha"},
 		// move cursor, write rune
 		{fb3, fb4, "\x1b[6;13Hb"},
 		// move cursor, set pen, write runes
@@ -417,7 +417,7 @@ func TestFrameBufferDiff(t *testing.T) {
 		// cursor, set pen, write 2 runes set size, move
 		// cursor, set pen, write rune, move cursor, write
 		// rune (only Y, no Z because of resize)
-		{fb5, fb6, "\x1b]X;10;13\\\x1b[2;H\x1b[34;41m\x1b[3mX\x1b[6;13HY"},
+		{fb5, fb6, "\x1b]X;10;13\a\x1b[2;H\x1b[34;41m\x1b[3mX\x1b[6;13HY"},
 	}
 
 	for i, c := range cases {

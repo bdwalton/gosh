@@ -115,7 +115,7 @@ func newFramebuffer(rows, cols int) *framebuffer {
 }
 
 func (f *framebuffer) ansiOSCSize() []byte {
-	return []byte(fmt.Sprintf("%c%c%s;%d;%d%c", ESC, ESC_OSC, OSC_SETSIZE, f.getNumRows(), f.getNumCols(), ESC_ST))
+	return []byte(fmt.Sprintf("%c%c%s;%d;%d%c", ESC, ESC_OSC, OSC_SETSIZE, f.getNumRows(), f.getNumCols(), CTRL_BEL))
 }
 
 func (src *framebuffer) diff(dest *framebuffer) []byte {
