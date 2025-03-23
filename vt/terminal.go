@@ -86,7 +86,8 @@ func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc) (*Terminal, er
 
 func NewTerminal() (*Terminal, error) {
 	// On the client end, we will read from the network and ship
-	// the diff into the locally running terminal. To do that, we'll ensure we have a local pipe to work through.
+	// the diff into the locally running terminal. To do that,
+	// we'll ensure we have a local pipe to work through.
 	pr, pw, err := os.Pipe()
 	if err != nil {
 		return nil, fmt.Errorf("couldn't open a pipe: %v", err)
