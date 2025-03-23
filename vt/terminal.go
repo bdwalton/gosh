@@ -653,6 +653,7 @@ func (t *Terminal) cursorMoveAbs(row, col int) {
 func (t *Terminal) eraseLine(params *parameters) {
 	m, _ := params.getItem(0, 0)
 
+	// TODO: Handle BCE properly
 	nc := t.fb.getNumCols()
 	switch m {
 	case 0: // to end of line
@@ -667,15 +668,16 @@ func (t *Terminal) eraseLine(params *parameters) {
 func (t *Terminal) eraseInDisplay(params *parameters) {
 	m, _ := params.getItem(0, 0)
 
+	// TODO: Handle BCE properly
 	nr := t.fb.getNumRows()
 	switch m {
 	case 0: // active position to end of screen, inclusive
-		t.fb.resetRows(t.cur.row, nr)
+		t.fb.resetRows(t.cur.row+1, nr-1)
 		t.eraseLine(params)
 	case 1: // start of screen to active position, inclusive
 		t.fb.resetRows(0, t.cur.row-1)
 		t.eraseLine(params)
 	case 2: // entire screen
-		t.fb.resetRows(0, nr)
+		t.fb.resetRows(0, nr-1)
 	}
 }
