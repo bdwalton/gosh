@@ -39,9 +39,9 @@ func main() {
 	}
 
 	cmd := exec.Command("ssh", args...)
-	out, err := cmd.Output()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't run remote server: %v", err)
+		fmt.Fprintf(os.Stderr, "Couldn't run remote server %q: %v", cmd, err)
 		os.Exit(1)
 	}
 
