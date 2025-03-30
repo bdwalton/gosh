@@ -375,3 +375,79 @@ func TestTerminalDiff(t *testing.T) {
 		}
 	}
 }
+
+func TestEraseInDisplay(t *testing.T) {
+	emptyFb := newFramebuffer(10, 10)
+	fb2 := emptyFb.copy()
+	fillBuffer(fb2)
+	fb2erase1 := fb2.copy()
+	copy(fb2erase1.data[4][4:], newRow(6))
+	fb2erase1.data[5] = newRow(10)
+	fb2erase1.data[6] = newRow(10)
+	fb2erase1.data[7] = newRow(10)
+	fb2erase1.data[8] = newRow(10)
+	fb2erase1.data[9] = newRow(10)
+	fb2erase2 := fb2.copy()
+	copy(fb2erase2.data[9][4:], newRow(6))
+	fb2erase3 := fb2.copy()
+	fb2erase3.data[0] = newRow(10)
+	fb2erase3.data[1] = newRow(10)
+	fb2erase3.data[2] = newRow(10)
+	fb2erase3.data[3] = newRow(10)
+	copy(fb2erase3.data[4][0:4], newRow(4))
+
+	cases := []struct {
+		cur    cursor
+		params *parameters
+		fb     *framebuffer
+		wantFb *framebuffer
+	}{
+		{
+			cursor{0, 0},
+			&parameters{1, []int{0}},
+			emptyFb.copy(),
+			emptyFb.copy(),
+		},
+		{
+			cursor{4, 4},
+			&parameters{1, []int{0}},
+			fb2.copy(),
+			fb2erase1,
+		},
+		{
+			cursor{9, 4},
+			&parameters{1, []int{0}},
+			fb2.copy(),
+			fb2erase2,
+		},
+		{
+			cursor{4, 4},
+			&parameters{1, []int{1}},
+			fb2.copy(),
+			fb2erase3,
+		},
+		{
+			cursor{4, 4},
+			&parameters{1, []int{2}},
+			fb2.copy(),
+			emptyFb,
+		},
+		{
+			cursor{9, 9},
+			&parameters{1, []int{2}},
+			fb2.copy(),
+			emptyFb,
+		},
+	}
+
+	for i, c := range cases {
+		term, _ := NewTerminal()
+		term.fb = c.fb
+		term.cur = c.cur
+		term.eraseInDisplay(c.params)
+
+		if !c.wantFb.equal(term.fb) {
+			t.Errorf("%d: Got\n%v wanted\n%v", i, term.fb, c.wantFb)
+		}
+	}
+}
