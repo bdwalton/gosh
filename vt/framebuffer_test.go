@@ -402,9 +402,24 @@ func TestFrameBufferDiff(t *testing.T) {
 	fb6.setCell(5, 13, newCell('Z', format{fg: standardColors[FG_YELLOW], bg: standardColors[BG_GREEN]}))
 	fb6.resize(10, 13)
 
+	fb7 := newFramebuffer(24, 80)
+	fb8 := fb7.copy()
+
+	fb8.setCell(0, 0, newCell(' ', defFmt))
+	fb8.setCell(0, 1, newCell('a', format{bg: standardColors[BG_BLACK]}))
+	fb8.setCell(0, 2, newCell('b', format{bg: standardColors[BG_BLACK]}))
+	fb8.setCell(0, 3, newCell('c', format{bg: standardColors[BG_BLACK]}))
+	fb8.setCell(0, 4, newCell(' ', format{bg: standardColors[BG_BLACK]}))
+	fb8.setCell(0, 5, newCell('\ue0b0', format{fg: standardColors[FG_BLACK], bg: standardColors[BG_BLUE]}))
+	fb8.setCell(0, 6, newCell(' ', format{fg: standardColors[FG_BLACK], bg: standardColors[BG_BLUE]}))
+	fb8.setCell(0, 7, newCell('~', format{fg: standardColors[FG_BLACK], bg: standardColors[BG_BLUE]}))
+	fb8.setCell(0, 8, newCell(' ', format{fg: standardColors[FG_BLACK], bg: standardColors[BG_BLUE]}))
+	fb8.setCell(0, 9, newCell('\ue0b0', format{fg: standardColors[FG_BLUE], bg: standardColors[BG_DEF]}))
+	fb8.setCell(0, 10, newCell(' ', defFmt))
+
 	cases := []struct {
-		fb1, fb2 *framebuffer
-		want     string
+		srcFB, destFB *framebuffer
+		want          string
 	}{
 		// no diff
 		{fb1, fb2, ""},
@@ -418,13 +433,14 @@ func TestFrameBufferDiff(t *testing.T) {
 		// cursor, set pen, write rune, move cursor, write
 		// rune (only Y, no Z because of resize)
 		{fb5, fb6, "\x1b]X;10;13\a\x1b[2;H\x1b[34;41m\x1b[3mX\x1b[6;13HY"},
+		{fb7, fb8, "\x1b[;H \x1b[40mabc \x1b[30;44m\ue0b0 ~ \x1b[34;49m\ue0b0\x1b[m "},
 	}
 
 	for i, c := range cases {
 		// shadows, but ok
-		fb1 := c.fb1.copy()
-		fb2 := c.fb2.copy()
-		if got := string(fb1.diff(fb2)); got != c.want {
+		srcFB := c.srcFB.copy()
+		destFB := c.destFB.copy()
+		if got := string(srcFB.diff(destFB)); got != c.want {
 			t.Errorf("%d: Got\n\t%q, wanted\n\t%q", i, got, c.want)
 		}
 	}

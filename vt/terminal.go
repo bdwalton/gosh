@@ -167,13 +167,22 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 	// we always generate diffs as from previous to current
 	fbd := src.fb.diff(dest.fb)
 	if len(fbd) > 0 {
+		if dest.curF.equal(defFmt) {
+			sb.WriteString(FMT_RESET)
+		}
+
 		sb.Write(fbd)
 		// Always reset the cursor
 		sb.WriteString(dest.cur.getMoveToAnsi())
+
 		// We assume that the pen was changed during the
 		// writing of the framebuffer diff, so always generate
 		// a full format reset for the diff
 		sb.Write(defFmt.diff(dest.curF))
+	} else {
+		// If we didn't write anything, the pen may still be
+		// different so we should ship the delta.
+		sb.Write(src.curF.diff(dest.curF))
 	}
 
 	return []byte(sb.String())

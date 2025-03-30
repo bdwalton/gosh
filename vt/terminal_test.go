@@ -348,18 +348,23 @@ func TestTerminalDiff(t *testing.T) {
 	t13 := t10.Copy()
 	t13.horizMargin = newMargin(0, 4)
 	t13.vertMargin = newMargin(1, 6)
+	t14, _ := NewTerminal()
+	t15 := t14.Copy()
+	t15.curF = format{fg: standardColors[FG_RED], italic: true}
+	t16 := t15.Copy()
+	t16.curF = format{fg: standardColors[FG_YELLOW], italic: true, brightness: FONT_BOLD}
 
 	cases := []struct {
 		src, dest *Terminal
 		want      []byte
 	}{
 		{t1, t2, []byte{}},
-		{t2, t3, []byte(fmt.Sprintf("%c%c%s;%d;%d%c%c%c%c%c", ESC, ESC_OSC, OSC_SETSIZE, 20, 15, CTRL_BEL, ESC, ESC_CSI, ';', CSI_CUP))},
-		{t3, t4, []byte(fmt.Sprintf("%s%c%c%d%c%c%s", cursor{5, 7}.getMoveToAnsi(), ESC, ESC_CSI, FG_RED, CSI_SGR, 'a', cursor{}.getMoveToAnsi()))},
+		{t2, t3, []byte(fmt.Sprintf("%c%c%c%c%c%s;%d;%d%c%c%c%c%c", ESC, ESC_CSI, CSI_SGR, ESC, ESC_OSC, OSC_SETSIZE, 20, 15, CTRL_BEL, ESC, ESC_CSI, ';', CSI_CUP))},
+		{t3, t4, []byte(fmt.Sprintf("%c%c%c%s%c%c%d%c%c%s", ESC, ESC_CSI, CSI_SGR, cursor{5, 7}.getMoveToAnsi(), ESC, ESC_CSI, FG_RED, CSI_SGR, 'a', cursor{}.getMoveToAnsi()))},
 		{t4, t5, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_TITLE, "mytitle", CTRL_BEL))},
 		{t4, t6, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON_TITLE, "mytitle", CTRL_BEL))},
 		{t4, t7, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON, "myicon", CTRL_BEL))},
-		{t1, t8, []byte(fmt.Sprintf("%c%c%s;%s%c%c%c%s;%d;%d%c%c%c;%c", ESC, ESC_OSC, OSC_ICON, "myicon", CTRL_BEL, ESC, ESC_OSC, OSC_SETSIZE, 10, 6, CTRL_BEL, ESC, ESC_CSI, CSI_CUP))},
+		{t1, t8, []byte(fmt.Sprintf("%c%c%s;%s%c%c%c%c%c%c%s;%d;%d%c%c%c;%c", ESC, ESC_OSC, OSC_ICON, "myicon", CTRL_BEL, ESC, ESC_CSI, CSI_SGR, ESC, ESC_OSC, OSC_SETSIZE, 10, 6, CTRL_BEL, ESC, ESC_CSI, CSI_CUP))},
 		{t8, t9, []byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_ENABLE))},
 		{t9, t10, []byte(fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
 		{t10, t11, []byte(fmt.Sprintf("%c%c%d;%d%c", ESC, ESC_CSI, 3, 6, CSI_DECSTBM))},
@@ -367,6 +372,9 @@ func TestTerminalDiff(t *testing.T) {
 		{t9, t11, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c%d%c%c%c%d%c", ESC, ESC_CSI, 3, 6, CSI_DECSTBM, ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
 		{t9, t12, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c%d%c%c%c%d%c", ESC, ESC_CSI, 4, 8, CSI_DECSLRM, ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
 		{t9, t13, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c%d;%d%c%c%c%d%c%c%c%d%c", ESC, ESC_CSI, 1, 5, CSI_DECSLRM, ESC, ESC_CSI, 2, 7, CSI_DECSTBM, ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
+		{t14, t15, []byte(fmt.Sprintf("%c%c%dm%c%c%dm", ESC, ESC_CSI, FG_RED, ESC, ESC_CSI, ITALIC_ON))},
+
+		{t15, t16, []byte(fmt.Sprintf("%c%c%d%c%c%c%dm", ESC, ESC_CSI, FG_YELLOW, CSI_SGR, ESC, ESC_CSI, FONT_BOLD))},
 	}
 
 	for i, c := range cases {

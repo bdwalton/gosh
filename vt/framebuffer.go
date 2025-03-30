@@ -142,7 +142,11 @@ func (src *framebuffer) diff(dest *framebuffer) []byte {
 					sb.WriteString(cur.getMoveToAnsi())
 				}
 
-				sb.Write(srcCell.efficientDiff(destCell, lastF))
+				d := srcCell.efficientDiff(destCell, lastF)
+				if len(d) == 0 {
+					d = []byte(fmt.Sprintf("%c", destCell.r))
+				}
+				sb.Write(d)
 				lastF = destCell.getFormat()
 				lastCur = cur
 			}
