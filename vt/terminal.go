@@ -262,7 +262,7 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	case '8': // restore cursor
 		t.cur = t.savedCur.Copy()
 	default:
-		slog.Debug("ignoring ESC", "r", string(r), "params", params, "data", data)
+		slog.Debug("ignoring ESC", "r", string(r), "params", params, "data", string(data))
 	}
 
 }
