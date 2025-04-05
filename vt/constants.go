@@ -26,7 +26,7 @@ const (
 	CTRL_LF  = 0x0a // ^J Line feed \n
 	CTRL_FF  = 0x0c // ^L Form feed \f
 	CTRL_CR  = 0x0d // ^M Carriage return \r
-	CTRL_HTS = 0x88 // Horizontal tab stop
+	CTRL_HTS = 0x88 // Set tab stop
 	CTRL_ST  = 0x9c // ST string terminator
 )
 
