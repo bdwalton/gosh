@@ -269,6 +269,8 @@ func (t *Terminal) Resize(rows, cols int) {
 
 func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	switch r {
+	case 'H': // set tab stop
+		t.tabs[t.cur.col] = true
 	case '7': // save cursor
 		t.savedCur = t.cur.Copy()
 	case '8': // restore cursor
