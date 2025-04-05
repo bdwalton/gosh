@@ -146,6 +146,7 @@ const (
 
 // CSI private mode parameter codes
 const (
+	PRIV_CSI_DECCKM        = 1    // DEC application cursor keys
 	PRIV_CSI_DECAWM        = 7    // DEC autowrap mode, default reset
 	PRIV_CSI_LNM           = 20   // Line Feed/New Line Mode, default reset
 	PRIV_CSI_BRACKET_PASTE = 2004 // Bracketed paste, ala xterm

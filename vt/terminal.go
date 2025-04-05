@@ -53,6 +53,7 @@ type Terminal struct {
 
 // Private flags here will be initialized, diff'd, copied, etc.
 var privFlags = []int{
+	PRIV_CSI_DECCKM,
 	PRIV_CSI_DECAWM,
 	PRIV_CSI_LNM,
 	PRIV_CSI_BRACKET_PASTE,
