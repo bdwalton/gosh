@@ -198,6 +198,7 @@ func (gc *GConn) Read(extbuf []byte) (int, error) {
 		// Only update our remote if the nonce sequence has
 		// increased from our last known good remote nonce.
 		if ors, rs := gc.remote.String(), remote.String(); rs != ors && rn > gc.rnce {
+			slog.Info("Updating remote peer", "remote", remote.String())
 			gc.remote = remote
 		}
 
