@@ -490,6 +490,8 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		t.cursorMove(params, last)
 	case CSI_SGR:
 		t.curF = formatFromParams(t.curF, params)
+	case CSI_DECST8C:
+		t.resetTabs(params, data)
 	case CSI_CHT:
 		n, _ := params.getItem(0, 1)
 		t.stepTabs(n)
@@ -501,6 +503,19 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	default:
 		slog.Debug("unimplemented CSI code", "last", string(last), "params", params, "data", data)
 	}
+}
+
+func (t *Terminal) resetTabs(params *parameters, data []rune) {
+	n, ok := params.getItem(0, 0)
+	if len(data) != 1 || data[0] != '?' || !ok || n != 5 {
+		slog.Debug("resetTabs called without ? 5 as data and parameter", "data", string(data), "params", params)
+	}
+	cols := t.fb.getNumCols()
+	tabs := make([]bool, cols, cols)
+	for i := 0; i < cols; i += 8 {
+		tabs[i] = true
+	}
+	t.tabs = tabs
 }
 
 func (t *Terminal) clearTabs(params *parameters) {
