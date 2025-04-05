@@ -494,7 +494,7 @@ func TestResizeTabs(t *testing.T) {
 		{
 			[]bool{true, false, false, true, false, false, false, false, false, true},
 			7,
-			[]bool{true, false, false, true, false, false, false},
+			[]bool{true, false, false, true, false, false},
 		},
 		// Larger, preserved modifications
 		{

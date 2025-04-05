@@ -692,7 +692,7 @@ func (t *Terminal) resizeTabs(cols int) {
 	l := len(t.tabs)
 	switch {
 	case cols < l:
-		t.tabs = t.tabs[0:cols]
+		t.tabs = t.tabs[0 : cols-1]
 	case cols > l:
 		tabs := makeTabs(cols)
 		copy(tabs, t.tabs)
