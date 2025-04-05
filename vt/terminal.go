@@ -499,7 +499,7 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_TBC:
 		t.clearTabs(params)
 	default:
-		slog.Debug("unimplemented CSI code", "last", last, "params", params, "data", data)
+		slog.Debug("unimplemented CSI code", "last", string(last), "params", params, "data", data)
 	}
 }
 
