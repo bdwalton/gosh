@@ -305,15 +305,13 @@ func TestResize(t *testing.T) {
 }
 
 func TestScrollRows(t *testing.T) {
-	fb1 := numberedFBForTest(2, 6, 10, 2)
-
 	cases := []struct {
 		fb     *framebuffer
 		scroll int
 		want   *framebuffer
 	}{
 		{numberedFBForTest(0, 8, 10, 0), 0, numberedFBForTest(0, 8, 10, 0)},
-		{numberedFBForTest(0, 8, 10, 0), 2, fb1},
+		{numberedFBForTest(0, 8, 10, 0), 2, numberedFBForTest(2, 6, 10, 2)},
 		{numberedFBForTest(0, 8, 10, 0), 8, newFramebuffer(8, 10)},
 	}
 
