@@ -239,7 +239,7 @@ func TestPrint(t *testing.T) {
 		t, _ := NewTerminal()
 		t.fb = fb
 		t.cur = c
-		t.privAutowrap = wrap
+		t.setFlag(PRIV_CSI_DECAWM, wrap)
 		return t
 	}
 
@@ -337,10 +337,10 @@ func TestTerminalDiff(t *testing.T) {
 	t8 := t7.Copy()
 	t8.Resize(10, 6)
 	t9 := t8.Copy()
-	t9.privAutowrap = true
+	t9.setFlag(PRIV_CSI_DECAWM, true)
 	t10 := t9.Copy()
-	t10.privAutowrap = false
-	t10.privNewLineMode = true
+	t10.setFlag(PRIV_CSI_DECAWM, false)
+	t10.setFlag(PRIV_CSI_LNM, true)
 	t11 := t10.Copy()
 	t11.vertMargin = newMargin(2, 5)
 	t12 := t10.Copy()

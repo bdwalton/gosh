@@ -45,18 +45,28 @@ type Terminal struct {
 	vertMargin, horizMargin margin
 
 	// CSI private flags
-	privAutowrap    bool // default reset (false)
-	privNewLineMode bool // default reset (false)
+	flags map[int]*privFlag
 
 	// Internal
 	mux sync.Mutex
 }
 
+// Private flags here will be initialized, diff'd, copied, etc.
+var privFlags = []int{
+	PRIV_CSI_DECAWM,
+	PRIV_CSI_LNM,
+}
+
 func newBasicTerminal(r, w *os.File) *Terminal {
+	flags := make(map[int]*privFlag)
+	for _, f := range privFlags {
+		flags[f] = newPrivFlag(f)
+	}
 	return &Terminal{
 		fb:      newFramebuffer(DEF_ROWS, DEF_COLS),
 		oscTemp: make([]rune, 0),
 		tabs:    makeTabs(DEF_COLS),
+		flags:   flags,
 		p:       newParser(),
 		ptyR:    r,
 		ptyW:    w,
@@ -114,14 +124,19 @@ func (t *Terminal) Write(p []byte) (int, error) {
 func (t *Terminal) Copy() *Terminal {
 	t.mux.Lock()
 	defer t.mux.Unlock()
+
+	flags := make(map[int]*privFlag)
+	for c, f := range t.flags {
+		flags[c] = f.copy()
+	}
+
 	return &Terminal{
-		fb:              t.fb.copy(),
-		title:           t.title,
-		icon:            t.icon,
-		cur:             t.cur,
-		curF:            t.curF,
-		privAutowrap:    t.privAutowrap,
-		privNewLineMode: t.privNewLineMode,
+		fb:    t.fb.copy(),
+		title: t.title,
+		icon:  t.icon,
+		cur:   t.cur,
+		curF:  t.curF,
+		flags: flags,
 	}
 }
 
@@ -150,20 +165,10 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 		sb.WriteString(dest.vertMargin.getAnsi(CSI_DECSTBM))
 	}
 
-	if src.privAutowrap != dest.privAutowrap {
-		b := CSI_PRIV_DISABLE
-		if dest.privAutowrap {
-			b = CSI_PRIV_ENABLE
+	for _, c := range privFlags {
+		if !src.flags[c].equal(dest.flags[c]) {
+			sb.WriteString(dest.flags[c].getAnsiString())
 		}
-		sb.WriteString(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_DECAWM, b))
-	}
-
-	if src.privNewLineMode != dest.privNewLineMode {
-		b := CSI_PRIV_DISABLE
-		if dest.privNewLineMode {
-			b = CSI_PRIV_ENABLE
-		}
-		sb.WriteString(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_LNM, b))
 	}
 
 	// we always generate diffs as from previous to current
@@ -356,13 +361,21 @@ func (t *Terminal) clearFrags(row, col int) {
 	}
 }
 
+func (t *Terminal) setFlag(code int, val bool) {
+	t.flags[code].set(val)
+}
+
+func (t *Terminal) getFlag(code int) bool {
+	return t.flags[code].get()
+}
+
 func (t *Terminal) print(r rune) {
 	row, col := t.cur.row, t.cur.col
 	rw := runewidth.StringWidth(string(r))
 
 	switch rw {
 	case 0: // combining
-		if col == 0 && !t.privAutowrap {
+		if col == 0 && !t.getFlag(PRIV_CSI_DECAWM) {
 			// can't do anything with this. if we're in
 			// the first position but hadn't wrapped, we
 			// don't have something to combine with, so
@@ -372,7 +385,7 @@ func (t *Terminal) print(r rune) {
 		}
 
 		switch {
-		case col == 0 && t.privAutowrap: // we wrapped
+		case col == 0 && t.getFlag(PRIV_CSI_DECAWM): // we wrapped
 			col = t.fb.getNumCols() - 1
 			row -= 1
 		case col >= t.fb.getNumCols(): // we're at the end of a row but didn't wrap
@@ -409,7 +422,7 @@ func (t *Terminal) print(r rune) {
 			return
 		}
 
-		if t.privAutowrap {
+		if t.getFlag(PRIV_CSI_DECAWM) {
 			col = 0
 			if row == t.fb.getNumRows()-1 {
 				t.fb.scrollRows(1)
@@ -526,12 +539,9 @@ func (t *Terminal) setPriv(params *parameters, data []rune, val bool) {
 		return
 	}
 
-	switch priv {
-	case PRIV_CSI_DECAWM:
-		t.privAutowrap = val
-	case PRIV_CSI_LNM:
-		t.privNewLineMode = val
-	default:
+	if _, ok := t.flags[priv]; ok {
+		t.setFlag(priv, val)
+	} else {
 		slog.Debug("unimplmented private csi mode", "priv", priv)
 	}
 }
