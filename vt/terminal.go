@@ -451,7 +451,7 @@ func (t *Terminal) handleExecute(last rune) {
 	case CTRL_LF, CTRL_FF: // libvte treats lf and ff the same, so we do too
 		t.lineFeed()
 	case CTRL_TAB:
-		t.advanceTab()
+		t.stepTabs(1)
 	default:
 		slog.Debug("handleExecute: UNHANDLED Command", "last", string(last))
 	}
@@ -475,6 +475,12 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		t.cursorMove(params, last)
 	case CSI_SGR:
 		t.curF = formatFromParams(t.curF, params)
+	case CSI_CHT:
+		n, _ := params.getItem(0, 1)
+		t.stepTabs(n)
+	case CSI_CBT:
+		n, _ := params.getItem(0, 1)
+		t.stepTabs(-n)
 	case CSI_TBC:
 		t.clearTabs(params)
 	default:
@@ -700,17 +706,42 @@ func (t *Terminal) resizeTabs(cols int) {
 	}
 }
 
-func (t *Terminal) advanceTab() {
-	col := t.cur.col + 1
+func (t *Terminal) stepTabs(steps int) {
+	// column under consideration, step increment for next column,
+	// count increment to know when we've tabbed enough.
+	col, step, inc := t.cur.col+1, 1, -1
+
+	switch {
+	case steps == 0:
+		// shouldn't happen, but don't adjust cursor if it
+		// does
+		return
+	case steps < 0:
+		// we're moving backward through the line, not forward
+		col = t.cur.col - 1
+		step = -1
+		inc = 1
+	}
+
+	max := t.fb.getNumCols() - 1
 	for {
-		if col >= t.fb.getNumCols() {
-			break
+		switch {
+		case col <= 0:
+			t.cur.col = 0
+			return
+		case col >= max:
+			t.cur.col = max
+			return
+		default:
+			if t.tabs[col] {
+				steps += inc
+				if steps == 0 {
+					t.cur.col = col
+					return
+				}
+			}
+			col += step
 		}
-		if t.tabs[col] {
-			t.cursorMoveAbs(t.cur.row, col)
-			break
-		}
-		col += 1
 	}
 }
 

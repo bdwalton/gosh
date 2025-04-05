@@ -549,3 +549,81 @@ func TestClearTabs(t *testing.T) {
 		}
 	}
 }
+
+func TestStepTabs(t *testing.T) {
+	cases := []struct {
+		tabs  []bool
+		cur   cursor
+		steps int
+		want  cursor
+	}{
+		{
+			[]bool{true, false, false, false, true, false, false, true, false},
+			cursor{5, 3},
+			1,
+			cursor{5, 4},
+		},
+		{
+			[]bool{true, false, false, false, true, false, false, true, false},
+			cursor{5, 8},
+			1,
+			cursor{5, 8},
+		},
+		{
+			[]bool{true, false, false, false, true, false, false, true, false},
+			cursor{5, 3},
+			2,
+			cursor{5, 7},
+		},
+		{
+			[]bool{true, false, false, false, true, false, false, true, false},
+			cursor{5, 3},
+			3,
+			cursor{5, 8},
+		},
+		{
+			[]bool{true, true, false, false, true, false, false, true, false},
+			cursor{5, 3},
+			-1,
+			cursor{5, 1},
+		},
+		{
+			[]bool{true, false, true, false, true, false, false, true, false},
+			cursor{5, 7},
+			-2,
+			cursor{5, 2},
+		},
+		{
+			[]bool{true, false, true, false, true, false, false, true, false},
+			cursor{5, 3},
+			-3,
+			cursor{5, 0},
+		},
+		{
+			[]bool{true, false, true, false, true, false, false, true, false},
+			cursor{5, 3},
+			0,
+			cursor{5, 3},
+		},
+		{
+			[]bool{true, false, true, false, true, false, false, true, false},
+			cursor{5, 0},
+			-1,
+			cursor{5, 0},
+		},
+		{
+			[]bool{true, false, true, false, true, false, false, true, false},
+			cursor{5, 8},
+			1,
+			cursor{5, 8},
+		},
+	}
+
+	for i, c := range cases {
+		term := &Terminal{tabs: c.tabs, cur: c.cur, fb: newFramebuffer(10, len(c.tabs))}
+		term.stepTabs(c.steps)
+		if !term.cur.equal(c.want) {
+			t.Errorf("%d: Got %s, wanted %s", i, term.cur, c.want)
+		}
+	}
+}

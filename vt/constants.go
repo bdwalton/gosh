@@ -54,10 +54,12 @@ const (
 	CSI_CPL          = 'F' // cursor previous line
 	CSI_CHA          = 'G' // cursor horizontal attribute
 	CSI_CUP          = 'H' // cursor position
+	CSI_CHT          = 'I' // cursor forward tabulation
 	CSI_ED           = 'J' // erase in display
 	CSI_EL           = 'K' // erase in line
 	CSI_SU           = 'S' // scroll up
 	CSI_SD           = 'T' // scroll down
+	CSI_CBT          = 'Z' // cursor backward tabulation
 	CSI_HVP          = 'f' // horizontal vertical position
 	CSI_TBC          = 'g' // tab stop clear
 	CSI_SGR          = 'm' // select graphic rendition
