@@ -537,7 +537,7 @@ func (t *Terminal) lineFeed() {
 func (t *Terminal) setPriv(params *parameters, data []rune, val bool) {
 	priv, ok := params.consumeItem()
 	if len(data) != 1 || data[0] != '?' || !ok {
-		slog.Debug("togglePriv called without ? intermediate or missing params", "data", data, "params", params.items, "enabled?", val)
+		slog.Debug("setPriv called without ? intermediate or missing params", "data", data, "params", params.items, "enabled?", val)
 		return
 	}
 
