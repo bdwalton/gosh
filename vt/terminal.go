@@ -692,7 +692,7 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 	case CSI_CHA:
 		col = n - 1 // our indexing is zero based
 	case CSI_CUP, CSI_HVP: // TODO: What does "format effector" mean for HVP
-		row = n - 1 // out indexing is zero based
+		row = n - 1 // our indexing is zero based
 		col = m - 1
 	}
 
