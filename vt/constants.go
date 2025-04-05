@@ -63,6 +63,8 @@ const (
 	CSI_CBT          = 'Z' // cursor backward tabulation
 	CSI_HPA          = '`' // character position absolute (column), default [row,1]
 	CSI_HPR          = 'a' // character position relative (column), default [row,col+1]
+	CSI_VPA          = 'd' // line position absolute (row), default [1,col]
+	CSI_VPR          = 'e' // line position relative (row), default [row+1,col]
 	CSI_HVP          = 'f' // horizontal vertical position
 	CSI_TBC          = 'g' // tab stop clear
 	CSI_PRIV_ENABLE  = 'h' // h typically enables or activates something

@@ -36,6 +36,16 @@ func TestCursorMove(t *testing.T) {
 		mt               rune // move type
 		wantRow, wantCol int
 	}{
+		// VPA - vertical position absolute
+		{&Terminal{fb: fb1, cur: cursor{15, fb1.getNumCols() - 1}}, paramsFromInts([]int{}), CSI_VPA, 0, fb1.getNumCols() - 1},
+		{&Terminal{fb: fb1, cur: cursor{15, fb1.getNumCols() - 1}}, paramsFromInts([]int{10}), CSI_VPA, 9, 79},
+		{&Terminal{fb: fb1, cur: cursor{15, 0}}, paramsFromInts([]int{3}), CSI_VPA, 2, 0},
+		{&Terminal{fb: fb1, cur: cursor{15, 0}}, paramsFromInts([]int{1000}), CSI_VPA, fb1.getNumRows() - 1, 0},
+		// VPR - vertical position relative
+		{&Terminal{fb: fb1, cur: cursor{15, fb1.getNumCols() - 1}}, paramsFromInts([]int{}), CSI_VPR, 16, fb1.getNumCols() - 1},
+		{&Terminal{fb: fb1, cur: cursor{15, fb1.getNumCols() - 1}}, paramsFromInts([]int{5}), CSI_VPR, 20, 79},
+		{&Terminal{fb: fb1, cur: cursor{15, 0}}, paramsFromInts([]int{3}), CSI_VPR, 18, 0},
+		{&Terminal{fb: fb1, cur: cursor{15, 0}}, paramsFromInts([]int{1000}), CSI_VPR, fb1.getNumRows() - 1, 0},
 		// HPA - horizontal position absolute
 		{&Terminal{fb: fb1, cur: cursor{15, fb1.getNumCols() - 1}}, paramsFromInts([]int{}), CSI_HPA, 15, 0},
 		{&Terminal{fb: fb1, cur: cursor{15, fb1.getNumCols() - 1}}, paramsFromInts([]int{10}), CSI_HPA, 15, 9},
