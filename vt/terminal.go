@@ -486,7 +486,7 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		t.eraseLine(params)
 	case CSI_ED:
 		t.eraseInDisplay(params)
-	case CSI_CUP, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
+	case CSI_CUP, CSI_CUU, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
 		t.cursorMove(params, last)
 	case CSI_SGR:
 		t.curF = formatFromParams(t.curF, params)
