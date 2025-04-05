@@ -459,3 +459,56 @@ func TestEraseInDisplay(t *testing.T) {
 		}
 	}
 }
+
+func TestResizeTabs(t *testing.T) {
+	cases := []struct {
+		tabs []bool
+		sz   int
+		want []bool
+	}{
+		// Same size, default tab stops
+		{
+			[]bool{true, false, false, false, false, false, false, false, false, true},
+			10,
+			[]bool{true, false, false, false, false, false, false, false, false, true},
+		},
+		// Same size, preserved modifications
+		{
+			[]bool{true, false, false, true, false, true, false, false, false, true},
+			10,
+			[]bool{true, false, false, true, false, true, false, false, false, true},
+		},
+		// Larger, default tab stops
+		{
+			[]bool{true, false, false, false, false, false, false, false, false, true},
+			17,
+			[]bool{true, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, true},
+		},
+		// Smaller, default tab stops
+		{
+			[]bool{true, false, false, false, false, false, false, false, false, true},
+			12,
+			[]bool{true, false, false, false, false, false, false, false, false, true, false, false},
+		},
+		// Smaller, preserved modifications
+		{
+			[]bool{true, false, false, true, false, false, false, false, false, true},
+			7,
+			[]bool{true, false, false, true, false, false, false},
+		},
+		// Larger, preserved modifications
+		{
+			[]bool{true, false, false, true, false, false, false, true, false, true},
+			17,
+			[]bool{true, false, false, true, false, false, false, true, false, true, false, false, false, false, false, false, true},
+		},
+	}
+
+	for i, c := range cases {
+		term := &Terminal{tabs: c.tabs}
+		term.resizeTabs(c.sz)
+		if !slices.Equal(term.tabs, c.want) {
+			t.Errorf("%d: Got\n\t%v, wanted\n\t%v", i, term.tabs, c.want)
+		}
+	}
+}

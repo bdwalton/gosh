@@ -36,6 +36,7 @@ type Terminal struct {
 	title, icon   string
 	cur, savedCur cursor
 	curF          format
+	tabs          []bool
 
 	// Temp
 	oscTemp []rune
@@ -55,6 +56,7 @@ func newBasicTerminal(r, w *os.File) *Terminal {
 	return &Terminal{
 		fb:      newFramebuffer(DEF_ROWS, DEF_COLS),
 		oscTemp: make([]rune, 0),
+		tabs:    makeTabs(DEF_COLS),
 		p:       newParser(),
 		ptyR:    r,
 		ptyW:    w,
@@ -261,6 +263,7 @@ func (t *Terminal) Resize(rows, cols int) {
 	defer t.mux.Unlock()
 
 	t.fb.resize(rows, cols)
+	t.resizeTabs(cols)
 	slog.Debug("changed window size", "rows", rows, "cols", rows)
 }
 
@@ -445,6 +448,8 @@ func (t *Terminal) handleExecute(last rune) {
 		t.carriageReturn()
 	case CTRL_LF, CTRL_FF: // libvte treats lf and ff the same, so we do too
 		t.lineFeed()
+	case CTRL_TAB:
+		t.advanceTab()
 	default:
 		slog.Debug("handleExecute: UNHANDLED Command", "last", string(last))
 	}
@@ -656,6 +661,40 @@ func (t *Terminal) cursorMoveAbs(row, col int) {
 		t.cur.row = 0
 	case t.cur.row >= nr:
 		t.cur.row = nr - 1
+	}
+}
+
+func makeTabs(cols int) []bool {
+	tabs := make([]bool, cols, cols)
+	for i := range tabs {
+		tabs[i] = (i%8 == 0)
+	}
+	return tabs
+}
+
+func (t *Terminal) resizeTabs(cols int) {
+	l := len(t.tabs)
+	switch {
+	case cols < l:
+		t.tabs = t.tabs[0:cols]
+	case cols > l:
+		tabs := makeTabs(cols)
+		copy(tabs, t.tabs)
+		t.tabs = tabs
+	}
+}
+
+func (t *Terminal) advanceTab() {
+	col := t.cur.col + 1
+	for {
+		if col >= t.fb.getNumCols() {
+			break
+		}
+		if t.tabs[col] {
+			t.cursorMoveAbs(t.cur.row, col)
+			break
+		}
+		col += 1
 	}
 }
 
