@@ -512,3 +512,40 @@ func TestResizeTabs(t *testing.T) {
 		}
 	}
 }
+
+func TestClearTabs(t *testing.T) {
+	cases := []struct {
+		tabs     []bool
+		cur      cursor
+		tbc_mode int
+		want     []bool
+	}{
+		{
+			[]bool{true, false, false, true, false},
+			cursor{5, 2},
+			TBC_CUR,
+			[]bool{true, false, false, true, false},
+		},
+		{
+			[]bool{true, false, false, true, false},
+			cursor{5, 3},
+			TBC_CUR,
+			[]bool{true, false, false, false, false},
+		},
+		{
+			[]bool{true, false, false, true, false},
+			cursor{5, 3},
+			TBC_ALL,
+			[]bool{false, false, false, false, false},
+		},
+	}
+
+	for i, c := range cases {
+		term := &Terminal{tabs: c.tabs, cur: c.cur}
+		params := &parameters{1, []int{c.tbc_mode}}
+		term.clearTabs(params)
+		if !slices.Equal(term.tabs, c.want) {
+			t.Errorf("%d: Got\n\t%v, wanted\n\t%v", i, term.tabs, c.want)
+		}
+	}
+}

@@ -473,8 +473,22 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		t.cursorMove(params, last)
 	case CSI_SGR:
 		t.curF = formatFromParams(t.curF, params)
+	case CSI_TBC:
+		t.clearTabs(params)
 	default:
 		slog.Debug("unimplemented CSI code", "last", last, "params", params, "data", data)
+	}
+}
+
+func (t *Terminal) clearTabs(params *parameters) {
+	m, _ := params.getItem(0, 0)
+	switch m {
+	case TBC_CUR:
+		t.tabs[t.cur.col] = false
+	case TBC_ALL:
+		for i := range t.tabs {
+			t.tabs[i] = false
+		}
 	}
 }
 

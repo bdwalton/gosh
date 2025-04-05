@@ -59,6 +59,7 @@ const (
 	CSI_SU           = 'S' // scroll up
 	CSI_SD           = 'T' // scroll down
 	CSI_HVP          = 'f' // horizontal vertical position
+	CSI_TBC          = 'g' // tab stop clear
 	CSI_SGR          = 'm' // select graphic rendition
 	CSI_DSR          = 'n' // device status report
 	CSI_PRIV_ENABLE  = 'h' // h typically enables or activates something
@@ -153,4 +154,10 @@ const (
 	OSC_ICON       = "1"
 	OSC_TITLE      = "2"
 	OSC_SETSIZE    = "X" // Gosh-specific
+)
+
+// Modes for CSI_TBC
+const (
+	TBC_CUR = 0 // clear current tab stop
+	TBC_ALL = 3 // clear all tab stops
 )
