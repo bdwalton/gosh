@@ -353,6 +353,8 @@ func TestTerminalDiff(t *testing.T) {
 	t15.curF = format{fg: standardColors[FG_RED], italic: true}
 	t16 := t15.Copy()
 	t16.curF = format{fg: standardColors[FG_YELLOW], italic: true, brightness: FONT_BOLD}
+	t17 := t1.Copy()
+	t17.setFlag(PRIV_CSI_BRACKET_PASTE, true)
 
 	cases := []struct {
 		src, dest *Terminal
@@ -375,6 +377,7 @@ func TestTerminalDiff(t *testing.T) {
 		{t14, t15, []byte(fmt.Sprintf("%c%c%dm%c%c%dm", ESC, ESC_CSI, FG_RED, ESC, ESC_CSI, ITALIC_ON))},
 
 		{t15, t16, []byte(fmt.Sprintf("%c%c%d%c%c%c%dm", ESC, ESC_CSI, FG_YELLOW, CSI_SGR, ESC, ESC_CSI, FONT_BOLD))},
+		{t1, t17, []byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_BRACKET_PASTE, CSI_PRIV_ENABLE))},
 	}
 
 	for i, c := range cases {

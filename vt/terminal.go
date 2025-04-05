@@ -55,6 +55,7 @@ type Terminal struct {
 var privFlags = []int{
 	PRIV_CSI_DECAWM,
 	PRIV_CSI_LNM,
+	PRIV_CSI_BRACKET_PASTE,
 }
 
 func newBasicTerminal(r, w *os.File) *Terminal {
