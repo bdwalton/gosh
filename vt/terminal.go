@@ -486,7 +486,7 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		t.eraseLine(params)
 	case CSI_ED:
 		t.eraseInDisplay(params)
-	case CSI_CUP, CSI_CUU, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
+	case CSI_HPA, CSI_HPR, CSI_CUP, CSI_CUU, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
 		t.cursorMove(params, last)
 	case CSI_SGR:
 		t.curF = formatFromParams(t.curF, params)
@@ -623,6 +623,10 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 	col := t.cur.col
 
 	switch moveType {
+	case CSI_HPA:
+		col = n - 1 // 0 based columns
+	case CSI_HPR:
+		col += n // we don't need to be 0 based for this
 	case CSI_CUU:
 		if t.vertMargin.isSet() {
 			mRow := t.vertMargin.getMin()

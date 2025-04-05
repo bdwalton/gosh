@@ -36,6 +36,16 @@ func TestCursorMove(t *testing.T) {
 		mt               rune // move type
 		wantRow, wantCol int
 	}{
+		// HPA - horizontal position absolute
+		{&Terminal{fb: fb1, cur: cursor{15, fb1.getNumCols() - 1}}, paramsFromInts([]int{}), CSI_HPA, 15, 0},
+		{&Terminal{fb: fb1, cur: cursor{15, fb1.getNumCols() - 1}}, paramsFromInts([]int{10}), CSI_HPA, 15, 9},
+		{&Terminal{fb: fb1, cur: cursor{15, 0}}, paramsFromInts([]int{3}), CSI_HPA, 15, 2},
+		{&Terminal{fb: fb1, cur: cursor{15, 0}}, paramsFromInts([]int{1000}), CSI_HPA, 15, fb1.getNumCols() - 1},
+		// HPR - horizontal position relative
+		{&Terminal{fb: fb1, cur: cursor{15, fb1.getNumCols() - 1}}, paramsFromInts([]int{}), CSI_HPR, 15, fb1.getNumCols() - 1},
+		{&Terminal{fb: fb1, cur: cursor{15, 5}}, paramsFromInts([]int{}), CSI_HPR, 15, 6},
+		{&Terminal{fb: fb1, cur: cursor{15, 0}}, paramsFromInts([]int{}), CSI_HPR, 15, 1},
+		{&Terminal{fb: fb1, cur: cursor{15, 5}}, paramsFromInts([]int{10}), CSI_HPR, 15, 15},
 		// CUU - cursor up
 		{&Terminal{fb: fb1, cur: cursor{0, 0}}, paramsFromInts([]int{}), CSI_CUU, 0, 0},
 		{&Terminal{fb: fb1, cur: cursor{0, 0}}, paramsFromInts([]int{2}), CSI_CUU, 0, 0},

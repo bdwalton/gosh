@@ -61,6 +61,8 @@ const (
 	CSI_SD           = 'T' // scroll down
 	CSI_DECST8C      = 'W' // DEC reset tab stops, starting at col 9, every 8 columns
 	CSI_CBT          = 'Z' // cursor backward tabulation
+	CSI_HPA          = '`' // character position absolute (column), default [row,1]
+	CSI_HPR          = 'a' // character position relative (column), default [row,col+1]
 	CSI_HVP          = 'f' // horizontal vertical position
 	CSI_TBC          = 'g' // tab stop clear
 	CSI_PRIV_ENABLE  = 'h' // h typically enables or activates something
