@@ -280,6 +280,8 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	switch r {
 	case 'A', 'B', 'C', 'E', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
 		slog.Debug("swallowing ESC character set command", "data", string(data))
+	case 'F':
+		t.cursorMoveAbs(t.fb.getNumRows()-1, 0)
 	case 'H': // set tab stop. note that in some vt dialects this
 		// would actually be part of character set handling
 		// (swedish on vt220).
