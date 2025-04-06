@@ -57,6 +57,7 @@ const (
 	CSI_CHT          = 'I' // cursor forward tabulation
 	CSI_ED           = 'J' // erase in display
 	CSI_EL           = 'K' // erase in line
+	CSI_DL           = 'M' // delete line(s)
 	CSI_SU           = 'S' // scroll up
 	CSI_SD           = 'T' // scroll down
 	CSI_DECST8C      = 'W' // DEC reset tab stops, starting at col 9, every 8 columns

@@ -488,6 +488,8 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		t.setTopBottom(params)
 	case CSI_DECSLRM:
 		t.setLeftRight(params)
+	case CSI_DL:
+		t.deleteLines(params)
 	case CSI_EL:
 		t.eraseLine(params)
 	case CSI_ED:
@@ -783,6 +785,15 @@ func (t *Terminal) stepTabs(steps int) {
 			}
 			col += step
 		}
+	}
+}
+
+func (t *Terminal) deleteLines(params *parameters) {
+	m, _ := params.getItem(0, 1)
+	cols := t.fb.getNumCols()
+
+	for i := t.cur.row; i < t.cur.row+m && t.vertMargin.contains(i); i++ {
+		t.fb.data[i] = newRow(cols)
 	}
 }
 
