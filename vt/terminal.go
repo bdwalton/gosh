@@ -507,6 +507,24 @@ func (t *Terminal) handleExecute(last rune) {
 
 func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	switch last {
+	case CSI_ICH:
+		// Insert n blank characters
+		n, _ := params.getItem(0, 1)
+		lastCol := t.fb.getNumCols() - 1
+		for i := 0; i < n; i++ {
+			if t.cur.col == lastCol {
+				break
+			}
+			t.print(' ')
+		}
+	case CSI_ECH:
+		// Insert n blank characters
+		n, _ := params.getItem(0, 1)
+		last := t.cur.col + n
+		if lastCol := t.fb.getNumCols() - 1; last > lastCol {
+			last = lastCol
+		}
+		t.fb.resetCells(t.cur.row, t.cur.col, last, t.curF)
 	case CSI_PRIV_ENABLE:
 		t.setPriv(params, data, true)
 	case CSI_PRIV_DISABLE:

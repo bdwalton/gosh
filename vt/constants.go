@@ -46,6 +46,7 @@ const (
 
 // CSI codes
 const (
+	CSI_ICH          = '@' // insert blank characters
 	CSI_CUU          = 'A' // cursor up
 	CSI_CUD          = 'B' // cursor down
 	CSI_CUF          = 'C' // cursor forward
@@ -61,6 +62,7 @@ const (
 	CSI_SU           = 'S' // scroll up
 	CSI_SD           = 'T' // scroll down
 	CSI_DECST8C      = 'W' // DEC reset tab stops, starting at col 9, every 8 columns
+	CSI_ECH          = 'X' // erase characters
 	CSI_CBT          = 'Z' // cursor backward tabulation
 	CSI_HPA          = '`' // character position absolute (column), default [row,1]
 	CSI_HPR          = 'a' // character position relative (column), default [row,col+1]
