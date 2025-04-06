@@ -310,9 +310,9 @@ func TestScrollRows(t *testing.T) {
 		scroll int
 		want   *framebuffer
 	}{
-		{numberedFBForTest(0, 8, 10, 0), 0, numberedFBForTest(0, 8, 10, 0)},
-		{numberedFBForTest(0, 8, 10, 0), 2, numberedFBForTest(2, 6, 10, 2)},
-		{numberedFBForTest(0, 8, 10, 0), 8, newFramebuffer(8, 10)},
+		{numberedFBForTest(0, 8, 10, 0, 0), 0, numberedFBForTest(0, 8, 10, 0, 0)},
+		{numberedFBForTest(0, 8, 10, 0, 0), 2, numberedFBForTest(2, 8, 10, 0, 2)},
+		{numberedFBForTest(0, 8, 10, 0, 0), 8, newFramebuffer(8, 10)},
 	}
 
 	for i, c := range cases {
@@ -509,24 +509,29 @@ func TestSetRowRegion(t *testing.T) {
 // Assumes 0-7 for rows so we can a) make cell content to a rune
 // representing original row and b) index into the standard foreground
 // colors; start indicates the numeric rune we start from when
-// creating the framebuffer and defaults indicates how many empty rows
-// to add at the end.
-func numberedFBForTest(start, rows, cols, defaults int) *framebuffer {
+// creating the framebuffer and defaultsStart and defaultsEnd
+// indicates how many empty rows to add at the beginning and end.
+func numberedFBForTest(start, rows, cols, defaultsStart, defaultsEnd int) *framebuffer {
 	fb := newFramebuffer(rows, cols)
-	for r, row := range fb.data {
+	for i := 0; i < defaultsStart; i++ {
+		fb.data[i] = newRow(cols)
+	}
+
+	for r := defaultsStart; r < rows-defaultsEnd; r++ {
+		row := fb.data[r]
 		for c := range row {
-			fb.setCell(r, c, newCell(rune(r+start+'0'), format{fg: standardColors[30+start+r]}))
+			fb.setCell(r, c, newCell(rune(r+-defaultsStart+start+'0'), format{fg: standardColors[30+start-defaultsStart+r]}))
 		}
 	}
 
-	for i := 0; i < defaults; i++ {
-		fb.data = append(fb.data, newRow(cols))
+	for r := rows - defaultsEnd; r < rows; r++ {
+		fb.data[r] = newRow(cols)
 	}
 	return fb
 }
 
 func TestGetRegion(t *testing.T) {
-	dfb := numberedFBForTest(0, 8, 10, 0)
+	dfb := numberedFBForTest(0, 8, 10, 0, 0)
 	cases := []struct {
 		fb         *framebuffer
 		t, b, l, r int
@@ -535,10 +540,10 @@ func TestGetRegion(t *testing.T) {
 	}{
 		{newFramebuffer(10, 10), 0, 10, 0, 10, newFramebuffer(10, 10), nil},
 		{newFramebuffer(10, 10), 0, 11, 0, 10, newFramebuffer(10, 10), invalidRegion},
-		{dfb, 0, 8, 0, 10, numberedFBForTest(0, 8, 10, 0), nil},
-		{dfb, 1, 8, 0, 10, numberedFBForTest(1, 7, 10, 0), nil},
-		{dfb, 1, 8, 1, 9, numberedFBForTest(1, 7, 8, 0), nil},
-		{dfb, 1, 8, 1, 9, numberedFBForTest(1, 7, 8, 0), nil},
+		{dfb, 0, 8, 0, 10, numberedFBForTest(0, 8, 10, 0, 0), nil},
+		{dfb, 1, 8, 0, 10, numberedFBForTest(1, 7, 10, 0, 0), nil},
+		{dfb, 1, 8, 1, 9, numberedFBForTest(1, 7, 8, 0, 0), nil},
+		{dfb, 1, 8, 1, 9, numberedFBForTest(1, 7, 8, 0, 0), nil},
 	}
 
 	for i, c := range cases {
