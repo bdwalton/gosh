@@ -210,18 +210,33 @@ func (f *framebuffer) equal(other *framebuffer) bool {
 func (f *framebuffer) scrollRows(n int) {
 	nc := f.getNumCols()
 	nr := f.getNumRows()
-	for i := 0; i < nr-n; i++ {
-		x := i + n
-		switch x < nr {
-		case true:
-			copy(f.data[i], f.getRow(x))
-		default:
+
+	if n < 0 {
+		// i starts at the bottom, backed up n (negative) so
+		// we can copy those rows down. iterate until i <= -n
+		// (meaning n rows above 0)
+		for i := nr + n - 1; i >= -n-1; i-- {
+			x := i - n
+			copy(f.data[x], f.data[i])
+
+		}
+		for i := 0; i < -n; i++ {
 			copy(f.data[i], newRow(nc))
 		}
-	}
+	} else {
+		for i := 0; i < nr-n; i++ {
+			x := i + n
+			switch x < nr {
+			case true:
+				copy(f.data[i], f.getRow(x))
+			default:
+				copy(f.data[i], newRow(nc))
+			}
+		}
 
-	for i := nr - n; i < nr; i++ {
-		copy(f.data[i], newRow(nc))
+		for i := nr - n; i < nr; i++ {
+			copy(f.data[i], newRow(nc))
+		}
 	}
 }
 

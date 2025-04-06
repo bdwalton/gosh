@@ -313,6 +313,7 @@ func TestScrollRows(t *testing.T) {
 		{numberedFBForTest(0, 8, 10, 0, 0), 0, numberedFBForTest(0, 8, 10, 0, 0)},
 		{numberedFBForTest(0, 8, 10, 0, 0), 2, numberedFBForTest(2, 8, 10, 0, 2)},
 		{numberedFBForTest(0, 8, 10, 0, 0), 8, newFramebuffer(8, 10)},
+		{numberedFBForTest(0, 8, 10, 0, 0), -1, numberedFBForTest(0, 8, 10, 1, 0)},
 	}
 
 	for i, c := range cases {
