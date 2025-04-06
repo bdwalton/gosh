@@ -278,7 +278,11 @@ func (t *Terminal) Resize(rows, cols int) {
 
 func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	switch r {
-	case 'H': // set tab stop
+	case 'A', 'B', 'C', 'E', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
+		slog.Debug("swallowing ESC character set command", "data", string(data))
+	case 'H': // set tab stop. note that in some vt dialects this
+		// would actually be part of character set handling
+		// (swedish on vt220).
 		t.tabs[t.cur.col] = true
 	case 'M': // move cursor one line up, scrolling if needed
 		if t.cur.row == 0 {
