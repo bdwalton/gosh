@@ -278,6 +278,12 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	switch r {
 	case 'H': // set tab stop
 		t.tabs[t.cur.col] = true
+	case 'M': // move cursor one line up, scrolling if needed
+		if t.cur.row == 0 {
+			t.fb.scrollRows(-1)
+		} else {
+			t.cursorMoveAbs(t.cur.row-1, t.cur.col)
+		}
 	case '7': // save cursor
 		t.savedCur = t.cur.Copy()
 	case '8': // restore cursor
