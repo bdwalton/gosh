@@ -294,6 +294,8 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 		t.savedCur = t.cur.Copy()
 	case '8': // restore cursor
 		t.cur = t.savedCur.Copy()
+	case 'c':
+		t.reset()
 	default:
 		slog.Debug("ignoring ESC", "r", string(r), "params", params, "data", string(data))
 	}
@@ -373,6 +375,23 @@ func (t *Terminal) clearFrags(row, col int) {
 			t.fb.setCell(row, col-1, defaultCell())
 		}
 	}
+}
+
+func (t *Terminal) reset() {
+	rows, cols := t.fb.getNumRows(), t.fb.getNumCols()
+	t.fb = newFramebuffer(rows, cols)
+	t.title = ""
+	t.icon = ""
+	t.cur = cursor{0, 0}
+	t.savedCur = cursor{0, 0}
+	t.tabs = makeTabs(cols)
+	t.vertMargin = newMargin(0, rows-1)
+	t.horizMargin = newMargin(0, cols-1)
+	flags := make(map[int]*privFlag)
+	for _, f := range privFlags {
+		flags[f] = newPrivFlag(f)
+	}
+	t.flags = flags
 }
 
 func (t *Terminal) setFlag(code int, val bool) {
