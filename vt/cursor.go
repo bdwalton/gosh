@@ -19,9 +19,9 @@ func (c cursor) getMoveToAnsi() string {
 	if c.row != 0 {
 		sb.WriteString(fmt.Sprintf("%d", c.row+1))
 	}
-	sb.WriteByte(';')
+
 	if c.col != 0 {
-		sb.WriteString(fmt.Sprintf("%d", c.col+1))
+		sb.WriteString(fmt.Sprintf(";%d", c.col+1))
 	}
 	sb.WriteByte(CSI_CUP)
 	return sb.String()

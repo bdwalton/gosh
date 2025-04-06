@@ -326,9 +326,9 @@ func TestCursorMoveToAnsi(t *testing.T) {
 		cur  cursor
 		want string
 	}{
-		{cursor{0, 0}, fmt.Sprintf("%c%c;%c", ESC, ESC_CSI, CSI_CUP)},
+		{cursor{0, 0}, fmt.Sprintf("%c%c%c", ESC, ESC_CSI, CSI_CUP)},
 		{cursor{1, 1}, fmt.Sprintf("%c%c2;2%c", ESC, ESC_CSI, CSI_CUP)},
-		{cursor{30, 0}, fmt.Sprintf("%c%c31;%c", ESC, ESC_CSI, CSI_CUP)},
+		{cursor{30, 0}, fmt.Sprintf("%c%c31%c", ESC, ESC_CSI, CSI_CUP)},
 		{cursor{0, 15}, fmt.Sprintf("%c%c;16%c", ESC, ESC_CSI, CSI_CUP)},
 	}
 
@@ -384,12 +384,12 @@ func TestTerminalDiff(t *testing.T) {
 		want      []byte
 	}{
 		{t1, t2, []byte{}},
-		{t2, t3, []byte(fmt.Sprintf("%c%c%c%c%c%s;%d;%d%c%c%c%c%c", ESC, ESC_CSI, CSI_SGR, ESC, ESC_OSC, OSC_SETSIZE, 20, 15, CTRL_BEL, ESC, ESC_CSI, ';', CSI_CUP))},
+		{t2, t3, []byte(fmt.Sprintf("%c%c%c%c%c%s;%d;%d%c%c%c%c", ESC, ESC_CSI, CSI_SGR, ESC, ESC_OSC, OSC_SETSIZE, 20, 15, CTRL_BEL, ESC, ESC_CSI, CSI_CUP))},
 		{t3, t4, []byte(fmt.Sprintf("%c%c%c%s%c%c%d%c%c%s", ESC, ESC_CSI, CSI_SGR, cursor{5, 7}.getMoveToAnsi(), ESC, ESC_CSI, FG_RED, CSI_SGR, 'a', cursor{}.getMoveToAnsi()))},
 		{t4, t5, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_TITLE, "mytitle", CTRL_BEL))},
 		{t4, t6, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON_TITLE, "mytitle", CTRL_BEL))},
 		{t4, t7, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON, "myicon", CTRL_BEL))},
-		{t1, t8, []byte(fmt.Sprintf("%c%c%s;%s%c%c%c%c%c%c%s;%d;%d%c%c%c;%c", ESC, ESC_OSC, OSC_ICON, "myicon", CTRL_BEL, ESC, ESC_CSI, CSI_SGR, ESC, ESC_OSC, OSC_SETSIZE, 10, 6, CTRL_BEL, ESC, ESC_CSI, CSI_CUP))},
+		{t1, t8, []byte(fmt.Sprintf("%c%c%s;%s%c%c%c%c%c%c%s;%d;%d%c%c%c%c", ESC, ESC_OSC, OSC_ICON, "myicon", CTRL_BEL, ESC, ESC_CSI, CSI_SGR, ESC, ESC_OSC, OSC_SETSIZE, 10, 6, CTRL_BEL, ESC, ESC_CSI, CSI_CUP))},
 		{t8, t9, []byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_ENABLE))},
 		{t9, t10, []byte(fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
 		{t10, t11, []byte(fmt.Sprintf("%c%c%d;%d%c", ESC, ESC_CSI, 3, 6, CSI_DECSTBM))},
