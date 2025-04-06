@@ -55,7 +55,9 @@ type Terminal struct {
 var privFlags = []int{
 	PRIV_CSI_DECCKM,
 	PRIV_CSI_DECAWM,
+	PRIV_BLINK_CURSOR,
 	PRIV_CSI_LNM,
+	PRIV_SHOW_CURSOR,
 	PRIV_CSI_BRACKET_PASTE,
 }
 
