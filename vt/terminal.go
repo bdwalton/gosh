@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 	"unicode/utf8"
 
 	"github.com/creack/pty"
@@ -33,6 +34,7 @@ type Terminal struct {
 	wait, stop manageFunc
 
 	// State
+	lastChg       time.Time
 	title, icon   string
 	cur, savedCur cursor
 	curF          format
@@ -135,17 +137,22 @@ func (t *Terminal) Copy() *Terminal {
 	}
 
 	return &Terminal{
-		fb:    t.fb.copy(),
-		title: t.title,
-		icon:  t.icon,
-		cur:   t.cur,
-		curF:  t.curF,
-		flags: flags,
+		fb:      t.fb.copy(),
+		title:   t.title,
+		icon:    t.icon,
+		cur:     t.cur,
+		curF:    t.curF,
+		flags:   flags,
+		lastChg: t.lastChg,
 	}
 }
 
 func (src *Terminal) Diff(dest *Terminal) []byte {
 	var sb strings.Builder
+
+	if src.lastChg == dest.lastChg {
+		return []byte{}
+	}
 
 	if src.title != dest.title || src.icon != dest.icon {
 		switch {
@@ -229,6 +236,7 @@ func (t *Terminal) Run() {
 
 		for _, a := range t.p.parse(r) {
 			t.mux.Lock()
+			t.lastChg = time.Now()
 			switch a.act {
 			case VTPARSE_ACTION_EXECUTE:
 				t.handleExecute(a.r)
@@ -269,10 +277,11 @@ func (t *Terminal) Resize(rows, cols int) {
 	}
 
 	t.mux.Lock()
-	defer t.mux.Unlock()
-
 	t.fb.resize(rows, cols)
 	t.resizeTabs(cols)
+	t.lastChg = time.Now()
+	defer t.mux.Unlock()
+
 	slog.Debug("changed window size", "rows", rows, "cols", rows)
 }
 

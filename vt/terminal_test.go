@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"testing"
+	"time"
 )
 
 func TestCursorInScrollingRegion(t *testing.T) {
@@ -339,6 +340,12 @@ func TestCursorMoveToAnsi(t *testing.T) {
 	}
 }
 
+func testTerminalCopy(term *Terminal) *Terminal {
+	c := term.Copy()
+	c.lastChg = time.Now()
+	return c
+}
+
 func TestTerminalDiff(t *testing.T) {
 	t1, _ := NewTerminal()
 	t1.Resize(10, 10)
@@ -346,36 +353,36 @@ func TestTerminalDiff(t *testing.T) {
 	t2.Resize(10, 10)
 	t3, _ := NewTerminal()
 	t3.Resize(20, 15)
-	t4 := t3.Copy()
+	t4 := testTerminalCopy(t3)
 	t4.fb.setCell(5, 7, newCell('a', format{fg: standardColors[FG_RED]}))
-	t5 := t4.Copy()
+	t5 := testTerminalCopy(t4)
 	t5.title = "mytitle"
-	t6 := t5.Copy()
+	t6 := testTerminalCopy(t5)
 	t6.icon = "mytitle"
-	t7 := t4.Copy()
+	t7 := testTerminalCopy(t4)
 	t7.icon = "myicon"
-	t8 := t7.Copy()
+	t8 := testTerminalCopy(t7)
 	t8.Resize(10, 6)
-	t9 := t8.Copy()
+	t9 := testTerminalCopy(t8)
 	t9.setFlag(PRIV_CSI_DECAWM, true)
-	t10 := t9.Copy()
+	t10 := testTerminalCopy(t9)
 	t10.setFlag(PRIV_CSI_DECAWM, false)
 	t10.setFlag(PRIV_CSI_LNM, true)
-	t11 := t10.Copy()
+	t11 := testTerminalCopy(t10)
 	t11.vertMargin = newMargin(2, 5)
-	t12 := t10.Copy()
+	t12 := testTerminalCopy(t10)
 	t12.horizMargin = newMargin(3, 7)
-	t13 := t10.Copy()
+	t13 := testTerminalCopy(t10)
 	t13.horizMargin = newMargin(0, 4)
 	t13.vertMargin = newMargin(1, 6)
 	t14, _ := NewTerminal()
-	t15 := t14.Copy()
+	t15 := testTerminalCopy(t14)
 	t15.curF = format{fg: standardColors[FG_RED], italic: true}
-	t16 := t15.Copy()
+	t16 := testTerminalCopy(t15)
 	t16.curF = format{fg: standardColors[FG_YELLOW], italic: true, brightness: FONT_BOLD}
-	t17 := t1.Copy()
+	t17 := testTerminalCopy(t1)
 	t17.setFlag(PRIV_CSI_BRACKET_PASTE, true)
-	t18 := t17.Copy()
+	t18 := testTerminalCopy(t17)
 	t18.setFlag(PRIV_CSI_BRACKET_PASTE, false)
 	t18.setFlag(PRIV_CSI_DECCKM, true)
 
@@ -383,6 +390,7 @@ func TestTerminalDiff(t *testing.T) {
 		src, dest *Terminal
 		want      []byte
 	}{
+		{t1, t1, []byte{}},
 		{t1, t2, []byte{}},
 		{t2, t3, []byte(fmt.Sprintf("%c%c%c%c%c%s;%d;%d%c%c%c%c", ESC, ESC_CSI, CSI_SGR, ESC, ESC_OSC, OSC_SETSIZE, 20, 15, CTRL_BEL, ESC, ESC_CSI, CSI_CUP))},
 		{t3, t4, []byte(fmt.Sprintf("%c%c%c%s%c%c%d%c%c%s", ESC, ESC_CSI, CSI_SGR, cursor{5, 7}.getMoveToAnsi(), ESC, ESC_CSI, FG_RED, CSI_SGR, 'a', cursor{}.getMoveToAnsi()))},
