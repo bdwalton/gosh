@@ -29,19 +29,19 @@ func paramsFromInts(items []int) *parameters {
 func TestColorsFromParams(t *testing.T) {
 	cases := []struct {
 		params *parameters
-		want   string
+		want   color
 	}{
-		{paramsFromInts([]int{5}), "5;0"}, // Unspecified parameters are treated as 0
-		{paramsFromInts([]int{5, 253}), "5;253"},
-		{paramsFromInts([]int{2, 253, 128, 129}), "2;253;128;129"},
-		{paramsFromInts([]int{2, 253}), "2;253;0;0"},            // Unspecified parameters are treated as 0
-		{paramsFromInts([]int{2, 253, 1}), "2;253;1;0"},         // Unspecified parameters are treated as 0
-		{paramsFromInts([]int{2, 253, 1, 32, 1}), "2;253;1;32"}, // Additional parameters not consumed
+		{paramsFromInts([]int{5}), ansi256Color{0}}, // Unspecified parameters are treated as 0
+		{paramsFromInts([]int{5, 253}), ansi256Color{253}},
+		{paramsFromInts([]int{2, 253, 128, 129}), rgbColor{[]int{253, 128, 129}}},
+		{paramsFromInts([]int{2, 253}), rgbColor{[]int{253, 0, 0}}},            // Unspecified parameters are treated as 0
+		{paramsFromInts([]int{2, 253, 1}), rgbColor{[]int{253, 1, 0}}},         // Unspecified parameters are treated as 0
+		{paramsFromInts([]int{2, 253, 1, 32, 1}), rgbColor{[]int{253, 1, 32}}}, // Additional parameters not consumed
 	}
 
 	for i, c := range cases {
 		col := colorFromParams(c.params, standardColors[FG_DEF])
-		if col == nil || col.String() != c.want {
+		if col == nil || !col.equal(c.want) {
 			t.Errorf("%d: Got %q, wanted %q, from %v", i, col, c.want, c.params.items)
 		}
 	}
