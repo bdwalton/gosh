@@ -154,12 +154,19 @@ const (
 
 // CSI private mode parameter codes
 const (
-	PRIV_CSI_DECCKM        = 1    // DEC application cursor keys
-	PRIV_CSI_DECAWM        = 7    // DEC autowrap mode, default reset
-	PRIV_BLINK_CURSOR      = 12   // Start blinking cursor
-	PRIV_CSI_LNM           = 20   // Line Feed/New Line Mode, default reset
-	PRIV_SHOW_CURSOR       = 25   // Show cursor DECTCEM
-	PRIV_CSI_BRACKET_PASTE = 2004 // Bracketed paste, ala xterm
+	PRIV_CSI_DECCKM           = 1    // DEC application cursor keys
+	PRIV_CSI_DECAWM           = 7    // DEC autowrap mode, default reset
+	PRIV_BLINK_CURSOR         = 12   // Start blinking cursor
+	PRIV_CSI_LNM              = 20   // Line Feed/New Line Mode, default reset
+	PRIV_SHOW_CURSOR          = 25   // Show cursor DECTCEM
+	PRIV_DISABLE_MOUSE_XY     = 1000 // Don't send Mouse X & Y on button press and release
+	PRIV_DISABLE_MOUSE_HILITE = 1001 // Don't use Hilite Mouse Tracking
+	PRIV_DISABLE_MOUSE_MOTION = 1002 // Don't use Cell Motion Mouse Tracking
+	PRIV_DISABLE_MOUSE_ALL    = 1003 // Don't use All Motion Mouse Tracking
+	PRIV_DISABLE_MOUSE_FOCUS  = 1004 // Don't send FocusIn/FocusOut events
+	PRIV_DISABLE_MOUSE_UTF8   = 1005 // Disable UTF-8 Mouse Mode
+	PRIV_DISABLE_MOUSE_SGR    = 1006 // Disable SGR Mouse Mode
+	PRIV_CSI_BRACKET_PASTE    = 2004 // Bracketed paste, ala xterm
 )
 
 // OSC actions
