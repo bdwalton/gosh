@@ -14,13 +14,13 @@ var defFmt = format{}
 const FMT_RESET = "\x1b[m"
 
 type format struct {
-	fg, bg                                        color
+	fg, bg                                        *color
 	brightness                                    intensity
 	underline                                     ulstyle
 	italic, blink, reversed, invisible, strikeout bool
 }
 
-func (f *format) getFG() color {
+func (f *format) getFG() *color {
 	if f.isDefaultFG() {
 		return standardColors[FG_DEF]
 	}
@@ -36,7 +36,7 @@ func (f *format) isDefaultFG() bool {
 	return false
 }
 
-func (f *format) getBG() color {
+func (f *format) getBG() *color {
 	if f.isDefaultBG() {
 		return standardColors[BG_DEF]
 	}
@@ -179,7 +179,7 @@ func (src format) diff(dest format) []byte {
 }
 
 func (f *format) String() string {
-	return fmt.Sprintf("fg: %s; bg: %s; bright: %d, underline: %d, italic: %t, blink: %t, reversed: %t, invisible: %t, strikeout: %t", f.getFG(), f.getBG(), f.brightness, f.underline, f.italic, f.blink, f.reversed, f.invisible, f.strikeout)
+	return fmt.Sprintf("fg: %s; bg: %s; bright: %d, underline: %d, italic: %t, blink: %t, reversed: %t, invisible: %t, strikeout: %t", f.getFG().getAnsiString(SET_FG), f.getBG().getAnsiString(SET_BG), f.brightness, f.underline, f.italic, f.blink, f.reversed, f.invisible, f.strikeout)
 }
 
 func (f format) equal(other format) bool {
@@ -313,7 +313,7 @@ func basicBG(col int) func(f format, p *parameters) format {
 
 func basicBrightBG(col int) func(f format, p *parameters) format {
 	return func(f format, p *parameters) format {
-		f.bg = ansiBasicColor{col}
+		f.bg = newAnsiColor(col)
 		return f
 	}
 }

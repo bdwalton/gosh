@@ -12,7 +12,7 @@ var dBG = standardColors[BG_DEF]
 func TestGetFG(t *testing.T) {
 	cases := []struct {
 		f    *format
-		want color
+		want *color
 	}{
 		{&format{}, dFG},
 		{&format{fg: dFG}, dFG},
@@ -29,7 +29,7 @@ func TestGetFG(t *testing.T) {
 func TestGetBG(t *testing.T) {
 	cases := []struct {
 		f    *format
-		want color
+		want *color
 	}{
 		{&format{}, dBG},
 		{&format{bg: dBG}, dBG},
@@ -117,7 +117,7 @@ func TestFormatApplication(t *testing.T) {
 		{
 			format{bg: standardColors[BG_BLUE]},
 			paramsFromInts([]int{INTENSITY_BOLD, SET_FG, 2, 212, 219, 123, STRIKEOUT_ON, STRIKEOUT_OFF}),
-			format{fg: rgbColor{[]int{212, 219, 123}}, brightness: FONT_BOLD, bg: standardColors[BG_BLUE], strikeout: false},
+			format{fg: newRGBColor([]int{212, 219, 123}), brightness: FONT_BOLD, bg: standardColors[BG_BLUE], strikeout: false},
 		},
 	}
 
@@ -140,12 +140,12 @@ func TestDiff(t *testing.T) {
 		},
 		{
 			// Any diff against "dest == default" should just reset the pen
-			format{fg: rgbColor{[]int{10, 20, 30}}, bg: rgbColor{[]int{30, 20, 10}}},
+			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
 			defFmt,
 			[]byte(FMT_RESET),
 		},
 		{
-			format{fg: rgbColor{[]int{10, 20, 30}}},
+			format{fg: newRGBColor([]int{10, 20, 30})},
 			format{bg: standardColors[BG_YELLOW]},
 			[]byte(fmt.Sprintf("%c%c%d;%d%c", ESC, ESC_CSI, FG_DEF, BG_YELLOW, CSI_SGR)),
 		},
@@ -156,23 +156,23 @@ func TestDiff(t *testing.T) {
 		},
 		{
 			format{fg: standardColors[FG_WHITE], strikeout: true},
-			format{bg: ansi256Color{243}, reversed: true},
+			format{bg: newAnsiColor(243), reversed: true},
 			[]byte(fmt.Sprintf("%c%c%d;%d;5;%dm%c%c%d;%d%c", ESC, ESC_CSI, FG_DEF, SET_BG, 243, ESC, ESC_CSI, REVERSED_ON, STRIKEOUT_OFF, CSI_SGR)),
 		},
 		{
-			format{fg: rgbColor{[]int{10, 20, 30}}, bg: rgbColor{[]int{30, 20, 10}}},
-			format{fg: rgbColor{[]int{30, 20, 10}}, bg: rgbColor{[]int{10, 20, 30}}},
+			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
+			format{fg: newRGBColor([]int{30, 20, 10}), bg: newRGBColor([]int{10, 20, 30})},
 			[]byte(fmt.Sprintf("%c%c%d;2;%d;%d;%d;%d;2;%d;%d;%d%c", ESC, ESC_CSI, SET_FG, 30, 20, 10, SET_BG, 10, 20, 30, CSI_SGR)),
 		},
 		{
-			format{fg: rgbColor{[]int{10, 20, 30}}, bg: rgbColor{[]int{30, 20, 10}}},
-			format{fg: standardColors[FG_BLUE], bg: ansi256Color{124}},
+			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
+			format{fg: standardColors[FG_BLUE], bg: newAnsiColor(124)},
 			[]byte(fmt.Sprintf("%c%c%d;%d;5;%d%c", ESC, ESC_CSI, FG_BLUE, SET_BG, 124, CSI_SGR)),
 		},
 
 		{
-			format{fg: rgbColor{[]int{10, 20, 30}}, bg: rgbColor{[]int{30, 20, 10}}},
-			format{fg: rgbColor{[]int{10, 20, 30}}, bg: ansi256Color{124}},
+			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
+			format{fg: newRGBColor([]int{10, 20, 30}), bg: newAnsiColor(124)},
 			[]byte(fmt.Sprintf("%c%c%d;5;%d%c", ESC, ESC_CSI, SET_BG, 124, CSI_SGR)),
 		},
 		{

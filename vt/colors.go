@@ -6,68 +6,48 @@ import (
 	"slices"
 )
 
-type color interface {
-	fmt.Stringer
-	equal(color) bool
+const (
+	BASIC = iota
+	ANSI256
+	RGB
+)
+
+type color struct {
+	colType int
+	data    []int
 }
 
-type ansiBasicColor struct {
-	col int
-}
-
-func (c ansiBasicColor) equal(other color) bool {
-	switch other.(type) {
-	case ansiBasicColor:
-		return c.col == other.(ansiBasicColor).col
-	case *ansiBasicColor:
-		return c.col == other.(*ansiBasicColor).col
-	default:
+func (c color) equal(other *color) bool {
+	if other == nil {
 		return false
+	}
+	return c.colType == other.colType && slices.Equal(c.data, other.data)
+}
+
+func (c color) getAnsiString(set int) string {
+	switch c.colType {
+	case BASIC:
+		return fmt.Sprintf("%d", c.data[0])
+	case ANSI256:
+		return fmt.Sprintf("%d;5;%d", set, c.data[0])
+	case RGB:
+		return fmt.Sprintf("%d;2;%d;%d;%d", set, c.data[0], c.data[1], c.data[2])
+	default:
+		slog.Error("invalid color type")
+		return ""
 	}
 }
 
-func (c ansiBasicColor) String() string {
-	return fmt.Sprintf("%d", c.col)
+func newColor(col int) *color {
+	return &color{colType: BASIC, data: []int{col}}
 }
 
-type ansi256Color struct {
-	col int
+func newAnsiColor(col int) *color {
+	return &color{colType: ANSI256, data: []int{col}}
 }
 
-func (c ansi256Color) equal(other color) bool {
-	switch other.(type) {
-	case ansi256Color:
-		return c.col == other.(ansi256Color).col
-	case *ansi256Color:
-		return c.col == other.(*ansi256Color).col
-	default:
-		return false
-	}
-}
-
-func (c ansi256Color) String() string {
-	return fmt.Sprintf("5;%d", c.col)
-}
-
-type rgbColor struct {
-	rgb []int
-}
-
-func (c rgbColor) equal(other color) bool {
-	switch other.(type) {
-	case rgbColor:
-		o := other.(rgbColor)
-		return slices.Equal(c.rgb, o.rgb)
-	case *rgbColor:
-		o := other.(*rgbColor)
-		return slices.Equal(c.rgb, o.rgb)
-	default:
-		return false
-	}
-}
-
-func (c rgbColor) String() string {
-	return fmt.Sprintf("2;%d;%d;%d", c.rgb[0], c.rgb[1], c.rgb[2])
+func newRGBColor(cols []int) *color {
+	return &color{colType: RGB, data: cols}
 }
 
 // colorFromParams takes a paramter object and interprets it as
@@ -77,7 +57,7 @@ func (c rgbColor) String() string {
 // ignored. It returns a color and the number of parameters consumed
 // by the color, including the SET* parameter. Upon error, it will
 // return nil and 0 (no parameters consumed)
-func colorFromParams(params *parameters, def color) color {
+func colorFromParams(params *parameters, def *color) *color {
 	cm, ok := params.consumeItem()
 	if !ok {
 		slog.Debug("invalid parameters to provide extended color", "params", params.items)
@@ -96,14 +76,14 @@ func colorFromParams(params *parameters, def color) color {
 		}
 
 		// TODO: Handle invalid values (!0-255)
-		return rgbColor{cols}
+		return newRGBColor(cols)
 	case 5: // 256 color selection
 		// TODO: Handle invalid values (!0-255)
 		item, ok := params.consumeItem()
 		if !ok {
-			return ansi256Color{0}
+			return newAnsiColor(0)
 		}
-		return ansi256Color{item}
+		return newAnsiColor(item)
 	}
 
 	slog.Debug("invalid color type selector, returning default", "selector param", cm)
@@ -111,23 +91,23 @@ func colorFromParams(params *parameters, def color) color {
 }
 
 // Publish common color codes as standard variables
-var standardColors = map[int]color{
-	FG_BLACK:   &ansiBasicColor{FG_BLACK},
-	FG_RED:     &ansiBasicColor{FG_RED},
-	FG_GREEN:   &ansiBasicColor{FG_GREEN},
-	FG_YELLOW:  &ansiBasicColor{FG_YELLOW},
-	FG_BLUE:    &ansiBasicColor{FG_BLUE},
-	FG_MAGENTA: &ansiBasicColor{FG_MAGENTA},
-	FG_CYAN:    &ansiBasicColor{FG_CYAN},
-	FG_WHITE:   &ansiBasicColor{FG_WHITE},
-	FG_DEF:     &ansiBasicColor{FG_DEF},
-	BG_BLACK:   &ansiBasicColor{BG_BLACK},
-	BG_RED:     &ansiBasicColor{BG_RED},
-	BG_GREEN:   &ansiBasicColor{BG_GREEN},
-	BG_YELLOW:  &ansiBasicColor{BG_YELLOW},
-	BG_BLUE:    &ansiBasicColor{BG_BLUE},
-	BG_MAGENTA: &ansiBasicColor{BG_MAGENTA},
-	BG_CYAN:    &ansiBasicColor{BG_CYAN},
-	BG_WHITE:   &ansiBasicColor{BG_WHITE},
-	BG_DEF:     &ansiBasicColor{BG_DEF},
+var standardColors = map[int]*color{
+	FG_BLACK:   newColor(FG_BLACK),
+	FG_RED:     newColor(FG_RED),
+	FG_GREEN:   newColor(FG_GREEN),
+	FG_YELLOW:  newColor(FG_YELLOW),
+	FG_BLUE:    newColor(FG_BLUE),
+	FG_MAGENTA: newColor(FG_MAGENTA),
+	FG_CYAN:    newColor(FG_CYAN),
+	FG_WHITE:   newColor(FG_WHITE),
+	FG_DEF:     newColor(FG_DEF),
+	BG_BLACK:   newColor(BG_BLACK),
+	BG_RED:     newColor(BG_RED),
+	BG_GREEN:   newColor(BG_GREEN),
+	BG_YELLOW:  newColor(BG_YELLOW),
+	BG_BLUE:    newColor(BG_BLUE),
+	BG_MAGENTA: newColor(BG_MAGENTA),
+	BG_CYAN:    newColor(BG_CYAN),
+	BG_WHITE:   newColor(BG_WHITE),
+	BG_DEF:     newColor(BG_DEF),
 }
