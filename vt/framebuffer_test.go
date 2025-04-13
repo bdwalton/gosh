@@ -431,8 +431,8 @@ func TestFrameBufferDiff(t *testing.T) {
 		// cursor, set pen, write 2 runes set size, move
 		// cursor, set pen, write rune, move cursor, write
 		// rune (only Y, no Z because of resize)
-		{fb5, fb6, "\x1b]X;10;13\a\x1b[2H\x1b[34;41m\x1b[3mX\x1b[6;13HY"},
-		{fb7, fb8, "\x1b[H \x1b[40mabc \x1b[30;44m\ue0b0 ~ \x1b[34;49m\ue0b0\x1b[m "},
+		{fb5, fb6, "\x1b]X;10;13\a\x1b[2H\x1b[34m\x1b[41m\x1b[3mX\x1b[6;13HY"},
+		{fb7, fb8, "\x1b[H \x1b[40mabc \x1b[30m\x1b[44m\ue0b0 ~ \x1b[34m\x1b[49m\ue0b0\x1b[m "},
 	}
 
 	for i, c := range cases {

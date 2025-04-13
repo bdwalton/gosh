@@ -59,35 +59,12 @@ func (src format) diff(dest format) []byte {
 	var sb, ts strings.Builder
 
 	if dfg := dest.getFG(); !dfg.equal(src.getFG()) {
-		s := dfg.String()
-		// more than a 2 digit color code or 1 digit with
-		// subspecifiers (2; or 5;)
-		if len(s) > 2 {
-			s = fmt.Sprintf("%d;%s", SET_FG, s)
-		}
-		ts.WriteString(s)
+		sb.WriteString(fmt.Sprintf("%c%c%s%c", ESC, ESC_CSI, dfg.getAnsiString(SET_FG), CSI_SGR))
 	}
 
 	if dbg := dest.getBG(); !dbg.equal(src.getBG()) {
-		if ts.Len() > 0 {
-			ts.WriteByte(';')
-		}
-		s := dbg.String()
-		// more than a 2 digit color code or 1 digit with
-		// subspecifiers (2; or 5;)
-		if len(s) > 2 {
-			s = fmt.Sprintf("%d;%s", SET_BG, s)
-		}
-		ts.WriteString(s)
+		sb.WriteString(fmt.Sprintf("%c%c%s%c", ESC, ESC_CSI, dbg.getAnsiString(SET_BG), CSI_SGR))
 	}
-
-	if ts.Len() > 0 {
-		sb.Write([]byte{ESC, ESC_CSI})
-		sb.WriteString(ts.String())
-		sb.WriteRune(CSI_SGR)
-	}
-
-	ts.Reset()
 
 	if src.brightness != dest.brightness {
 		switch dest.brightness {
