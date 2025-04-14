@@ -202,10 +202,7 @@ func formatFromParams(curF format, params *parameters) format {
 
 // formatter functions take the current format and return a modified
 // format. they may consume additional paramters, made available in
-// the second argument, and if they do, they must return the number
-// that should be skipped for future consideration.  TOOD: How to
-// indicate errors? Just ignore and return the unmodified format? Log?
-// Return error?
+// the second argument
 type formatter func(format, *parameters) format
 
 var formatters map[int]formatter = map[int]formatter{
@@ -248,22 +245,22 @@ var formatters map[int]formatter = map[int]formatter{
 	BG_WHITE:          basicBG(BG_WHITE),
 	SET_BG:            extendedBG(),
 	BG_DEF:            basicBG(BG_DEF),
-	FG_BRIGHT_BLACK:   basicBrightFG(FG_BLACK),
-	FG_BRIGHT_RED:     basicBrightFG(FG_RED),
-	FG_BRIGHT_GREEN:   basicBrightFG(FG_GREEN),
-	FG_BRIGHT_YELLOW:  basicBrightFG(FG_YELLOW),
-	FG_BRIGHT_BLUE:    basicBrightFG(FG_BLUE),
-	FG_BRIGHT_MAGENTA: basicBrightFG(FG_MAGENTA),
-	FG_BRIGHT_CYAN:    basicBrightFG(FG_CYAN),
-	FG_BRIGHT_WHITE:   basicBrightFG(FG_WHITE),
-	BG_BRIGHT_BLACK:   basicBrightBG(BG_BRIGHT_BLACK),
-	BG_BRIGHT_RED:     basicBrightBG(BG_BRIGHT_RED),
-	BG_BRIGHT_GREEN:   basicBrightBG(BG_BRIGHT_GREEN),
-	BG_BRIGHT_YELLOW:  basicBrightBG(BG_BRIGHT_YELLOW),
-	BG_BRIGHT_BLUE:    basicBrightBG(BG_BRIGHT_BLUE),
-	BG_BRIGHT_MAGENTA: basicBrightBG(BG_BRIGHT_MAGENTA),
-	BG_BRIGHT_CYAN:    basicBrightBG(BG_BRIGHT_CYAN),
-	BG_BRIGHT_WHITE:   basicBrightBG(BG_BRIGHT_WHITE),
+	FG_BRIGHT_BLACK:   basicFG(FG_BRIGHT_BLACK),
+	FG_BRIGHT_RED:     basicFG(FG_BRIGHT_RED),
+	FG_BRIGHT_GREEN:   basicFG(FG_BRIGHT_GREEN),
+	FG_BRIGHT_YELLOW:  basicFG(FG_BRIGHT_YELLOW),
+	FG_BRIGHT_BLUE:    basicFG(FG_BRIGHT_BLUE),
+	FG_BRIGHT_MAGENTA: basicFG(FG_BRIGHT_MAGENTA),
+	FG_BRIGHT_CYAN:    basicFG(FG_BRIGHT_CYAN),
+	FG_BRIGHT_WHITE:   basicFG(FG_BRIGHT_WHITE),
+	BG_BRIGHT_BLACK:   basicBG(BG_BRIGHT_BLACK),
+	BG_BRIGHT_RED:     basicBG(BG_BRIGHT_RED),
+	BG_BRIGHT_GREEN:   basicBG(BG_BRIGHT_GREEN),
+	BG_BRIGHT_YELLOW:  basicBG(BG_BRIGHT_YELLOW),
+	BG_BRIGHT_BLUE:    basicBG(BG_BRIGHT_BLUE),
+	BG_BRIGHT_MAGENTA: basicBG(BG_BRIGHT_MAGENTA),
+	BG_BRIGHT_CYAN:    basicBG(BG_BRIGHT_CYAN),
+	BG_BRIGHT_WHITE:   basicBG(BG_BRIGHT_WHITE),
 }
 
 func basicFG(col int) func(f format, p *parameters) format {
@@ -273,24 +270,9 @@ func basicFG(col int) func(f format, p *parameters) format {
 	}
 }
 
-func basicBrightFG(col int) func(f format, p *parameters) format {
-	return func(f format, p *parameters) format {
-		f.fg = standardColors[col]
-		f.brightness = FONT_BOLD
-		return f
-	}
-}
-
 func basicBG(col int) func(f format, p *parameters) format {
 	return func(f format, p *parameters) format {
 		f.bg = standardColors[col]
-		return f
-	}
-}
-
-func basicBrightBG(col int) func(f format, p *parameters) format {
-	return func(f format, p *parameters) format {
-		f.bg = newAnsiColor(col)
 		return f
 	}
 }

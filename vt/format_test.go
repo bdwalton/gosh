@@ -107,12 +107,12 @@ func TestFormatApplication(t *testing.T) {
 		{
 			format{},
 			paramsFromInts([]int{FG_BRIGHT_RED}),
-			format{fg: standardColors[FG_RED], brightness: FONT_BOLD},
+			format{fg: standardColors[FG_BRIGHT_RED]},
 		},
 		{
 			format{},
 			paramsFromInts([]int{FG_BRIGHT_RED, BG_BLACK, UNDERLINE_ON, STRIKEOUT_ON}),
-			format{fg: standardColors[FG_RED], brightness: FONT_BOLD, bg: standardColors[BG_BLACK], underline: UNDERLINE_SINGLE, strikeout: true},
+			format{fg: standardColors[FG_BRIGHT_RED], bg: standardColors[BG_BLACK], underline: UNDERLINE_SINGLE, strikeout: true},
 		},
 		{
 			format{bg: standardColors[BG_BLUE]},
