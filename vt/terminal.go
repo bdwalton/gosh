@@ -523,6 +523,8 @@ func (t *Terminal) handleExecute(last rune) {
 
 func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	switch last {
+	case CSI_DA:
+		t.replyDeviceAttributes(data)
 	case CSI_ICH:
 		// Insert n blank characters
 		n, _ := params.getItem(0, 1)
@@ -621,6 +623,21 @@ func (t *Terminal) lineFeed() {
 		t.fb.scrollRows(1)
 	} else {
 		t.cursorMoveAbs(t.cur.row+1, t.cur.col)
+	}
+}
+
+func (t *Terminal) replyDeviceAttributes(data []rune) {
+	switch string(data) {
+	case "=": // teritatary attributes
+		slog.Debug("ignoring request for tertiary device attributes")
+	case ">": // secondary attributes
+		t.Write([]byte("\033[>1;10;0c")) // vt220
+		slog.Debug("identifying secondary attributes as a vt220")
+	case "": // primary attributes
+		t.Write([]byte("\033[?62c")) // vt220
+		slog.Debug("identifying primary attributes as a vt220")
+	default:
+		slog.Debug("Unexpected CSI device attributes request")
 	}
 }
 
