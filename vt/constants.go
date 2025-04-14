@@ -77,6 +77,7 @@ const (
 	CSI_DSR          = 'n' // device status report
 	CSI_DECSTBM      = 'r' // set top and bottom margin
 	CSI_DECSLRM      = 's' // set left and right margin
+	CSI_XTWINOPS     = 't' // window manipulation, xterm/dtterm stuff mostly
 )
 
 // CSI SGR Format codes

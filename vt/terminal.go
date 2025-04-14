@@ -34,11 +34,12 @@ type Terminal struct {
 	wait, stop manageFunc
 
 	// State
-	lastChg       time.Time
-	title, icon   string
-	cur, savedCur cursor
-	curF          format
-	tabs          []bool
+	lastChg               time.Time
+	title, icon           string
+	savedTitle, savedIcon string
+	cur, savedCur         cursor
+	curF                  format
+	tabs                  []bool
 
 	// Temp
 	oscTemp []rune
@@ -525,6 +526,8 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	switch last {
 	case CSI_DA:
 		t.replyDeviceAttributes(data)
+	case CSI_XTWINOPS:
+		t.xtwinops(params)
 	case CSI_ICH:
 		// Insert n blank characters
 		n, _ := params.getItem(0, 1)
@@ -623,6 +626,21 @@ func (t *Terminal) lineFeed() {
 		t.fb.scrollRows(1)
 	} else {
 		t.cursorMoveAbs(t.cur.row+1, t.cur.col)
+	}
+}
+
+func (t *Terminal) xtwinops(params *parameters) {
+	slog.Debug("handling xtwinops", "params", params)
+	cmd, _ := params.getItem(0, 0)
+	switch cmd {
+	case 0:
+		slog.Debug("invalid xtwinops command (0)")
+	case 22: // save title and icon
+		t.savedTitle = t.title
+		t.savedIcon = t.icon
+	case 23: // restore title and icon
+		t.title = t.savedTitle
+		t.icon = t.savedIcon
 	}
 }
 
