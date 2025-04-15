@@ -701,6 +701,7 @@ func (t *Terminal) setTopBottom(params *parameters) {
 	// https://vt100.net/docs/vt510-rm/DECSTBM.html
 	// STBM sets the cursor to 1,1 (0,0)
 	t.vertMargin = newMargin(top-1, bottom-1)
+	slog.Debug("set top/bottom margin", "margin", t.vertMargin)
 	t.cursorMoveAbs(0, 0)
 }
 
@@ -715,6 +716,7 @@ func (t *Terminal) setLeftRight(params *parameters) {
 	// https://vt100.net/docs/vt510-rm/DECSLRM.html
 	// STBM sets the cursor to 1,1 (0,0)
 	t.horizMargin = newMargin(left-1, right-1)
+	slog.Debug("set left/right margin", "margin", t.horizMargin)
 	t.cursorMoveAbs(0, 0)
 }
 
