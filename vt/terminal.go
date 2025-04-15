@@ -526,6 +526,8 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	switch last {
 	case CSI_DA:
 		t.replyDeviceAttributes(data)
+	case CSI_Q_MULTI:
+		t.csiQ(params, data)
 	case CSI_XTWINOPS:
 		t.xtwinops(params)
 	case CSI_ICH:
@@ -641,6 +643,21 @@ func (t *Terminal) xtwinops(params *parameters) {
 	case 23: // restore title and icon
 		t.title = t.savedTitle
 		t.icon = t.savedIcon
+	}
+}
+
+func (t *Terminal) csiQ(params *parameters, data []rune) {
+	switch string(data) {
+	case ">":
+		if n, _ := params.getItem(0, 0); n != 0 {
+			slog.Debug("invalid xterm_version query", "params", params, "data", string(data))
+			return
+		}
+		r := fmt.Sprintf("%c%c>|gosh(%s)%c%c", ESC, ESC_DCS, GOSH_VT_VER, ESC, ESC_ST)
+		t.Write([]byte(r))
+		slog.Debug("identifying as gosh version", "ver", GOSH_VT_VER)
+	default:
+		slog.Debug("unhandled CSI q", "params", params, "data", string(data))
 	}
 }
 

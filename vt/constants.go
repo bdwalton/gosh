@@ -1,5 +1,11 @@
 package vt
 
+// Returned when as the version component of the DSC response when the
+// vt is queried for XTERM_VERSION CSI > q. This is not representative
+// of the overall gosh protocol version, but meant as an internal
+// version for the vt emulation.
+const GOSH_VT_VER = "0.8"
+
 const (
 	// Like it's 1975 baby!
 	DEF_ROWS = 24
@@ -75,6 +81,7 @@ const (
 	CSI_PRIV_DISABLE = 'l' // l typically disables or deactivates something
 	CSI_SGR          = 'm' // select graphic rendition
 	CSI_DSR          = 'n' // device status report
+	CSI_Q_MULTI      = 'q' // overloaded, common for returning xterm name and version
 	CSI_DECSTBM      = 'r' // set top and bottom margin
 	CSI_DECSLRM      = 's' // set left and right margin
 	CSI_XTWINOPS     = 't' // window manipulation, xterm/dtterm stuff mostly
