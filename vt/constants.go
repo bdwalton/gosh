@@ -165,7 +165,11 @@ const (
 const (
 	PRIV_CSI_DECCKM           = 1    // DEC application cursor keys
 	PRIV_CSI_DECCOLM          = 3    // DEC 80 (l) / 132 (h) mode DECCOLM
+	PRIV_SMOOTH_SCROLL        = 4    // Smooth scroll DECSCLM
+	PRIV_REV_VIDEO            = 5    // Reverse video DECSCNM
+	PRIV_ORIGIN_MODE          = 6    // Origin Mode DECOM
 	PRIV_CSI_DECAWM           = 7    // DEC autowrap mode, default reset
+	PRIV_AUTO_REPEAT          = 8    // Auto-repeat keys DECARM
 	PRIV_BLINK_CURSOR         = 12   // Start blinking cursor
 	PRIV_CSI_LNM              = 20   // Line Feed/New Line Mode, default reset
 	PRIV_SHOW_CURSOR          = 25   // Show cursor DECTCEM
