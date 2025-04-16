@@ -563,7 +563,7 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		if lastCol := t.fb.getNumCols() - 1; last > lastCol {
 			last = lastCol
 		}
-		t.fb.resetCells(t.cur.row, t.cur.col, last, t.curF)
+		t.fb.setCells(t.cur.row, t.cur.row, t.cur.col, last, newCell(' ', t.curF))
 	case CSI_PRIV_ENABLE:
 		t.setPriv(params, data, true)
 	case CSI_PRIV_DISABLE:
@@ -999,16 +999,19 @@ func (t *Terminal) eraseLine(params *parameters) {
 	m, _ := params.getItem(0, 0)
 
 	// TODO: Handle BCE properly
-	nc := t.fb.getNumCols()
+	dc := defaultCell()
+	dc.f = t.curF
+
+	nc := t.fb.getNumCols() - 1
 	switch m {
 	case 0: // to end of line
-		t.fb.resetCells(t.cur.row, t.cur.col, nc, t.curF)
+		t.fb.setCells(t.cur.row, t.cur.row, t.cur.col, nc, dc)
 		slog.Debug("erase in line, pos to end", "row", t.cur.row, "col", t.cur.col)
 	case 1: // to start of line
-		t.fb.resetCells(t.cur.row, 0, t.cur.col, t.curF)
+		t.fb.setCells(t.cur.row, t.cur.row, 0, t.cur.col, dc)
 		slog.Debug("erase in line, start of line to pos", "row", t.cur.row, "col", t.cur.col)
 	case 2: // entire line
-		t.fb.resetCells(t.cur.row, 0, nc, t.curF)
+		t.fb.setCells(t.cur.row, t.cur.row, 0, nc, dc)
 		slog.Debug("erase in line, entire line", "row", t.cur.row, "col", t.cur.col)
 	}
 }

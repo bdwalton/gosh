@@ -292,27 +292,14 @@ func (f *framebuffer) resetRows(from, to int) bool {
 	return true
 }
 
-func (f *framebuffer) resetCells(row, from, to int, fm format) bool {
-	nr := len(f.data)
-	nc := len(f.data[0])
-	switch {
-	case row < 0 || row >= nr:
-		return false
-	case from < 0 || from >= nc:
-		return false
-	case to < 0 || from >= nc:
-		return false
-	case from > to:
-		return false
-	default:
-		resetCell := defaultCell()
-		resetCell.f = fm
-		for col := from; col <= to; col++ {
-			f.setCell(row, col, resetCell)
-		}
+func (f *framebuffer) setCells(rowFrom, rowTo, colFrom, colTo int, c cell) {
+	fr, err := f.getRegion(rowFrom, rowTo, colFrom, colTo)
+	if err != nil {
+		slog.Error("couldn't get region to set cells", "err", err)
+		return
 	}
 
-	return true
+	fr.fill(c)
 }
 
 func newRow(cols int) []cell {
@@ -384,7 +371,7 @@ func (f *framebuffer) getRegion(t, b, l, r int) (*framebuffer, error) {
 
 func (f *framebuffer) fill(c cell) {
 	for row := range f.data {
-		for col := range row {
+		for col := range f.data[row] {
 			f.setCell(row, col, c)
 		}
 	}

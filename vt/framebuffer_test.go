@@ -134,51 +134,42 @@ func TestCellEquality(t *testing.T) {
 	}
 }
 
-func TestResetCells(t *testing.T) {
+func TestSetCells(t *testing.T) {
 	cases := []struct {
-		fb              *framebuffer
-		row, start, end int
-		fm              format
-		want            bool
+		fb         *framebuffer
+		t, b, l, r int
+		fm         format
 	}{
-		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 5, defFmt, true},
-		{fillBuffer(newFramebuffer(10, 10)), 0, 5, 9, defFmt, true},
-		{fillBuffer(newFramebuffer(10, 10)), -1, 5, 9, defFmt, false},
-		{fillBuffer(newFramebuffer(10, 10)), 10, 5, 9, defFmt, false},
-		{fillBuffer(newFramebuffer(10, 10)), 5, 9, 5, defFmt, false},
-		{fillBuffer(newFramebuffer(10, 10)), 5, 9, 9, defFmt, true},
-		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 5, format{bg: standardColors[BG_BLUE]}, true},
-		{fillBuffer(newFramebuffer(10, 10)), 5, 9, 9, format{bg: standardColors[BG_RED]}, true},
+		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 0, 5, defFmt},
+		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 5, 9, defFmt},
+		{fillBuffer(newFramebuffer(10, 10)), -1, -1, 5, 9, defFmt},
+		{fillBuffer(newFramebuffer(10, 10)), 10, 10, 5, 9, defFmt},
+		{fillBuffer(newFramebuffer(10, 10)), 5, 5, 9, 5, defFmt},
+		{fillBuffer(newFramebuffer(10, 10)), 5, 5, 9, 9, defFmt},
+		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 0, 5, format{bg: standardColors[BG_BLUE]}},
+		{fillBuffer(newFramebuffer(10, 10)), 5, 5, 9, 9, format{bg: standardColors[BG_RED]}},
 	}
 
 	for i, c := range cases {
 		empty := defaultCell()
 		empty.f = c.fm
 
-		resetWorked := c.fb.resetCells(c.row, c.start, c.end, c.fm)
-		if resetWorked != c.want {
-			t.Errorf("%d: Got %t, wanted %t", i, resetWorked, c.want)
-		} else {
-			if resetWorked {
-				for row := range c.fb.data {
-					for col := range row {
-						got, _ := c.fb.getCell(row, col)
-						if row == c.row {
-							if col >= c.start && col <= c.end {
-								if !got.equal(empty) {
-									t.Errorf("%d: (row:%d, col:%d) Got\n\t%v, wanted\n\t%v", i, row, col, got, empty)
-									fmt.Println(c.fb)
-								}
-							} else {
-								if got.equal(empty) {
-									t.Errorf("%d: Got %t, wanted %t, expected empty, got %v", i, resetWorked, c.want, got)
-								}
-							}
-						} else {
-							if got.equal(empty) {
-								t.Errorf("%d: (row:%d, col:%d) Got %v, wanted non-default", i, row, col, got)
-							}
-						}
+		fmt.Println(c.t, c.b, c.l, c.r)
+		c.fb.setCells(c.t, c.b, c.l, c.r, empty)
+
+		for row := range c.fb.data {
+			for col := range row {
+				got, _ := c.fb.getCell(row, col)
+				if row >= c.t && row <= c.b && col >= c.l && col <= c.r {
+					if !got.equal(empty) {
+						t.Errorf("%d: (row:%d, col:%d) Got\n\t%v, wanted\n\t%v", i, row, col, got, empty)
+						fmt.Println(c.fb)
+						break
+					}
+				} else {
+					if got.equal(empty) {
+						t.Errorf("%d: Expected empty, got %v", i, got)
+						break
 					}
 				}
 			}
