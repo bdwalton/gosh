@@ -447,37 +447,37 @@ func TestEraseInDisplay(t *testing.T) {
 	}{
 		{
 			cursor{0, 0},
-			&parameters{1, []int{0}},
+			&parameters{1, []int{0}}, // pos to end of screen
 			emptyFb.copy(),
 			emptyFb.copy(),
 		},
 		{
 			cursor{4, 4},
-			&parameters{1, []int{0}},
+			&parameters{1, []int{0}}, // pos to end of screen
 			fb2.copy(),
 			fb2erase1,
 		},
 		{
 			cursor{9, 4},
-			&parameters{1, []int{0}},
+			&parameters{1, []int{0}}, // pos to end of screen
 			fb2.copy(),
 			fb2erase2,
 		},
 		{
 			cursor{4, 4},
-			&parameters{1, []int{1}},
+			&parameters{1, []int{1}}, // pos to beginning of screen
 			fb2.copy(),
 			fb2erase3,
 		},
 		{
 			cursor{4, 4},
-			&parameters{1, []int{2}},
+			&parameters{1, []int{2}}, // whole screen
 			fb2.copy(),
 			emptyFb,
 		},
 		{
 			cursor{9, 9},
-			&parameters{1, []int{2}},
+			&parameters{1, []int{2}}, // whole screen
 			fb2.copy(),
 			emptyFb,
 		},
