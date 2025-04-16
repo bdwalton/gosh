@@ -738,7 +738,7 @@ func (t *Terminal) setPriv(params *parameters, data []rune, val bool) {
 	if _, ok := t.flags[priv]; ok {
 		t.setFlag(priv, val)
 	} else {
-		slog.Debug("unimplmented private csi mode", "priv", priv)
+		slog.Debug("unimplemented private csi mode", "priv", priv)
 	}
 }
 
