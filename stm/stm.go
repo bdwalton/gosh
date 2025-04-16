@@ -145,6 +145,7 @@ func (s *stmObj) Run() {
 					msg.SetData(diff)
 					s.sendPayload(msg)
 					lastT = nowT
+					slog.Debug("sending diff", "diff", string(diff))
 				}
 			}
 		}
@@ -283,6 +284,7 @@ func (s *stmObj) consumePayload(id uint32) {
 		s.Shutdown()
 	case goshpb.PayloadType_CLIENT_INPUT:
 		keys := msg.GetData()
+		slog.Debug("remote keys", "keys", string(keys))
 		if n, err := s.term.Write(keys); err != nil || n != len(keys) {
 			slog.Error("couldn't write to terminal", "n", n, "len(keys)", len(keys), "err", err)
 		}
@@ -298,6 +300,7 @@ func (s *stmObj) consumePayload(id uint32) {
 			break
 		}
 		os.Stdout.Write(o)
+		slog.Debug("received output", "diff", string(o))
 	}
 }
 

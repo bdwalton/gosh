@@ -248,6 +248,7 @@ func (t *Terminal) Run() {
 			r = rune(b)
 		}
 
+		slog.Debug("parsing rune", "r", string(r), "cur", t.cur)
 		for _, a := range t.p.parse(r) {
 			t.mux.Lock()
 			t.lastChg = time.Now()
