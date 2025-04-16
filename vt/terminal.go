@@ -575,7 +575,12 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_VPA, CSI_VPR, CSI_HPA, CSI_HPR, CSI_CUP, CSI_CUU, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
 		t.cursorMove(params, last)
 	case CSI_SGR:
-		t.curF = formatFromParams(t.curF, params)
+		if string(data) != "" {
+			slog.Debug("swallowing xterm specific key modifier set/reset or query", "params", params, "data", string(data))
+
+		} else {
+			t.curF = formatFromParams(t.curF, params)
+		}
 	case CSI_DECST8C:
 		t.resetTabs(params, data)
 	case CSI_CHT:
