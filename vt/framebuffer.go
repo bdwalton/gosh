@@ -166,7 +166,7 @@ func (f *framebuffer) copy() *framebuffer {
 
 	for row := range f.data {
 		nf.data[row] = make([]cell, cols, cols)
-		nf.setRowRegion(row, 0, cols, f.getRow(row))
+		copy(nf.data[row], f.getRow(row))
 	}
 
 	return nf
@@ -352,12 +352,11 @@ func (f *framebuffer) getCell(row, col int) (cell, error) {
 	return defaultCell(), fmt.Errorf("invalid coordinates (%d, %d): %w", col, row, fbInvalidCell)
 }
 
-var invalidRegion = errors.New("invalid region specification")
-var setRowRegionErr = errors.New("setRegion dest and src length don't match")
-
 func (f *framebuffer) getRow(row int) []cell {
 	return f.data[row]
 }
+
+var invalidRegion = errors.New("invalid region specification")
 
 func (f *framebuffer) getRegion(t, b, l, r int) (*framebuffer, error) {
 	if t < 0 || t >= b || b > f.getNumRows() {
@@ -376,27 +375,6 @@ func (f *framebuffer) getRegion(t, b, l, r int) (*framebuffer, error) {
 		fb.data[row] = fb.data[row][l:r]
 	}
 	return fb, nil
-}
-
-func (f *framebuffer) getRowRegion(row, start, end int) ([]cell, error) {
-	if start < 0 || end <= start || end > len(f.data[0]) {
-		return nil, invalidRegion
-	}
-
-	return f.getRow(row)[start:end], nil
-}
-
-func (f *framebuffer) setRowRegion(row, start, end int, src []cell) error {
-	dest, err := f.getRowRegion(row, start, end)
-	if err != nil {
-		return err
-	}
-
-	if len(src) != len(dest) {
-		return setRowRegionErr
-	}
-	copy(dest, src)
-	return nil
 }
 
 func (f *framebuffer) fill(c cell) {

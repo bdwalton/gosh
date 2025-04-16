@@ -444,68 +444,6 @@ func TestFrameBufferDiff(t *testing.T) {
 	}
 }
 
-func TestGetRowRegion(t *testing.T) {
-	ac := newCell('a', format{fg: standardColors[FG_RED]})
-	bc := newCell('b', format{fg: standardColors[FG_BLUE]})
-	fb := newFramebuffer(10, 10)
-	fb.setCell(3, 5, ac)
-	fb.setCell(4, 3, bc)
-	fb.setCell(4, 4, ac)
-
-	cases := []struct {
-		fb               *framebuffer
-		row, left, right int
-		want             []cell
-		wantErr          error
-	}{
-		{fb, 2, 5, 7, []cell{defaultCell(), defaultCell()}, nil},
-		{fb, 3, 5, 7, []cell{ac, defaultCell()}, nil},
-		{fb, 3, 5, 7, []cell{ac, defaultCell()}, nil},
-		{fb, 4, 3, 6, []cell{bc, ac, defaultCell()}, nil},
-		{fb, 4, 3, 11, nil, invalidRegion},
-	}
-
-	for i, c := range cases {
-		if got, err := c.fb.getRowRegion(c.row, c.left, c.right); !errors.Is(err, c.wantErr) || !slices.Equal(got, c.want) {
-			t.Errorf("%d: Got\n\t%v (%v), wanted\n\t%v (%v)", i, got, err, c.want, c.wantErr)
-		}
-	}
-}
-
-func TestSetRowRegion(t *testing.T) {
-	ac := newCell('a', format{fg: standardColors[FG_RED]})
-	bc := newCell('b', format{fg: standardColors[FG_BLUE]})
-	fb := newFramebuffer(10, 10)
-	fb.setCell(3, 5, ac)
-	fb.setCell(4, 3, bc)
-	fb.setCell(4, 4, ac)
-
-	cases := []struct {
-		fb               *framebuffer
-		row, left, right int
-		new              []cell
-		want             []cell
-		wantErr          error
-	}{
-		{fb, 2, 5, 7, []cell{defaultCell(), ac}, []cell{defaultCell(), ac}, nil},
-		{fb, 3, 5, 7, []cell{ac, ac}, []cell{ac, ac}, nil},
-		{fb, 3, 5, 7, []cell{bc, ac}, []cell{bc, ac}, nil},
-		{fb, 4, 3, 6, []cell{ac, bc, bc}, []cell{ac, bc, bc}, nil},
-		{fb, 5, 3, 6, []cell{ac, bc, bc, defaultCell()}, []cell{defaultCell(), defaultCell(), defaultCell()}, setRowRegionErr},
-	}
-
-	for i, c := range cases {
-		err := c.fb.setRowRegion(c.row, c.left, c.right, c.new)
-		if !errors.Is(err, c.wantErr) {
-			t.Errorf("%d: Wanted err %v, got %v", i, c.wantErr, err)
-		}
-		got, _ := c.fb.getRowRegion(c.row, c.left, c.right)
-		if !slices.Equal(got, c.want) {
-			t.Errorf("%d: Got\n\t%v (err=%v), wanted\n\t%v (err=%v)", i, got, err, c.want, c.wantErr)
-		}
-	}
-}
-
 // Assumes 0-7 for rows so we can a) make cell content to a rune
 // representing original row and b) index into the standard foreground
 // colors; start indicates the numeric rune we start from when
