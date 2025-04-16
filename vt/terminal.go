@@ -526,6 +526,8 @@ func (t *Terminal) handleExecute(last rune) {
 
 func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	switch last {
+	case CSI_DSR:
+		t.handleDSR(params, data)
 	case CSI_DA:
 		t.replyDeviceAttributes(data)
 	case CSI_Q_MULTI:
@@ -660,6 +662,33 @@ func (t *Terminal) csiQ(params *parameters, data []rune) {
 		slog.Debug("identifying as gosh version", "ver", GOSH_VT_VER)
 	default:
 		slog.Debug("unhandled CSI q", "params", params, "data", string(data))
+	}
+}
+
+func (t *Terminal) handleDSR(params *parameters, data []rune) {
+	n, _ := params.getItem(0, 0)
+	switch string(data) {
+	case "": // General device status report
+		switch n {
+		case 5: // We always report OK (CSI 0 n)
+			t.Write([]byte(fmt.Sprintf("%c%c0%c", ESC, ESC_CSI, CSI_DSR)))
+		case 6: // Provide cursor location (CSI r ; c R)
+			t.Write([]byte(fmt.Sprintf("%c%c%d;%dR", ESC, ESC_CSI, t.cur.row+1, t.cur.col+1)))
+		}
+	case "?": // DEC specific device status report
+		switch n {
+		case 6: // Provide cursor location (CSI ? r ; c R)
+
+			t.Write([]byte(fmt.Sprintf("%c%c?%d;%dR", ESC, ESC_CSI, t.cur.row+1, t.cur.col+1)))
+		case 15: // report printer status; always "not ready" (CSI ? 1 1 n)
+			t.Write([]byte(fmt.Sprintf("%c%c?11%c", ESC, ESC_CSI, CSI_DSR)))
+		default:
+			slog.Debug("swallowing CSI ? DSR code", "params", params, "data", string(data))
+		}
+	case ">":
+		slog.Debug("swallowing xterm disable key modifiers", "params", params, "data", string(data))
+	default:
+		slog.Debug("unknown CSI DSR modifier string", "params", params, "data", data)
 	}
 }
 
