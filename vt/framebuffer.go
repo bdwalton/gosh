@@ -398,3 +398,11 @@ func (f *framebuffer) setRowRegion(row, start, end int, src []cell) error {
 	copy(dest, src)
 	return nil
 }
+
+func (f *framebuffer) fill(c cell) {
+	for row := range f.data {
+		for col := range row {
+			f.setCell(row, col, c)
+		}
+	}
+}

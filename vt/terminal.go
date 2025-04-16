@@ -296,6 +296,7 @@ func (t *Terminal) Resize(rows, cols int) {
 }
 
 func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
+	dstr := string(data)
 	switch r {
 	case 'A', 'B', 'C', 'E', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
 		slog.Debug("swallowing ESC character set command", "data", string(data))
@@ -313,8 +314,14 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 		}
 	case '7': // save cursor
 		t.savedCur = t.cur.Copy()
-	case '8': // restore cursor
-		t.cur = t.savedCur.Copy()
+	case '8': // restore cursor or decaln screen test
+		switch dstr {
+		case "":
+			t.cur = t.savedCur.Copy()
+		case "#": // DECALN vt100 screen test
+			t.doDECALN()
+		}
+
 	case 'c':
 		t.reset()
 	default:
@@ -695,6 +702,15 @@ func (t *Terminal) handleDSR(params *parameters, data []rune) {
 	default:
 		slog.Debug("unknown CSI DSR modifier string", "params", params, "data", data)
 	}
+}
+
+func (t *Terminal) doDECALN() {
+	slog.Debug("DECALN screen test triggered")
+	t.curF = defFmt
+	t.horizMargin = margin{}
+	t.vertMargin = margin{}
+	t.cursorMoveAbs(0, 0)
+	t.fb.fill(newCell('E', t.curF))
 }
 
 func (t *Terminal) replyDeviceAttributes(data []rune) {
