@@ -476,16 +476,16 @@ func TestGetRegion(t *testing.T) {
 		want       *framebuffer
 		wantErr    error
 	}{
-		{newFramebuffer(10, 10), 0, 10, 0, 10, newFramebuffer(10, 10), nil},
-		{newFramebuffer(10, 10), 0, 11, 0, 10, newFramebuffer(10, 10), invalidRegion},
-		{dfb, 0, 8, 0, 10, numberedFBForTest(0, 8, 10, 0, 0), nil},
-		{dfb, 1, 8, 0, 10, numberedFBForTest(1, 7, 10, 0, 0), nil},
-		{dfb, 1, 8, 1, 9, numberedFBForTest(1, 7, 8, 0, 0), nil},
-		{dfb, 1, 8, 1, 9, numberedFBForTest(1, 7, 8, 0, 0), nil},
+		{dfb, 0, 10, 0, 9, nil, invalidRegion},
+		{dfb, 0, 7, 0, 10, nil, invalidRegion},
+		{dfb, 0, 7, 0, 9, numberedFBForTest(0, 8, 10, 0, 0), nil},
+		{dfb, 1, 7, 0, 9, numberedFBForTest(1, 7, 10, 0, 0), nil},
+		{dfb, 1, 6, 1, 9, numberedFBForTest(1, 6, 9, 0, 0), nil},
+		{dfb, 1, 6, 1, 9, numberedFBForTest(1, 6, 9, 0, 0), nil},
+		{dfb, 2, 2, 1, 9, numberedFBForTest(2, 1, 9, 0, 0), nil},
 	}
 
 	for i, c := range cases {
-
 		if got, err := c.fb.getRegion(c.t, c.b, c.l, c.r); !errors.Is(err, c.wantErr) || (got != nil && !got.equal(c.want)) {
 			t.Errorf("%d: Got\n%v (%v) wanted:\n%v (%v)", i, got, err, c.want, c.wantErr)
 		}

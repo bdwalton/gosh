@@ -359,21 +359,26 @@ func (f *framebuffer) getRow(row int) []cell {
 var invalidRegion = errors.New("invalid region specification")
 
 func (f *framebuffer) getRegion(t, b, l, r int) (*framebuffer, error) {
-	if t < 0 || t >= b || b > f.getNumRows() {
+	nr := f.getNumRows() - 1
+	nc := f.getNumCols() - 1
+
+	if t < 0 || t > b || b > nr || l < 0 || l > r || r > nc {
 		return nil, invalidRegion
 	}
 
-	if l < 0 || l >= r || r > f.getNumCols() {
-		return nil, invalidRegion
-	}
-
+	sz := b - t + 1
 	fb := &framebuffer{
-		data: f.data[t:b],
+		data: make([][]cell, sz, sz),
 	}
 
-	for row := range fb.data {
-		fb.data[row] = fb.data[row][l:r]
+	for i := 0; i < sz; i++ {
+		if r == nc {
+			fb.data[i] = f.data[i+t][l:]
+		} else {
+			fb.data[i] = f.data[i+t][l : r+1]
+		}
 	}
+
 	return fb, nil
 }
 
