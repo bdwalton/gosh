@@ -57,10 +57,12 @@ type Terminal struct {
 // Private flags here will be initialized, diff'd, copied, etc.
 var privFlags = []int{
 	PRIV_CSI_DECCKM,
+	PRIV_CSI_DECCOLM,
 	PRIV_CSI_DECAWM,
 	PRIV_BLINK_CURSOR,
 	PRIV_CSI_LNM,
 	PRIV_SHOW_CURSOR,
+	PRIV_XTERM_80_132_ALLOW,
 	PRIV_DISABLE_MOUSE_XY,
 	PRIV_DISABLE_MOUSE_HILITE,
 	PRIV_DISABLE_MOUSE_MOTION,

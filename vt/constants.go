@@ -164,10 +164,12 @@ const (
 // CSI private mode parameter codes
 const (
 	PRIV_CSI_DECCKM           = 1    // DEC application cursor keys
+	PRIV_CSI_DECCOLM          = 3    // DEC 80 (l) / 132 (h) mode DECCOLM
 	PRIV_CSI_DECAWM           = 7    // DEC autowrap mode, default reset
 	PRIV_BLINK_CURSOR         = 12   // Start blinking cursor
 	PRIV_CSI_LNM              = 20   // Line Feed/New Line Mode, default reset
 	PRIV_SHOW_CURSOR          = 25   // Show cursor DECTCEM
+	PRIV_XTERM_80_132_ALLOW   = 40   // Xterm specific to enable/disable 80/132 col reset
 	PRIV_DISABLE_MOUSE_XY     = 1000 // Don't send Mouse X & Y on button press and release
 	PRIV_DISABLE_MOUSE_HILITE = 1001 // Don't use Hilite Mouse Tracking
 	PRIV_DISABLE_MOUSE_MOTION = 1002 // Don't use Cell Motion Mouse Tracking
