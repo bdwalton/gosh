@@ -790,12 +790,16 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 	switch moveType {
 	case CSI_HPA:
 		col = n - 1 // 0 based columns
+		slog.Debug("cursor horizontal position absolute", "col", col)
 	case CSI_HPR:
 		col += n // we don't need to be 0 based for this
+		slog.Debug("cursor horizontal position relative", "col", col)
 	case CSI_VPA:
 		row = n - 1 // 0 based rows
+		slog.Debug("cursor vertical position absolute", "row", row)
 	case CSI_VPR:
 		row += n // we don't need to be 0 based for this
+		slog.Debug("cursor vertical position relative", "row", row)
 	case CSI_CUU:
 		if t.vertMargin.isSet() {
 			mRow := t.vertMargin.getMin()
@@ -803,11 +807,14 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 			// scroll region, just move
 			if row < mRow {
 				row -= n
+				slog.Debug("cursor up, vert margin set, unbounded", "row", row)
 			} else {
 				row = maxInt(mRow, row-n)
+				slog.Debug("cursor up, vert margin set, bounded", "row", row)
 			}
 		} else {
 			row -= n
+			slog.Debug("cursor up, no vert margin", "row", row)
 		}
 	case CSI_CUD:
 		if t.vertMargin.isSet() {
@@ -816,11 +823,14 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 			// scroll region, just move
 			if row > mRow {
 				row += n
+				slog.Debug("cursor down, vert margin set, unbounded", "row", row)
 			} else {
 				row = minInt(mRow, row+n)
+				slog.Debug("cursor down, vert margin set, bounded", "row", row)
 			}
 		} else {
 			row += n
+			slog.Debug("cursor down, no vert margin", "row", row)
 		}
 	case CSI_CUB:
 		if t.horizMargin.isSet() {
@@ -829,11 +839,14 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 			// just move
 			if col < mCol {
 				col -= n
+				slog.Debug("cursor back, horiz margin set, unbounded", "col", col)
 			} else {
 				col = maxInt(mCol, col-n)
+				slog.Debug("cursor back, horiz margin set, bounded", "col", col)
 			}
 		} else {
 			col -= n
+			slog.Debug("cursor back, no horiz margin", "col", col)
 		}
 	case CSI_CUF:
 		if t.horizMargin.isSet() {
@@ -842,23 +855,30 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 			// region, just move
 			if col > mCol {
 				col += n
+				slog.Debug("cursor back, horiz margin set, unbounded", "col", col)
 			} else {
 				col = minInt(mCol, col+n)
+				slog.Debug("cursor back, horiz margin set, bounded", "col", col)
 			}
 		} else {
 			col += n
+			slog.Debug("cursor back, no horiz margin", "col", col)
 		}
 	case CSI_CNL:
 		col = 0
 		row += n
+		slog.Debug("cursor next line", "row", row, "col", col)
 	case CSI_CPL:
 		col = 0
 		row -= n
+		slog.Debug("cursor previous line", "row", row, "col", col)
 	case CSI_CHA:
 		col = n - 1 // our indexing is zero based
+		slog.Debug("cursor horiztonal attribute", "col", col)
 	case CSI_CUP, CSI_HVP: // TODO: What does "format effector" mean for HVP
 		row = n - 1 // our indexing is zero based
 		col = m - 1
+		slog.Debug("horizontal vertical position/cursor position", "row", row, "col", col)
 	}
 
 	t.cursorMoveAbs(row, col)
@@ -962,10 +982,13 @@ func (t *Terminal) eraseLine(params *parameters) {
 	switch m {
 	case 0: // to end of line
 		t.fb.resetCells(t.cur.row, t.cur.col, nc, t.curF)
+		slog.Debug("erase in line, pos to end", "row", t.cur.row, "col", t.cur.col)
 	case 1: // to start of line
 		t.fb.resetCells(t.cur.row, 0, t.cur.col, t.curF)
+		slog.Debug("erase in line, start of line to pos", "row", t.cur.row, "col", t.cur.col)
 	case 2: // entire line
 		t.fb.resetCells(t.cur.row, 0, nc, t.curF)
+		slog.Debug("erase in line, entire line", "row", t.cur.row, "col", t.cur.col)
 	}
 }
 
@@ -978,10 +1001,13 @@ func (t *Terminal) eraseInDisplay(params *parameters) {
 	case 0: // active position to end of screen, inclusive
 		t.fb.resetRows(t.cur.row+1, nr-1)
 		t.eraseLine(params)
+		slog.Debug("CSI erase in display, pos to end of screen")
 	case 1: // start of screen to active position, inclusive
 		t.fb.resetRows(0, t.cur.row-1)
 		t.eraseLine(params)
+		slog.Debug("CSI erase in display, beginning of screen to pos")
 	case 2: // entire screen
 		t.fb.resetRows(0, nr-1)
+		slog.Debug("CSI erase in display, entire screen")
 	}
 }
