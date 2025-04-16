@@ -307,7 +307,7 @@ func (f *framebuffer) resetCells(row, from, to int, fm format) bool {
 	default:
 		resetCell := defaultCell()
 		resetCell.f = fm
-		for col := from; col < to; col++ {
+		for col := from; col <= to; col++ {
 			f.setCell(row, col, resetCell)
 		}
 	}

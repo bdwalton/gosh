@@ -437,7 +437,7 @@ func TestEraseInDisplay(t *testing.T) {
 	fb2erase3.data[1] = newRow(10)
 	fb2erase3.data[2] = newRow(10)
 	fb2erase3.data[3] = newRow(10)
-	copy(fb2erase3.data[4][0:4], newRow(4))
+	copy(fb2erase3.data[4][0:5], newRow(5))
 
 	cases := []struct {
 		cur    cursor

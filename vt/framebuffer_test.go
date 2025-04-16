@@ -160,18 +160,17 @@ func TestResetCells(t *testing.T) {
 			t.Errorf("%d: Got %t, wanted %t", i, resetWorked, c.want)
 		} else {
 			if resetWorked {
-				nr := c.fb.getNumRows()
-				nc := c.fb.getNumCols()
-				for row := 0; row < nr; row++ {
-					for col := 0; col < nc; col++ {
+				for row := range c.fb.data {
+					for col := range row {
 						got, _ := c.fb.getCell(row, col)
 						if row == c.row {
-							if col < c.start || col >= c.end {
-								if got.equal(empty) {
+							if col >= c.start && col <= c.end {
+								if !got.equal(empty) {
 									t.Errorf("%d: (row:%d, col:%d) Got\n\t%v, wanted\n\t%v", i, row, col, got, empty)
+									fmt.Println(c.fb)
 								}
 							} else {
-								if !got.equal(empty) {
+								if got.equal(empty) {
 									t.Errorf("%d: Got %t, wanted %t, expected empty, got %v", i, resetWorked, c.want, got)
 								}
 							}
