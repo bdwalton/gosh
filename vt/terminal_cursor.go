@@ -99,43 +99,42 @@ func (t *Terminal) cursorDown(n int) {
 }
 
 func (t *Terminal) cursorForward(n int) {
-	col := t.col()
-	if t.horizMargin.isSet() {
-		mCol := t.horizMargin.getMax()
-		// If we're already right of the scroll
-		// region, just move
-		if col > mCol {
-			col += n
-			slog.Debug("cursor forward, horiz margin set, unbounded", "col", col)
-		} else {
-			col = minInt(mCol, col+n)
-			slog.Debug("cursor forward, horiz margin set, bounded", "col", col)
-		}
-	} else {
-		col += n
-		slog.Debug("cursor forward, no horiz margin", "col", col)
+	if n == 0 {
+		n += 1
 	}
+	col := t.col()
+	right := t.getRightMargin()
+	if col > right {
+		right = t.cols() - 1
+	}
+
+	col += n
+	if col > right {
+		// TODO: handle wrap
+		col = right
+	}
+
 	t.cursorMoveAbs(t.row(), col)
 }
 
 func (t *Terminal) cursorBack(n int) {
-	col := t.col()
-	if t.horizMargin.isSet() {
-		mCol := t.horizMargin.getMin()
-		// If we're already left of the scroll region,
-		// just move
-		if col < mCol {
-			col -= n
-			slog.Debug("cursor back, horiz margin set, unbounded", "col", col)
-		} else {
-			col = maxInt(mCol, col-n)
-			slog.Debug("cursor back, horiz margin set, bounded", "col", col)
-		}
-	} else {
-		col -= n
-		slog.Debug("cursor back, no horiz margin", "col", col)
+	if n == 0 {
+		n += 1
 	}
+
+	col := t.col()
+	left := t.getLeftMargin()
+	if col < left {
+		left = 0
+	}
+
+	col -= n
+	if col < left {
+		col = left
+	}
+
 	t.cursorMoveAbs(t.row(), col)
+}
 
 func (t *Terminal) cursorMoveAbs(row, col int) {
 	t.cur.col = col

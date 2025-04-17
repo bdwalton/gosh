@@ -222,7 +222,9 @@ func TestCursorBack(t *testing.T) {
 		wantRow, wantCol int
 	}{
 		// CUB - cursor back
-		{tNoMargin, cursor{15, 15}, 0, 15, 15},
+		{tNoMargin, cursor{15, 15}, 0, 15, 14},
+		{tNoMargin, cursor{15, 15}, 1, 15, 14},
+		{tNoMargin, cursor{15, 0}, 0, 15, 0},
 		{tNoMargin, cursor{15, 0}, 1, 15, 0},
 		{tNoMargin, cursor{15, 0}, 2, 15, 0},
 		{tNoMargin, cursor{15, 3}, 2, 15, 1},
@@ -250,7 +252,7 @@ func TestCursorForward(t *testing.T) {
 		wantRow, wantCol int
 	}{
 		// CUF - cursor forward
-		{tNoMargin, cursor{15, 1}, 0, 15, 1},
+		{tNoMargin, cursor{15, 0}, 0, 15, 1}, // zero isn't valid, treat as 1
 		{tNoMargin, cursor{15, 0}, 1, 15, 1},
 		{tNoMargin, cursor{15, 0}, 10, 15, 10},
 		{tNoMargin, cursor{15, tNoMargin.cols() - 1}, 0, 15, tNoMargin.cols() - 1},
