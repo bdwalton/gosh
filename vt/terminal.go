@@ -306,12 +306,25 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 
 	case 'A', 'B', 'C', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
 		slog.Debug("swallowing ESC character set command", "data", string(data))
+	case 'E':
+		if t.cur.row == t.fb.getNumRows()-1 {
+			t.fb.scrollRows(1)
+			t.cursorMoveAbs(t.cur.row, 0)
+		} else {
+			t.cursorMoveAbs(t.cur.row+1, 0)
+		}
 	case 'F':
 		t.cursorMoveAbs(t.fb.getNumRows()-1, 0)
 	case 'H': // set tab stop. note that in some vt dialects this
 		// would actually be part of character set handling
 		// (swedish on vt220).
 		t.tabs[t.cur.col] = true
+	case 'D': // move cursor one line up, scrolling if needed
+		if t.cur.row == t.fb.getNumRows()-1 {
+			t.fb.scrollRows(1)
+		} else {
+			t.cursorMoveAbs(t.cur.row+1, t.cur.col)
+		}
 	case 'M': // move cursor one line up, scrolling if needed
 		if t.cur.row == 0 {
 			t.fb.scrollRows(-1)
