@@ -286,6 +286,14 @@ func (t *Terminal) Resize(rows, cols int) {
 	slog.Debug("changed window size", "rows", rows, "cols", rows)
 }
 
+func (t *Terminal) cols() int {
+	return t.fb.getNumCols()
+}
+
+func (t *Terminal) rows() int {
+	return t.fb.getNumRows()
+}
+
 func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	dstr := string(data)
 	switch r {
@@ -293,20 +301,20 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	case 'A', 'B', 'C', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
 		slog.Debug("swallowing ESC character set command", "data", string(data))
 	case 'E':
-		if t.cur.row == t.fb.getNumRows()-1 {
+		if t.cur.row == t.rows()-1 {
 			t.fb.scrollRows(1)
 			t.cursorMoveAbs(t.cur.row, 0)
 		} else {
 			t.cursorMoveAbs(t.cur.row+1, 0)
 		}
 	case 'F':
-		t.cursorMoveAbs(t.fb.getNumRows()-1, 0)
+		t.cursorMoveAbs(t.rows()-1, 0)
 	case 'H': // set tab stop. note that in some vt dialects this
 		// would actually be part of character set handling
 		// (swedish on vt220).
 		t.tabs[t.cur.col] = true
 	case 'D': // move cursor one line up, scrolling if needed
-		if t.cur.row == t.fb.getNumRows()-1 {
+		if t.cur.row == t.rows()-1 {
 			t.fb.scrollRows(1)
 		} else {
 			t.cursorMoveAbs(t.cur.row+1, t.cur.col)
@@ -411,7 +419,7 @@ func (t *Terminal) clearFrags(row, col int) {
 }
 
 func (t *Terminal) reset() {
-	rows, cols := t.fb.getNumRows(), t.fb.getNumCols()
+	rows, cols := t.rows(), t.cols()
 	t.fb = newFramebuffer(rows, cols)
 	t.title = ""
 	t.icon = ""
@@ -453,10 +461,10 @@ func (t *Terminal) print(r rune) {
 
 		switch {
 		case col == 0 && t.isModeSet(privIDToName[PRIV_DECAWM]): // we wrapped
-			col = t.fb.getNumCols() - 1
+			col = t.cols() - 1
 			row -= 1
-		case col >= t.fb.getNumCols(): // we're at the end of a row but didn't wrap
-			col = t.fb.getNumCols() - 1
+		case col >= t.cols(): // we're at the end of a row but didn't wrap
+			col = t.cols() - 1
 		default:
 			col -= 1
 		}
@@ -474,7 +482,7 @@ func (t *Terminal) print(r rune) {
 
 		t.fb.setCell(row, col, c)
 	default: // default (1 column), wide (2 columns)
-		if col <= t.fb.getNumCols()-rw {
+		if col <= t.cols()-rw {
 			t.clearFrags(row, col)
 			nc := newCell(r, t.curF)
 
@@ -491,14 +499,14 @@ func (t *Terminal) print(r rune) {
 
 		if t.isModeSet(privIDToName[PRIV_DECAWM]) {
 			col = 0
-			if row == t.fb.getNumRows()-1 {
+			if row == t.rows()-1 {
 				t.fb.scrollRows(1)
 			} else {
 				row += 1
 			}
 		} else {
 			// overwrite chars at the end
-			col = t.fb.getNumRows() - rw
+			col = t.rows() - rw
 		}
 
 		t.clearFrags(row, col)
@@ -550,7 +558,7 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_ICH:
 		// Insert n blank characters
 		n, _ := params.getItem(0, 1)
-		lastCol := t.fb.getNumCols() - 1
+		lastCol := t.cols() - 1
 		for i := 0; i < n; i++ {
 			if t.cur.col == lastCol {
 				break
@@ -561,7 +569,7 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		// Insert n blank characters
 		n, _ := params.getItem(0, 1)
 		last := t.cur.col + n
-		if lastCol := t.fb.getNumCols() - 1; last > lastCol {
+		if lastCol := t.cols() - 1; last > lastCol {
 			last = lastCol
 		}
 		t.fb.setCells(t.cur.row, t.cur.row, t.cur.col, last, newCell(' ', t.curF))
@@ -613,7 +621,7 @@ func (t *Terminal) resetTabs(params *parameters, data []rune) {
 	if len(data) != 1 || data[0] != '?' || !ok || n != 5 {
 		slog.Debug("resetTabs called without ? 5 as data and parameter", "data", string(data), "params", params)
 	}
-	cols := t.fb.getNumCols()
+	cols := t.cols()
 	tabs := make([]bool, cols, cols)
 	for i := 0; i < cols; i += 8 {
 		tabs[i] = true
@@ -753,7 +761,7 @@ func (t *Terminal) setMode(mode int, data string, last rune) {
 }
 
 func (t *Terminal) setTopBottom(params *parameters) {
-	nr := t.fb.getNumRows()
+	nr := t.rows()
 	top, _ := params.getItem(0, 1)
 	bottom, _ := params.getItem(1, nr)
 	if bottom <= top || top > nr || (top == 0 && bottom == 1) {
@@ -768,7 +776,7 @@ func (t *Terminal) setTopBottom(params *parameters) {
 }
 
 func (t *Terminal) setLeftRight(params *parameters) {
-	nc := t.fb.getNumCols()
+	nc := t.cols()
 	left, _ := params.getItem(0, 1)
 	right, _ := params.getItem(1, nc)
 	if right <= left || left >= nc || (left == 0 && right == 1) {
@@ -843,7 +851,7 @@ func (t *Terminal) cursorMoveAbs(row, col int) {
 	t.cur.col = col
 	t.cur.row = row
 
-	nc := t.fb.getNumCols()
+	nc := t.cols()
 	switch {
 	case t.cur.col < 0:
 		t.cur.col = 0
@@ -851,7 +859,7 @@ func (t *Terminal) cursorMoveAbs(row, col int) {
 		t.cur.col = nc - 1
 	}
 
-	nr := t.fb.getNumRows()
+	nr := t.rows()
 	// TODO: Fix this
 	switch {
 	case t.cur.row < 0:
@@ -898,7 +906,7 @@ func (t *Terminal) stepTabs(steps int) {
 		inc = 1
 	}
 
-	max := t.fb.getNumCols() - 1
+	max := t.cols() - 1
 	for {
 		switch {
 		case col <= 0:
@@ -922,7 +930,7 @@ func (t *Terminal) stepTabs(steps int) {
 
 func (t *Terminal) deleteLines(params *parameters) {
 	m, _ := params.getItem(0, 1)
-	cols := t.fb.getNumCols()
+	cols := t.cols()
 
 	for i := t.cur.row; i < t.cur.row+m && t.vertMargin.contains(i); i++ {
 		t.fb.data[i] = newRow(cols)
@@ -936,7 +944,7 @@ func (t *Terminal) eraseLine(params *parameters) {
 	dc := defaultCell()
 	dc.f = t.curF
 
-	nc := t.fb.getNumCols() - 1
+	nc := t.cols() - 1
 	switch m {
 	case 0: // to end of line
 		t.fb.setCells(t.cur.row, t.cur.row, t.cur.col, nc, dc)
@@ -954,7 +962,7 @@ func (t *Terminal) eraseInDisplay(params *parameters) {
 	m, _ := params.getItem(0, 0)
 
 	// TODO: Handle BCE properly
-	nr := t.fb.getNumRows()
+	nr := t.rows()
 	switch m {
 	case 0: // active position to end of screen, inclusive
 		t.fb.resetRows(t.cur.row+1, nr-1)
