@@ -154,7 +154,6 @@ func TestSetCells(t *testing.T) {
 		empty := defaultCell()
 		empty.f = c.fm
 
-		fmt.Println(c.t, c.b, c.l, c.r)
 		c.fb.setCells(c.t, c.b, c.l, c.r, empty)
 
 		for row := range c.fb.data {
@@ -163,7 +162,6 @@ func TestSetCells(t *testing.T) {
 				if row >= c.t && row <= c.b && col >= c.l && col <= c.r {
 					if !got.equal(empty) {
 						t.Errorf("%d: (row:%d, col:%d) Got\n\t%v, wanted\n\t%v", i, row, col, got, empty)
-						fmt.Println(c.fb)
 						break
 					}
 				} else {
