@@ -294,6 +294,34 @@ func (t *Terminal) rows() int {
 	return t.fb.getNumRows()
 }
 
+func (t *Terminal) getLeftMargin() int {
+	if t.horizMargin.isSet() {
+		return t.horizMargin.getMin()
+	}
+	return 0
+}
+
+func (t *Terminal) getRightMargin() int {
+	if t.horizMargin.isSet() {
+		return t.horizMargin.getMax()
+	}
+	return t.cols() - 1
+}
+
+func (t *Terminal) getTopMargin() int {
+	if t.vertMargin.isSet() {
+		return t.vertMargin.getMin()
+	}
+	return 0
+}
+
+func (t *Terminal) getBottomMargin() int {
+	if t.vertMargin.isSet() {
+		return t.vertMargin.getMax()
+	}
+	return t.rows() - 1
+}
+
 func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	dstr := string(data)
 	switch r {
