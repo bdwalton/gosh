@@ -113,7 +113,7 @@ func (t *Terminal) cursorForward(n int) {
 		}
 	} else {
 		col += n
-		slog.Debug("cursor back, no horiz margin", "col", col)
+		slog.Debug("cursor forward, no horiz margin", "col", col)
 	}
 	t.cursorMoveAbs(t.row(), col)
 }
