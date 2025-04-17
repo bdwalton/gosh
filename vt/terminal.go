@@ -771,7 +771,7 @@ func (t *Terminal) replyDeviceAttributes(data []rune) {
 
 func (t *Terminal) setMode(mode int, data string, last rune) {
 	set := false
-	if last == 'h' {
+	if last == CSI_MODE_SET {
 		set = true
 	}
 
