@@ -840,38 +840,36 @@ func (t *Terminal) cursorInScrollingRegion() bool {
 }
 
 func (t *Terminal) cursorMove(params *parameters, moveType rune) {
-	// No paramter indicates a 0 paramter, but for cursor
+	// No paramter indicates a 0 value, but for cursor
 	// movement, we always default to 1. That allows more
 	// efficient specification of the common movements.
-	n, _ := params.getItem(0, 1)
+	p1, _ := params.getItem(0, 1)
 
 	switch moveType {
 	case CSI_HPA, CSI_CHA:
-		n -= 1 // expects 0 based when called
-		t.cursorCHAorHPA(n)
+		t.cursorCHAorHPA(p1 - 1) // expects 0 based when called
 	case CSI_CUP, CSI_HVP:
 		// expects 0 based indexes when called
-		m, _ := params.getItem(1, 1)
-		t.cursorCUPorHVP(m-1, n-1)
+		p2, _ := params.getItem(1, 1)
+		t.cursorCUPorHVP(p1-1, p2-1)
 	case CSI_HPR:
-		t.cursorHPR(n)
+		t.cursorHPR(p1)
 	case CSI_VPA:
-		n -= 1 // expects 0 based when called
-		t.cursorVPA(n)
+		t.cursorVPA(p1 - 1) // expects 0 based when called
 	case CSI_VPR:
-		t.cursorVPR(n)
+		t.cursorVPR(p1)
 	case CSI_CUU:
-		t.cursorUp(n)
+		t.cursorUp(p1)
 	case CSI_CUD:
-		t.cursorDown(n)
+		t.cursorDown(p1)
 	case CSI_CUB:
-		t.cursorBack(n)
+		t.cursorBack(p1)
 	case CSI_CUF:
-		t.cursorForward(n)
+		t.cursorForward(p1)
 	case CSI_CNL:
-		t.cursorCNL(n)
+		t.cursorCNL(p1)
 	case CSI_CPL:
-		t.cursorCPL(n)
+		t.cursorCPL(p1)
 	}
 }
 
