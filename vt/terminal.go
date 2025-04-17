@@ -777,12 +777,14 @@ func (t *Terminal) setMode(mode int, data string, last rune) {
 
 	switch data {
 	case "?":
-		m, ok := t.modes[privIDToName[mode]]
+		name := privIDToName[mode]
+		m, ok := t.modes[name]
 		if !ok {
-			slog.Debug("unknown CSI private mode toggled; ignoring", "mode", mode, "data", data, "last", last)
+			slog.Debug("unknown CSI private mode toggled; ignoring", "mode", name, "data", data, "last", last)
 			return
 		}
 		m.set(set)
+		slog.Debug("setting private mode", "mode", mode, "set", set)
 	default:
 		slog.Debug("unexpected CSI set/reset data", "mode", mode, "data", data, "last", last)
 	}
