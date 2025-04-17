@@ -451,7 +451,7 @@ func (t *Terminal) reset() {
 	t.fb = newFramebuffer(rows, cols)
 	t.title = ""
 	t.icon = ""
-	t.cur = cursor{0, 0}
+	t.homeCursor()
 	t.savedCur = cursor{0, 0}
 	t.tabs = makeTabs(cols)
 	t.vertMargin = newMargin(0, rows-1)
@@ -788,6 +788,10 @@ func (t *Terminal) setMode(mode int, data string, last rune) {
 	default:
 		slog.Debug("unexpected CSI set/reset data", "mode", mode, "data", data, "last", last)
 	}
+}
+
+func (t *Terminal) homeCursor() {
+	t.cursorMoveAbs(0, 0)
 }
 
 func (t *Terminal) setTopBottom(params *parameters) {
