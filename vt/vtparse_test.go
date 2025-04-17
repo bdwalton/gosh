@@ -122,7 +122,7 @@ func TestCSIParsing(t *testing.T) {
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{2004}),
 			[]rune{'?'},
-			CSI_PRIV_DISABLE,
+			CSI_MODE_RESET,
 		},
 	}
 

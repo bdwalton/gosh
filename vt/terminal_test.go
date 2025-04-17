@@ -154,7 +154,7 @@ func TestPrint(t *testing.T) {
 		t, _ := NewTerminal()
 		t.fb = fb
 		t.cur = c
-		t.setFlag(PRIV_CSI_DECAWM, wrap)
+		t.setFlag(PRIV_DECAWM, wrap)
 		return t
 	}
 
@@ -258,10 +258,10 @@ func TestTerminalDiff(t *testing.T) {
 	t8 := testTerminalCopy(t7)
 	t8.Resize(10, 6)
 	t9 := testTerminalCopy(t8)
-	t9.setFlag(PRIV_CSI_DECAWM, true)
+	t9.setFlag(PRIV_DECAWM, true)
 	t10 := testTerminalCopy(t9)
-	t10.setFlag(PRIV_CSI_DECAWM, false)
-	t10.setFlag(PRIV_CSI_LNM, true)
+	t10.setFlag(PRIV_DECAWM, false)
+	t10.setFlag(PRIV_LNM, true)
 	t11 := testTerminalCopy(t10)
 	t11.vertMargin = newMargin(2, 5)
 	t12 := testTerminalCopy(t10)
@@ -275,10 +275,10 @@ func TestTerminalDiff(t *testing.T) {
 	t16 := testTerminalCopy(t15)
 	t16.curF = format{fg: standardColors[FG_YELLOW], italic: true, brightness: FONT_BOLD}
 	t17 := testTerminalCopy(t1)
-	t17.setFlag(PRIV_CSI_BRACKET_PASTE, true)
+	t17.setFlag(PRIV_BRACKET_PASTE, true)
 	t18 := testTerminalCopy(t17)
-	t18.setFlag(PRIV_CSI_BRACKET_PASTE, false)
-	t18.setFlag(PRIV_CSI_DECCKM, true)
+	t18.setFlag(PRIV_BRACKET_PASTE, false)
+	t18.setFlag(PRIV_DECCKM, true)
 
 	cases := []struct {
 		src, dest *Terminal
@@ -292,18 +292,18 @@ func TestTerminalDiff(t *testing.T) {
 		{t4, t6, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON_TITLE, "mytitle", CTRL_BEL))},
 		{t4, t7, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON, "myicon", CTRL_BEL))},
 		{t1, t8, []byte(fmt.Sprintf("%c%c%s;%s%c%c%c%c%c%c%s;%d;%d%c%c%c%c", ESC, ESC_OSC, OSC_ICON, "myicon", CTRL_BEL, ESC, ESC_CSI, CSI_SGR, ESC, ESC_OSC, OSC_SETSIZE, 10, 6, CTRL_BEL, ESC, ESC_CSI, CSI_CUP))},
-		{t8, t9, []byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_ENABLE))},
-		{t9, t10, []byte(fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
+		{t8, t9, []byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_DECAWM, CSI_MODE_SET))},
+		{t9, t10, []byte(fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, ESC_CSI, PRIV_DECAWM, CSI_MODE_RESET, ESC, ESC_CSI, PRIV_LNM, CSI_MODE_SET))},
 		{t10, t11, []byte(fmt.Sprintf("%c%c%d;%d%c", ESC, ESC_CSI, 3, 6, CSI_DECSTBM))},
 		{t10, t12, []byte(fmt.Sprintf("%c%c%d;%d%c", ESC, ESC_CSI, 4, 8, CSI_DECSLRM))},
-		{t9, t11, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c%d%c%c%c%d%c", ESC, ESC_CSI, 3, 6, CSI_DECSTBM, ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
-		{t9, t12, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c%d%c%c%c%d%c", ESC, ESC_CSI, 4, 8, CSI_DECSLRM, ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
-		{t9, t13, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c%d;%d%c%c%c%d%c%c%c%d%c", ESC, ESC_CSI, 1, 5, CSI_DECSLRM, ESC, ESC_CSI, 2, 7, CSI_DECSTBM, ESC, ESC_CSI, PRIV_CSI_DECAWM, CSI_PRIV_DISABLE, ESC, ESC_CSI, PRIV_CSI_LNM, CSI_PRIV_ENABLE))},
+		{t9, t11, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c%d%c%c%c%d%c", ESC, ESC_CSI, 3, 6, CSI_DECSTBM, ESC, ESC_CSI, PRIV_DECAWM, CSI_MODE_RESET, ESC, ESC_CSI, PRIV_LNM, CSI_MODE_SET))},
+		{t9, t12, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c%d%c%c%c%d%c", ESC, ESC_CSI, 4, 8, CSI_DECSLRM, ESC, ESC_CSI, PRIV_DECAWM, CSI_MODE_RESET, ESC, ESC_CSI, PRIV_LNM, CSI_MODE_SET))},
+		{t9, t13, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c%d;%d%c%c%c%d%c%c%c%d%c", ESC, ESC_CSI, 1, 5, CSI_DECSLRM, ESC, ESC_CSI, 2, 7, CSI_DECSTBM, ESC, ESC_CSI, PRIV_DECAWM, CSI_MODE_RESET, ESC, ESC_CSI, PRIV_LNM, CSI_MODE_SET))},
 		{t14, t15, []byte(fmt.Sprintf("%c%c%dm%c%c%dm", ESC, ESC_CSI, FG_RED, ESC, ESC_CSI, ITALIC_ON))},
 
 		{t15, t16, []byte(fmt.Sprintf("%c%c%d%c%c%c%dm", ESC, ESC_CSI, FG_YELLOW, CSI_SGR, ESC, ESC_CSI, FONT_BOLD))},
-		{t1, t17, []byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_BRACKET_PASTE, CSI_PRIV_ENABLE))},
-		{t17, t18, []byte(fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, ESC_CSI, PRIV_CSI_DECCKM, CSI_PRIV_ENABLE, ESC, ESC_CSI, PRIV_CSI_BRACKET_PASTE, CSI_PRIV_DISABLE))},
+		{t1, t17, []byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_BRACKET_PASTE, CSI_MODE_SET))},
+		{t17, t18, []byte(fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, ESC_CSI, PRIV_DECCKM, CSI_MODE_SET, ESC, ESC_CSI, PRIV_BRACKET_PASTE, CSI_MODE_RESET))},
 	}
 
 	for i, c := range cases {

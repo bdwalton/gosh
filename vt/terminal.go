@@ -56,15 +56,15 @@ type Terminal struct {
 
 // Private flags here will be initialized, diff'd, copied, etc.
 var privFlags = []int{
-	PRIV_CSI_DECCKM,
-	PRIV_CSI_DECCOLM,
+	PRIV_DECCKM,
+	PRIV_DECCOLM,
 	PRIV_SMOOTH_SCROLL,
 	PRIV_REV_VIDEO,
 	PRIV_ORIGIN_MODE,
-	PRIV_CSI_DECAWM,
+	PRIV_DECAWM,
 	PRIV_AUTO_REPEAT,
 	PRIV_BLINK_CURSOR,
-	PRIV_CSI_LNM,
+	PRIV_LNM,
 	PRIV_SHOW_CURSOR,
 	PRIV_REVERSE_WRAP,
 	PRIV_XTERM_80_132_ALLOW,
@@ -75,7 +75,7 @@ var privFlags = []int{
 	PRIV_DISABLE_MOUSE_FOCUS,
 	PRIV_DISABLE_MOUSE_UTF8,
 	PRIV_DISABLE_MOUSE_SGR,
-	PRIV_CSI_BRACKET_PASTE,
+	PRIV_BRACKET_PASTE,
 }
 
 func newBasicTerminal(r, w *os.File) *Terminal {
@@ -456,7 +456,7 @@ func (t *Terminal) print(r rune) {
 
 	switch rw {
 	case 0: // combining
-		if col == 0 && !t.getFlag(PRIV_CSI_DECAWM) {
+		if col == 0 && !t.getFlag(PRIV_DECAWM) {
 			// can't do anything with this. if we're in
 			// the first position but hadn't wrapped, we
 			// don't have something to combine with, so
@@ -466,7 +466,7 @@ func (t *Terminal) print(r rune) {
 		}
 
 		switch {
-		case col == 0 && t.getFlag(PRIV_CSI_DECAWM): // we wrapped
+		case col == 0 && t.getFlag(PRIV_DECAWM): // we wrapped
 			col = t.fb.getNumCols() - 1
 			row -= 1
 		case col >= t.fb.getNumCols(): // we're at the end of a row but didn't wrap
@@ -503,7 +503,7 @@ func (t *Terminal) print(r rune) {
 			return
 		}
 
-		if t.getFlag(PRIV_CSI_DECAWM) {
+		if t.getFlag(PRIV_DECAWM) {
 			col = 0
 			if row == t.fb.getNumRows()-1 {
 				t.fb.scrollRows(1)
@@ -579,9 +579,9 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 			last = lastCol
 		}
 		t.fb.setCells(t.cur.row, t.cur.row, t.cur.col, last, newCell(' ', t.curF))
-	case CSI_PRIV_ENABLE:
+	case CSI_MODE_SET:
 		t.setPriv(params, data, true)
-	case CSI_PRIV_DISABLE:
+	case CSI_MODE_RESET:
 		t.setPriv(params, data, false)
 	case CSI_DECSTBM:
 		t.setTopBottom(params)

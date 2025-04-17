@@ -52,39 +52,39 @@ const (
 
 // CSI codes
 const (
-	CSI_ICH          = '@' // insert blank characters
-	CSI_CUU          = 'A' // cursor up
-	CSI_CUD          = 'B' // cursor down
-	CSI_CUF          = 'C' // cursor forward
-	CSI_CUB          = 'D' // cursor back
-	CSI_CNL          = 'E' // cursor next line
-	CSI_CPL          = 'F' // cursor previous line
-	CSI_CHA          = 'G' // cursor horizontal attribute
-	CSI_CUP          = 'H' // cursor position
-	CSI_CHT          = 'I' // cursor forward tabulation
-	CSI_ED           = 'J' // erase in display
-	CSI_EL           = 'K' // erase in line
-	CSI_DL           = 'M' // delete line(s)
-	CSI_SU           = 'S' // scroll up
-	CSI_SD           = 'T' // scroll down
-	CSI_DECST8C      = 'W' // DEC reset tab stops, starting at col 9, every 8 columns
-	CSI_ECH          = 'X' // erase characters
-	CSI_CBT          = 'Z' // cursor backward tabulation
-	CSI_HPA          = '`' // character position absolute (column), default [row,1]
-	CSI_HPR          = 'a' // character position relative (column), default [row,col+1]
-	CSI_DA           = 'c' // send (primary) device attributes
-	CSI_VPA          = 'd' // line position absolute (row), default [1,col]
-	CSI_VPR          = 'e' // line position relative (row), default [row+1,col]
-	CSI_HVP          = 'f' // horizontal vertical position
-	CSI_TBC          = 'g' // tab stop clear
-	CSI_PRIV_ENABLE  = 'h' // h typically enables or activates something
-	CSI_PRIV_DISABLE = 'l' // l typically disables or deactivates something
-	CSI_SGR          = 'm' // select graphic rendition
-	CSI_DSR          = 'n' // device status report
-	CSI_Q_MULTI      = 'q' // overloaded, common for returning xterm name and version
-	CSI_DECSTBM      = 'r' // set top and bottom margin
-	CSI_DECSLRM      = 's' // set left and right margin
-	CSI_XTWINOPS     = 't' // window manipulation, xterm/dtterm stuff mostly
+	CSI_ICH        = '@' // insert blank characters
+	CSI_CUU        = 'A' // cursor up
+	CSI_CUD        = 'B' // cursor down
+	CSI_CUF        = 'C' // cursor forward
+	CSI_CUB        = 'D' // cursor back
+	CSI_CNL        = 'E' // cursor next line
+	CSI_CPL        = 'F' // cursor previous line
+	CSI_CHA        = 'G' // cursor horizontal attribute
+	CSI_CUP        = 'H' // cursor position
+	CSI_CHT        = 'I' // cursor forward tabulation
+	CSI_ED         = 'J' // erase in display
+	CSI_EL         = 'K' // erase in line
+	CSI_DL         = 'M' // delete line(s)
+	CSI_SU         = 'S' // scroll up
+	CSI_SD         = 'T' // scroll down
+	CSI_DECST8C    = 'W' // DEC reset tab stops, starting at col 9, every 8 columns
+	CSI_ECH        = 'X' // erase characters
+	CSI_CBT        = 'Z' // cursor backward tabulation
+	CSI_HPA        = '`' // character position absolute (column), default [row,1]
+	CSI_HPR        = 'a' // character position relative (column), default [row,col+1]
+	CSI_DA         = 'c' // send (primary) device attributes
+	CSI_VPA        = 'd' // line position absolute (row), default [1,col]
+	CSI_VPR        = 'e' // line position relative (row), default [row+1,col]
+	CSI_HVP        = 'f' // horizontal vertical position
+	CSI_TBC        = 'g' // tab stop clear
+	CSI_MODE_SET   = 'h' // h typically enables or activates something
+	CSI_MODE_RESET = 'l' // l typically disables or deactivates something
+	CSI_SGR        = 'm' // select graphic rendition
+	CSI_DSR        = 'n' // device status report
+	CSI_Q_MULTI    = 'q' // overloaded, common for returning xterm name and version
+	CSI_DECSTBM    = 'r' // set top and bottom margin
+	CSI_DECSLRM    = 's' // set left and right margin
+	CSI_XTWINOPS   = 't' // window manipulation, xterm/dtterm stuff mostly
 )
 
 // CSI SGR Format codes
@@ -163,15 +163,15 @@ const (
 
 // CSI private mode parameter codes
 const (
-	PRIV_CSI_DECCKM           = 1    // DEC application cursor keys
-	PRIV_CSI_DECCOLM          = 3    // DEC 80 (l) / 132 (h) mode DECCOLM
+	PRIV_DECCKM               = 1    // DEC application cursor keys
+	PRIV_DECCOLM              = 3    // DEC 80 (l) / 132 (h) mode DECCOLM
 	PRIV_SMOOTH_SCROLL        = 4    // Smooth scroll DECSCLM
 	PRIV_REV_VIDEO            = 5    // Reverse video DECSCNM
 	PRIV_ORIGIN_MODE          = 6    // Origin Mode DECOM
-	PRIV_CSI_DECAWM           = 7    // DEC autowrap mode, default reset
+	PRIV_DECAWM               = 7    // DEC autowrap mode, default reset
 	PRIV_AUTO_REPEAT          = 8    // Auto-repeat keys DECARM
 	PRIV_BLINK_CURSOR         = 12   // Start blinking cursor
-	PRIV_CSI_LNM              = 20   // Line Feed/New Line Mode, default reset
+	PRIV_LNM                  = 20   // Line Feed/New Line Mode, default reset
 	PRIV_SHOW_CURSOR          = 25   // Show cursor DECTCEM
 	PRIV_XTERM_80_132_ALLOW   = 40   // Xterm specific to enable/disable 80/132 col reset
 	PRIV_REVERSE_WRAP         = 45   // Xterm's reverse-wraparound mode
@@ -182,7 +182,7 @@ const (
 	PRIV_DISABLE_MOUSE_FOCUS  = 1004 // Don't send FocusIn/FocusOut events
 	PRIV_DISABLE_MOUSE_UTF8   = 1005 // Disable UTF-8 Mouse Mode
 	PRIV_DISABLE_MOUSE_SGR    = 1006 // Disable SGR Mouse Mode
-	PRIV_CSI_BRACKET_PASTE    = 2004 // Bracketed paste, ala xterm
+	PRIV_BRACKET_PASTE        = 2004 // Bracketed paste, ala xterm
 )
 
 // OSC actions
