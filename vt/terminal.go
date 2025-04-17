@@ -303,7 +303,8 @@ func (t *Terminal) Resize(rows, cols int) {
 func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	dstr := string(data)
 	switch r {
-	case 'A', 'B', 'C', 'E', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
+
+	case 'A', 'B', 'C', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
 		slog.Debug("swallowing ESC character set command", "data", string(data))
 	case 'F':
 		t.cursorMoveAbs(t.fb.getNumRows()-1, 0)
