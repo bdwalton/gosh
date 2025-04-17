@@ -873,28 +873,6 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 	}
 }
 
-func (t *Terminal) cursorMoveAbs(row, col int) {
-	t.cur.col = col
-	t.cur.row = row
-
-	nc := t.cols()
-	switch {
-	case t.cur.col < 0:
-		t.cur.col = 0
-	case t.cur.col >= nc:
-		t.cur.col = nc - 1
-	}
-
-	nr := t.rows()
-	// TODO: Fix this
-	switch {
-	case t.cur.row < 0:
-		t.cur.row = 0
-	case t.cur.row >= nr:
-		t.cur.row = nr - 1
-	}
-}
-
 func makeTabs(cols int) []bool {
 	tabs := make([]bool, cols, cols)
 	for i := range tabs {

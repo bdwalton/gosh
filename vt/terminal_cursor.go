@@ -136,4 +136,25 @@ func (t *Terminal) cursorBack(n int) {
 		slog.Debug("cursor back, no horiz margin", "col", col)
 	}
 	t.cursorMoveAbs(t.row(), col)
+
+func (t *Terminal) cursorMoveAbs(row, col int) {
+	t.cur.col = col
+	t.cur.row = row
+
+	nc := t.cols()
+	switch {
+	case t.cur.col < 0:
+		t.cur.col = 0
+	case t.cur.col >= nc:
+		t.cur.col = nc - 1
+	}
+
+	nr := t.rows()
+	// TODO: Fix this
+	switch {
+	case t.cur.row < 0:
+		t.cur.row = 0
+	case t.cur.row >= nr:
+		t.cur.row = nr - 1
+	}
 }
