@@ -890,10 +890,10 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 			// region, just move
 			if col > mCol {
 				col += n
-				slog.Debug("cursor back, horiz margin set, unbounded", "col", col)
+				slog.Debug("cursor forward, horiz margin set, unbounded", "col", col)
 			} else {
 				col = minInt(mCol, col+n)
-				slog.Debug("cursor back, horiz margin set, bounded", "col", col)
+				slog.Debug("cursor forward, horiz margin set, bounded", "col", col)
 			}
 		} else {
 			col += n
