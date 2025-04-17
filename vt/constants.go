@@ -174,6 +174,7 @@ const (
 	PRIV_CSI_LNM              = 20   // Line Feed/New Line Mode, default reset
 	PRIV_SHOW_CURSOR          = 25   // Show cursor DECTCEM
 	PRIV_XTERM_80_132_ALLOW   = 40   // Xterm specific to enable/disable 80/132 col reset
+	PRIV_REVERSE_WRAP         = 45   // Xterm's reverse-wraparound mode
 	PRIV_DISABLE_MOUSE_XY     = 1000 // Don't send Mouse X & Y on button press and release
 	PRIV_DISABLE_MOUSE_HILITE = 1001 // Don't use Hilite Mouse Tracking
 	PRIV_DISABLE_MOUSE_MOTION = 1002 // Don't use Cell Motion Mouse Tracking
