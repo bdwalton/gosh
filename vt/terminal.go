@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -47,47 +48,23 @@ type Terminal struct {
 	// scroll margin/region parameters
 	vertMargin, horizMargin margin
 
-	// CSI private flags
-	flags map[int]*privFlag
+	// Modes that have been set or reset
+	modes map[string]*mode
 
 	// Internal
 	mux sync.Mutex
 }
 
-// Private flags here will be initialized, diff'd, copied, etc.
-var privFlags = []int{
-	PRIV_DECCKM,
-	PRIV_DECCOLM,
-	PRIV_SMOOTH_SCROLL,
-	PRIV_REV_VIDEO,
-	PRIV_ORIGIN_MODE,
-	PRIV_DECAWM,
-	PRIV_AUTO_REPEAT,
-	PRIV_BLINK_CURSOR,
-	PRIV_LNM,
-	PRIV_SHOW_CURSOR,
-	PRIV_REVERSE_WRAP,
-	PRIV_XTERM_80_132_ALLOW,
-	PRIV_DISABLE_MOUSE_XY,
-	PRIV_DISABLE_MOUSE_HILITE,
-	PRIV_DISABLE_MOUSE_MOTION,
-	PRIV_DISABLE_MOUSE_ALL,
-	PRIV_DISABLE_MOUSE_FOCUS,
-	PRIV_DISABLE_MOUSE_UTF8,
-	PRIV_DISABLE_MOUSE_SGR,
-	PRIV_BRACKET_PASTE,
-}
-
 func newBasicTerminal(r, w *os.File) *Terminal {
-	flags := make(map[int]*privFlag)
-	for _, f := range privFlags {
-		flags[f] = newPrivFlag(f)
+	modes := make(map[string]*mode)
+	for name, id := range modeToID {
+		modes[name] = newPrivMode(id, false)
 	}
 	return &Terminal{
 		fb:      newFramebuffer(DEF_ROWS, DEF_COLS),
 		oscTemp: make([]rune, 0),
 		tabs:    makeTabs(DEF_COLS),
-		flags:   flags,
+		modes:   modes,
 		p:       newParser(),
 		ptyR:    r,
 		ptyW:    w,
@@ -146,9 +123,9 @@ func (t *Terminal) Copy() *Terminal {
 	t.mux.Lock()
 	defer t.mux.Unlock()
 
-	flags := make(map[int]*privFlag)
-	for c, f := range t.flags {
-		flags[c] = f.copy()
+	modes := make(map[string]*mode)
+	for name, m := range t.modes {
+		modes[name] = m.copy()
 	}
 
 	return &Terminal{
@@ -157,7 +134,7 @@ func (t *Terminal) Copy() *Terminal {
 		icon:    t.icon,
 		cur:     t.cur,
 		curF:    t.curF,
-		flags:   flags,
+		modes:   modes,
 		lastChg: t.lastChg,
 	}
 }
@@ -191,9 +168,17 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 		sb.WriteString(dest.vertMargin.getAnsi(CSI_DECSTBM))
 	}
 
-	for _, c := range privFlags {
-		if !src.flags[c].equal(dest.flags[c]) {
-			sb.WriteString(dest.flags[c].getAnsiString())
+	modeNames := make([]string, len(modeToID), len(modeToID))
+	var i int
+	for n := range src.modes {
+		modeNames[i] = n
+		i += 1
+	}
+	slices.Sort(modeNames)
+
+	for _, name := range modeNames {
+		if !src.modes[name].equal(dest.modes[name]) {
+			sb.WriteString(dest.modes[name].getAnsiString())
 		}
 	}
 
@@ -435,19 +420,20 @@ func (t *Terminal) reset() {
 	t.tabs = makeTabs(cols)
 	t.vertMargin = newMargin(0, rows-1)
 	t.horizMargin = newMargin(0, cols-1)
-	flags := make(map[int]*privFlag)
-	for _, f := range privFlags {
-		flags[f] = newPrivFlag(f)
+	modes := make(map[string]*mode)
+	for name, n := range modeToID {
+		modes[name] = newPrivMode(n, false)
 	}
-	t.flags = flags
+	t.modes = modes
 }
 
-func (t *Terminal) setFlag(code int, val bool) {
-	t.flags[code].set(val)
-}
-
-func (t *Terminal) getFlag(code int) bool {
-	return t.flags[code].get()
+func (t *Terminal) isModeSet(name string) bool {
+	m, ok := t.modes[name]
+	if !ok {
+		slog.Debug("asked if unknown mode was set", "mode", name)
+		return false
+	}
+	return m.get()
 }
 
 func (t *Terminal) print(r rune) {
@@ -456,7 +442,7 @@ func (t *Terminal) print(r rune) {
 
 	switch rw {
 	case 0: // combining
-		if col == 0 && !t.getFlag(PRIV_DECAWM) {
+		if col == 0 && !t.isModeSet(privIDToName[PRIV_DECAWM]) {
 			// can't do anything with this. if we're in
 			// the first position but hadn't wrapped, we
 			// don't have something to combine with, so
@@ -466,7 +452,7 @@ func (t *Terminal) print(r rune) {
 		}
 
 		switch {
-		case col == 0 && t.getFlag(PRIV_DECAWM): // we wrapped
+		case col == 0 && t.isModeSet(privIDToName[PRIV_DECAWM]): // we wrapped
 			col = t.fb.getNumCols() - 1
 			row -= 1
 		case col >= t.fb.getNumCols(): // we're at the end of a row but didn't wrap
@@ -503,7 +489,7 @@ func (t *Terminal) print(r rune) {
 			return
 		}
 
-		if t.getFlag(PRIV_DECAWM) {
+		if t.isModeSet(privIDToName[PRIV_DECAWM]) {
 			col = 0
 			if row == t.fb.getNumRows()-1 {
 				t.fb.scrollRows(1)
@@ -579,10 +565,9 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 			last = lastCol
 		}
 		t.fb.setCells(t.cur.row, t.cur.row, t.cur.col, last, newCell(' ', t.curF))
-	case CSI_MODE_SET:
-		t.setPriv(params, data, true)
-	case CSI_MODE_RESET:
-		t.setPriv(params, data, false)
+	case CSI_MODE_SET, CSI_MODE_RESET:
+		m, _ := params.getItem(0, 0)
+		t.setMode(m, string(data), last)
 	case CSI_DECSTBM:
 		t.setTopBottom(params)
 	case CSI_DECSLRM:
@@ -748,17 +733,22 @@ func (t *Terminal) replyDeviceAttributes(data []rune) {
 	}
 }
 
-func (t *Terminal) setPriv(params *parameters, data []rune, val bool) {
-	priv, ok := params.consumeItem()
-	if len(data) != 1 || data[0] != '?' || !ok {
-		slog.Debug("setPriv called without ? intermediate or missing params", "data", data, "params", params.items, "enabled?", val)
-		return
+func (t *Terminal) setMode(mode int, data string, last rune) {
+	set := false
+	if last == 'h' {
+		set = true
 	}
 
-	if _, ok := t.flags[priv]; ok {
-		t.setFlag(priv, val)
-	} else {
-		slog.Debug("unimplemented private csi mode", "priv", priv)
+	switch data {
+	case "?":
+		m, ok := t.modes[privIDToName[mode]]
+		if !ok {
+			slog.Debug("unknown CSI private mode toggled; ignoring", "mode", mode, "data", data, "last", last)
+			return
+		}
+		m.set(set)
+	default:
+		slog.Debug("unexpected CSI set/reset data", "mode", mode, "data", data, "last", last)
 	}
 }
 

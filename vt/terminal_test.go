@@ -154,7 +154,9 @@ func TestPrint(t *testing.T) {
 		t, _ := NewTerminal()
 		t.fb = fb
 		t.cur = c
-		t.setFlag(PRIV_DECAWM, wrap)
+		if wrap {
+			t.setMode(PRIV_DECAWM, "?", CSI_MODE_SET)
+		}
 		return t
 	}
 
@@ -258,10 +260,10 @@ func TestTerminalDiff(t *testing.T) {
 	t8 := testTerminalCopy(t7)
 	t8.Resize(10, 6)
 	t9 := testTerminalCopy(t8)
-	t9.setFlag(PRIV_DECAWM, true)
+	t9.setMode(PRIV_DECAWM, "?", CSI_MODE_SET)
 	t10 := testTerminalCopy(t9)
-	t10.setFlag(PRIV_DECAWM, false)
-	t10.setFlag(PRIV_LNM, true)
+	t10.setMode(PRIV_DECAWM, "?", CSI_MODE_RESET)
+	t10.setMode(PRIV_LNM, "?", CSI_MODE_SET)
 	t11 := testTerminalCopy(t10)
 	t11.vertMargin = newMargin(2, 5)
 	t12 := testTerminalCopy(t10)
@@ -275,10 +277,10 @@ func TestTerminalDiff(t *testing.T) {
 	t16 := testTerminalCopy(t15)
 	t16.curF = format{fg: standardColors[FG_YELLOW], italic: true, brightness: FONT_BOLD}
 	t17 := testTerminalCopy(t1)
-	t17.setFlag(PRIV_BRACKET_PASTE, true)
+	t17.setMode(PRIV_BRACKET_PASTE, "?", CSI_MODE_SET)
 	t18 := testTerminalCopy(t17)
-	t18.setFlag(PRIV_BRACKET_PASTE, false)
-	t18.setFlag(PRIV_DECCKM, true)
+	t18.setMode(PRIV_BRACKET_PASTE, "?", CSI_MODE_RESET)
+	t18.setMode(PRIV_DECCKM, "?", CSI_MODE_SET)
 
 	cases := []struct {
 		src, dest *Terminal
@@ -303,7 +305,7 @@ func TestTerminalDiff(t *testing.T) {
 
 		{t15, t16, []byte(fmt.Sprintf("%c%c%d%c%c%c%dm", ESC, ESC_CSI, FG_YELLOW, CSI_SGR, ESC, ESC_CSI, FONT_BOLD))},
 		{t1, t17, []byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, PRIV_BRACKET_PASTE, CSI_MODE_SET))},
-		{t17, t18, []byte(fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, ESC_CSI, PRIV_DECCKM, CSI_MODE_SET, ESC, ESC_CSI, PRIV_BRACKET_PASTE, CSI_MODE_RESET))},
+		{t17, t18, []byte(fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, ESC_CSI, PRIV_BRACKET_PASTE, CSI_MODE_RESET, ESC, ESC_CSI, PRIV_DECCKM, CSI_MODE_SET))},
 	}
 
 	for i, c := range cases {
