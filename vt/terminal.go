@@ -818,106 +818,35 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 	// movement, we always default to 1. That allows more
 	// efficient specification of the common movements.
 	n, _ := params.getItem(0, 1)
-	m, _ := params.getItem(1, 1)
-
-	row := t.cur.row
-	col := t.cur.col
 
 	switch moveType {
-	case CSI_HPA:
-		col = n - 1 // 0 based columns
-		slog.Debug("cursor horizontal position absolute", "col", col)
+	case CSI_HPA, CSI_CHA:
+		n -= 1 // expects 0 based when called
+		t.cursorCHAorHPA(n)
+	case CSI_CUP, CSI_HVP:
+		// expects 0 based indexes when called
+		m, _ := params.getItem(1, 1)
+		t.cursorCUPorHVP(m-1, n-1)
 	case CSI_HPR:
-		col += n // we don't need to be 0 based for this
-		slog.Debug("cursor horizontal position relative", "col", col)
+		t.cursorHPR(n)
 	case CSI_VPA:
-		row = n - 1 // 0 based rows
-		slog.Debug("cursor vertical position absolute", "row", row)
+		n -= 1 // expects 0 based when called
+		t.cursorVPA(n)
 	case CSI_VPR:
-		row += n // we don't need to be 0 based for this
-		slog.Debug("cursor vertical position relative", "row", row)
+		t.cursorVPR(n)
 	case CSI_CUU:
-		if t.vertMargin.isSet() {
-			mRow := t.vertMargin.getMin()
-			// If we're already above the top of the
-			// scroll region, just move
-			if row < mRow {
-				row -= n
-				slog.Debug("cursor up, vert margin set, unbounded", "row", row)
-			} else {
-				row = maxInt(mRow, row-n)
-				slog.Debug("cursor up, vert margin set, bounded", "row", row)
-			}
-		} else {
-			row -= n
-			slog.Debug("cursor up, no vert margin", "row", row)
-		}
+		t.cursorUp(n)
 	case CSI_CUD:
-		if t.vertMargin.isSet() {
-			mRow := t.vertMargin.getMax()
-			// If we're already below the bottom of the
-			// scroll region, just move
-			if row > mRow {
-				row += n
-				slog.Debug("cursor down, vert margin set, unbounded", "row", row)
-			} else {
-				row = minInt(mRow, row+n)
-				slog.Debug("cursor down, vert margin set, bounded", "row", row)
-			}
-		} else {
-			row += n
-			slog.Debug("cursor down, no vert margin", "row", row)
-		}
+		t.cursorDown(n)
 	case CSI_CUB:
-		if t.horizMargin.isSet() {
-			mCol := t.horizMargin.getMin()
-			// If we're already left of the scroll region,
-			// just move
-			if col < mCol {
-				col -= n
-				slog.Debug("cursor back, horiz margin set, unbounded", "col", col)
-			} else {
-				col = maxInt(mCol, col-n)
-				slog.Debug("cursor back, horiz margin set, bounded", "col", col)
-			}
-		} else {
-			col -= n
-			slog.Debug("cursor back, no horiz margin", "col", col)
-		}
+		t.cursorBack(n)
 	case CSI_CUF:
-		if t.horizMargin.isSet() {
-			mCol := t.horizMargin.getMax()
-			// If we're already right of the scroll
-			// region, just move
-			if col > mCol {
-				col += n
-				slog.Debug("cursor forward, horiz margin set, unbounded", "col", col)
-			} else {
-				col = minInt(mCol, col+n)
-				slog.Debug("cursor forward, horiz margin set, bounded", "col", col)
-			}
-		} else {
-			col += n
-			slog.Debug("cursor back, no horiz margin", "col", col)
-		}
+		t.cursorForward(n)
 	case CSI_CNL:
-		col = 0
-		row += n
-		slog.Debug("cursor next line", "row", row, "col", col)
+		t.cursorCNL(n)
 	case CSI_CPL:
-		col = 0
-		row -= n
-		slog.Debug("cursor previous line", "row", row, "col", col)
-	case CSI_CHA:
-		col = n - 1 // our indexing is zero based
-		slog.Debug("cursor horiztonal attribute", "col", col)
-	case CSI_CUP, CSI_HVP: // TODO: What does "format effector" mean for HVP
-		row = n - 1 // our indexing is zero based
-		col = m - 1
-		slog.Debug("horizontal vertical position/cursor position", "row", row, "col", col)
+		t.cursorCPL(n)
 	}
-
-	t.cursorMoveAbs(row, col)
 }
 
 func (t *Terminal) cursorMoveAbs(row, col int) {
