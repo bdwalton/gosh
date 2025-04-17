@@ -585,7 +585,7 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		t.xtwinops(params)
 	case CSI_ICH:
 		// Insert n blank characters
-		n, _ := params.getItem(0, 1)
+		n := params.getItem(0, 1)
 		lastCol := t.cols() - 1
 		for i := 0; i < n; i++ {
 			if t.cur.col == lastCol {
@@ -595,14 +595,14 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		}
 	case CSI_ECH:
 		// Insert n blank characters
-		n, _ := params.getItem(0, 1)
+		n := params.getItem(0, 1)
 		last := t.cur.col + n
 		if lastCol := t.cols() - 1; last > lastCol {
 			last = lastCol
 		}
 		t.fb.setCells(t.cur.row, t.cur.row, t.cur.col, last, newCell(' ', t.curF))
 	case CSI_MODE_SET, CSI_MODE_RESET:
-		m, _ := params.getItem(0, 0)
+		m := params.getItem(0, 0)
 		t.setMode(m, string(data), last)
 	case CSI_DECSTBM:
 		t.setTopBottom(params)
@@ -613,10 +613,10 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_EL:
 		t.eraseLine(params)
 	case CSI_SU:
-		n, _ := params.getItem(0, 1)
+		n := params.getItem(0, 1)
 		t.fb.scrollRows(-n)
 	case CSI_SD:
-		n, _ := params.getItem(0, 1)
+		n := params.getItem(0, 1)
 		t.fb.scrollRows(n)
 	case CSI_ED:
 		t.eraseInDisplay(params)
@@ -632,10 +632,10 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_DECST8C:
 		t.resetTabs(params, data)
 	case CSI_CHT:
-		n, _ := params.getItem(0, 1)
+		n := params.getItem(0, 1)
 		t.stepTabs(n)
 	case CSI_CBT:
-		n, _ := params.getItem(0, 1)
+		n := params.getItem(0, 1)
 		t.stepTabs(-n)
 	case CSI_TBC:
 		t.clearTabs(params)
@@ -645,8 +645,8 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 }
 
 func (t *Terminal) resetTabs(params *parameters, data []rune) {
-	n, ok := params.getItem(0, 0)
-	if len(data) != 1 || data[0] != '?' || !ok || n != 5 {
+	n := params.getItem(0, 0)
+	if len(data) != 1 || data[0] != '?' || n != 5 {
 		slog.Debug("resetTabs called without ? 5 as data and parameter", "data", string(data), "params", params)
 	}
 	cols := t.cols()
@@ -658,7 +658,7 @@ func (t *Terminal) resetTabs(params *parameters, data []rune) {
 }
 
 func (t *Terminal) clearTabs(params *parameters) {
-	m, _ := params.getItem(0, 0)
+	m := params.getItem(0, 0)
 	switch m {
 	case TBC_CUR:
 		t.tabs[t.cur.col] = false
@@ -690,7 +690,7 @@ func (t *Terminal) lineFeed() {
 
 func (t *Terminal) xtwinops(params *parameters) {
 	slog.Debug("handling xtwinops", "params", params)
-	cmd, _ := params.getItem(0, 0)
+	cmd := params.getItem(0, 0)
 	switch cmd {
 	case 0:
 		slog.Debug("invalid xtwinops command (0)")
@@ -706,7 +706,7 @@ func (t *Terminal) xtwinops(params *parameters) {
 func (t *Terminal) csiQ(params *parameters, data []rune) {
 	switch string(data) {
 	case ">":
-		if n, _ := params.getItem(0, 0); n != 0 {
+		if n := params.getItem(0, 0); n != 0 {
 			slog.Debug("invalid xterm_version query", "params", params, "data", string(data))
 			return
 		}
@@ -719,7 +719,7 @@ func (t *Terminal) csiQ(params *parameters, data []rune) {
 }
 
 func (t *Terminal) handleDSR(params *parameters, data []rune) {
-	n, _ := params.getItem(0, 0)
+	n := params.getItem(0, 0)
 	switch string(data) {
 	case "": // General device status report
 		switch n {
@@ -792,8 +792,8 @@ func (t *Terminal) setMode(mode int, data string, last rune) {
 
 func (t *Terminal) setTopBottom(params *parameters) {
 	nr := t.rows()
-	top, _ := params.getItem(0, 1)
-	bottom, _ := params.getItem(1, nr)
+	top := params.getItem(0, 1)
+	bottom := params.getItem(1, nr)
 	if bottom <= top || top > nr || (top == 0 && bottom == 1) {
 		return // matches xterm
 	}
@@ -807,8 +807,8 @@ func (t *Terminal) setTopBottom(params *parameters) {
 
 func (t *Terminal) setLeftRight(params *parameters) {
 	nc := t.cols()
-	left, _ := params.getItem(0, 1)
-	right, _ := params.getItem(1, nc)
+	left := params.getItem(0, 1)
+	right := params.getItem(1, nc)
 	if right <= left || left >= nc || (left == 0 && right == 1) {
 		return // matches xterm
 	}
@@ -845,14 +845,14 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 	// No paramter indicates a 0 value, but for cursor
 	// movement, we always default to 1. That allows more
 	// efficient specification of the common movements.
-	p1, _ := params.getItem(0, 1)
+	p1 := params.getItem(0, 1)
 
 	switch moveType {
 	case CSI_HPA, CSI_CHA:
 		t.cursorCHAorHPA(p1 - 1) // expects 0 based when called
 	case CSI_CUP, CSI_HVP:
 		// expects 0 based indexes when called
-		p2, _ := params.getItem(1, 1)
+		p2 := params.getItem(1, 1)
 		t.cursorCUPorHVP(p1-1, p2-1)
 	case CSI_HPR:
 		t.cursorHPR(p1)
@@ -935,7 +935,7 @@ func (t *Terminal) stepTabs(steps int) {
 }
 
 func (t *Terminal) deleteLines(params *parameters) {
-	m, _ := params.getItem(0, 1)
+	m := params.getItem(0, 1)
 	cols := t.cols()
 
 	for i := t.cur.row; i < t.cur.row+m && t.vertMargin.contains(i); i++ {
@@ -944,7 +944,7 @@ func (t *Terminal) deleteLines(params *parameters) {
 }
 
 func (t *Terminal) eraseLine(params *parameters) {
-	m, _ := params.getItem(0, 0)
+	m := params.getItem(0, 0)
 
 	// TODO: Handle BCE properly
 	dc := defaultCell()
@@ -965,7 +965,7 @@ func (t *Terminal) eraseLine(params *parameters) {
 }
 
 func (t *Terminal) eraseInDisplay(params *parameters) {
-	m, _ := params.getItem(0, 0)
+	m := params.getItem(0, 0)
 
 	// TODO: Handle BCE properly
 	nr := t.rows()

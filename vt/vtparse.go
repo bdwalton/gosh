@@ -55,11 +55,11 @@ func (p *parameters) numItems() int {
 	return p.num
 }
 
-func (p *parameters) getItem(item, def int) (int, bool) {
+func (p *parameters) getItem(item, def int) int {
 	if p.num == 0 || p.num <= item {
-		return def, false
+		return def
 	}
-	return p.items[item], true
+	return p.items[item]
 }
 
 func (p *parameters) lastItem() int {
