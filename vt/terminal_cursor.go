@@ -59,41 +59,36 @@ func (t *Terminal) cursorCPL(n int) {
 }
 
 func (t *Terminal) cursorUp(n int) {
-	row := t.row()
-	if t.vertMargin.isSet() {
-		mRow := t.vertMargin.getMin()
-		// If we're already above the top of the
-		// scroll region, just move
-		if row < mRow {
-			row -= n
-			slog.Debug("cursor up, vert margin set, unbounded", "row", row)
-		} else {
-			row = maxInt(mRow, row-n)
-			slog.Debug("cursor up, vert margin set, bounded", "row", row)
-		}
-	} else {
-		row -= n
-		slog.Debug("cursor up, no vert margin", "row", row)
+	if n == 0 {
+		n = 1
 	}
+	row := t.row()
+	top := t.getTopMargin()
+	if row < top {
+		top = 0
+	}
+
+	row -= n
+	if row < top {
+		row = top
+	}
+
 	t.cursorMoveAbs(row, t.col())
 }
 
 func (t *Terminal) cursorDown(n int) {
+	if n == 0 {
+		n = 1
+	}
 	row := t.row()
-	if t.vertMargin.isSet() {
-		mRow := t.vertMargin.getMax()
-		// If we're already below the bottom of the
-		// scroll region, just move
-		if row > mRow {
-			row += n
-			slog.Debug("cursor down, vert margin set, unbounded", "row", row)
-		} else {
-			row = minInt(mRow, row+n)
-			slog.Debug("cursor down, vert margin set, bounded", "row", row)
-		}
-	} else {
-		row += n
-		slog.Debug("cursor down, no vert margin", "row", row)
+	bottom := t.getBottomMargin()
+	if row > bottom {
+		bottom = t.rows()
+	}
+
+	row += n
+	if row > bottom {
+		row = bottom
 	}
 	t.cursorMoveAbs(row, t.col())
 }
