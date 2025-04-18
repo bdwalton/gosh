@@ -30,6 +30,7 @@ const (
 	CTRL_BS  = 0x08 // ^H Backspace
 	CTRL_TAB = 0x09 // ^I Tab \t
 	CTRL_LF  = 0x0a // ^J Line feed \n
+	CTRL_VT  = 0x0b // ^K Vertical tab \v
 	CTRL_FF  = 0x0c // ^L Form feed \f
 	CTRL_CR  = 0x0d // ^M Carriage return \r
 	CTRL_HTS = 0x88 // Set tab stop

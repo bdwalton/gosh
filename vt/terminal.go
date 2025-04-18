@@ -568,6 +568,8 @@ func (t *Terminal) handleExecute(last rune) {
 		t.lineFeed()
 	case CTRL_TAB:
 		t.stepTabs(1)
+	case CTRL_VT:
+		t.cursorDown(1)
 	default:
 		slog.Debug("handleExecute: UNHANDLED Command", "last", string(last))
 	}
