@@ -327,12 +327,21 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	switch r {
 	case 'A', 'B', 'C', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
 		slog.Debug("swallowing ESC character set command", "data", string(data))
-		if t.cur.row == t.rows()-1 {
-			t.fb.scrollRows(1)
-			t.cursorMoveAbs(t.cur.row, 0)
 	case ESC_NEL:
+		max := t.rows() - 1
+		if t.inScrollingRegion() {
+			max = t.getBottomMargin()
+			if t.cur.row == max {
+				t.scrollRegion(1)
+			} else {
+				t.cursorMoveAbs(t.cur.row+1, t.getLeftMargin())
+			}
 		} else {
-			t.cursorMoveAbs(t.cur.row+1, 0)
+			if t.cur.row == max {
+				t.scrollAll(1)
+			} else {
+				t.cursorMoveAbs(t.cur.row+1, 0)
+			}
 		}
 	case 'F':
 		t.cursorMoveAbs(t.rows()-1, 0)
@@ -340,17 +349,37 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 		// would actually be part of character set handling
 		// (swedish on vt220).
 		t.tabs[t.cur.col] = true
-		if t.cur.row == t.rows()-1 {
-			t.fb.scrollRows(1)
 	case ESC_IND: // move cursor one line down, scrolling if needed
+		max := t.rows() - 1
+		if t.inScrollingRegion() {
+			max = t.getBottomMargin()
+			if t.cur.row == max {
+				t.scrollRegion(1)
+			} else {
+				t.cursorMoveAbs(t.cur.row+1, t.cur.col)
+			}
 		} else {
-			t.cursorMoveAbs(t.cur.row+1, t.cur.col)
+			if t.cur.row == max {
+				t.scrollAll(1)
+			} else {
+				t.cursorMoveAbs(t.cur.row+1, t.cur.col)
+			}
 		}
-		if t.cur.row == 0 {
-			t.fb.scrollRows(-1)
 	case ESC_RI: // move cursor one line up, scrolling if needed
+		min := 0
+		if t.inScrollingRegion() {
+			min = t.getTopMargin()
+			if t.cur.row == min {
+				t.scrollRegion(-1)
+			} else {
+				t.cursorMoveAbs(t.cur.row-1, t.cur.col)
+			}
 		} else {
-			t.cursorMoveAbs(t.cur.row-1, t.cur.col)
+			if t.cur.row == min {
+				t.scrollAll(-11)
+			} else {
+				t.cursorMoveAbs(t.cur.row-1, t.cur.col)
+			}
 		}
 	case '7': // save cursor
 		t.savedCur = t.cur.Copy()
