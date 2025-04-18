@@ -344,7 +344,11 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 			}
 		}
 	case 'F':
-		t.cursorMoveAbs(t.rows()-1, 0)
+		if t.inScrollingRegion() {
+			t.cursorMoveAbs(t.rows()-1, t.getLeftMargin())
+		} else {
+			t.cursorMoveAbs(t.rows()-1, 0)
+		}
 	case ESC_HTS: // set tab stop. note that in some vt dialects this
 		// would actually be part of character set handling
 		// (swedish on vt220).
@@ -381,9 +385,9 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 				t.cursorMoveAbs(t.cur.row-1, t.cur.col)
 			}
 		}
-	case '7': // save cursor
+	case ESC_DECSC: // save cursor
 		t.savedCur = t.cur.Copy()
-	case '8': // restore cursor or decaln screen test
+	case ESC_DECRC: // restore cursor or decaln screen test
 		switch dstr {
 		case "":
 			t.cur = t.savedCur.Copy()

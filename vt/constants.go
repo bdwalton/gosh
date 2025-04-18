@@ -13,19 +13,21 @@ const (
 )
 
 const (
-	ESC     = 0x1b
-	ESC_IND = 'D' // IND - index
-	ESC_NEL = 'E' // NEL - newline
-	ESC_HTS = 'H' // HTS - horizontal tab set
-	ESC_RI  = 'M' // RI - reverse index
-	ESC_DCS = 'P'
-	C1_DCS  = 0x8f
-	ESC_CSI = 0x5b // ]
-	ESC_OSC = 0x5d // [
-	ESC_ST  = '\\'
-	C1_CSI  = 0x9b
-	C1_ST   = 0x9c
-	C1_OSC  = 0x9d
+	ESC       = 0x1b
+	ESC_DECSC = '7' // DECSC - save cursor
+	ESC_DECRC = '8' // DECRC - restore cursor
+	ESC_IND   = 'D' // IND - index
+	ESC_NEL   = 'E' // NEL - newline
+	ESC_HTS   = 'H' // HTS - horizontal tab set
+	ESC_RI    = 'M' // RI - reverse index
+	ESC_DCS   = 'P'
+	C1_DCS    = 0x8f
+	ESC_CSI   = 0x5b // ]
+	ESC_OSC   = 0x5d // [
+	ESC_ST    = '\\'
+	C1_CSI    = 0x9b
+	C1_ST     = 0x9c
+	C1_OSC    = 0x9d
 )
 
 // Control codes
