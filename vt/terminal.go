@@ -792,7 +792,7 @@ func (t *Terminal) setTopBottom(params *parameters) {
 	// STBM sets the cursor to 1,1 (0,0)
 	t.vertMargin = newMargin(top-1, bottom-1)
 	slog.Debug("set top/bottom margin", "margin", t.vertMargin)
-	t.cursorMoveAbs(0, 0)
+	t.homeCursor()
 }
 
 func (t *Terminal) setLeftRight(params *parameters) {
@@ -807,7 +807,7 @@ func (t *Terminal) setLeftRight(params *parameters) {
 	// STBM sets the cursor to 1,1 (0,0)
 	t.horizMargin = newMargin(left-1, right-1)
 	slog.Debug("set left/right margin", "margin", t.horizMargin)
-	t.cursorMoveAbs(0, 0)
+	t.homeCursor()
 }
 
 func minInt(i1, i2 int) int {
