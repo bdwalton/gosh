@@ -770,6 +770,11 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 		}
 		m.setState(state)
 		slog.Debug("setting private mode", "mode", mode, "state", string(state))
+		switch mode {
+		case PRIV_DECCOLM:
+			t.fb.fill(newCell(' ', t.curF))
+			t.homeCursor()
+		}
 	default:
 		slog.Debug("unexpected CSI set/reset data", "mode", mode, "data", data, "state", string(state))
 	}
