@@ -12,10 +12,59 @@ func (t *Terminal) col() int {
 	return t.cur.col
 }
 
+func (t *Terminal) homeCursor() {
+	if t.isModeSet(privIDToName[PRIV_ORIGIN_MODE]) {
+		t.cursorMoveAbs(t.getTopMargin(), t.getLeftMargin())
+	} else {
+		t.cursorMoveAbs(0, 0)
+	}
+}
+
+func (t *Terminal) cursorMove(params *parameters, moveType rune) {
+	// No paramter indicates a 0 value, but for cursor
+	// movement, we always default to 1. That allows more
+	// efficient specification of the common movements.
+	p1 := params.getItem(0, 1)
+
+	switch moveType {
+	case CSI_HPA, CSI_CHA:
+		t.cursorCHAorHPA(p1 - 1) // expects 0 based when called
+	case CSI_CUP, CSI_HVP:
+		// expects 0 based indexes when called
+		t.cursorCUPorHVP(p1-1, params.getItem(1, 1)-1)
+	case CSI_HPR:
+		t.cursorHPR(p1)
+	case CSI_VPA:
+		t.cursorVPA(p1 - 1) // expects 0 based when called
+	case CSI_VPR:
+		t.cursorVPR(p1)
+	case CSI_CUU:
+		t.cursorUp(p1)
+	case CSI_CUD:
+		t.cursorDown(p1)
+	case CSI_CUB:
+		t.cursorBack(p1)
+	case CSI_CUF:
+		t.cursorForward(p1)
+	case CSI_CNL:
+		t.cursorCNL(p1)
+	case CSI_CPL:
+		t.cursorCPL(p1)
+	}
+}
+
 // Move to an absolute column. Param n is assumed to be normalized to
 // our 0 indexing by the caller.
 func (t *Terminal) cursorCHAorHPA(col int) {
 	slog.Debug("horizontal position absolute / horizontal attribute", "col", col)
+	if t.isModeSet(privIDToName[PRIV_ORIGIN_MODE]) {
+		col += t.getLeftMargin()
+		if r := t.getRightMargin(); col > r {
+			col = r
+		}
+		slog.Debug("adjusting column for ORIGIN MODE", "col", col)
+	}
+
 	t.cursorMoveAbs(t.row(), col)
 }
 

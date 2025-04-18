@@ -780,10 +780,6 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 	}
 }
 
-func (t *Terminal) homeCursor() {
-	t.cursorMoveAbs(0, 0)
-}
-
 func (t *Terminal) setTopBottom(params *parameters) {
 	nr := t.rows()
 	top := params.getItem(0, 1)
@@ -833,39 +829,6 @@ func (t *Terminal) cursorInScrollingRegion() bool {
 		t.vertMargin.isSet() &&
 		t.horizMargin.contains(t.cur.row) &&
 		t.vertMargin.contains(t.cur.col)
-}
-
-func (t *Terminal) cursorMove(params *parameters, moveType rune) {
-	// No paramter indicates a 0 value, but for cursor
-	// movement, we always default to 1. That allows more
-	// efficient specification of the common movements.
-	p1 := params.getItem(0, 1)
-
-	switch moveType {
-	case CSI_HPA, CSI_CHA:
-		t.cursorCHAorHPA(p1 - 1) // expects 0 based when called
-	case CSI_CUP, CSI_HVP:
-		// expects 0 based indexes when called
-		t.cursorCUPorHVP(p1-1, params.getItem(1, 1)-1)
-	case CSI_HPR:
-		t.cursorHPR(p1)
-	case CSI_VPA:
-		t.cursorVPA(p1 - 1) // expects 0 based when called
-	case CSI_VPR:
-		t.cursorVPR(p1)
-	case CSI_CUU:
-		t.cursorUp(p1)
-	case CSI_CUD:
-		t.cursorDown(p1)
-	case CSI_CUB:
-		t.cursorBack(p1)
-	case CSI_CUF:
-		t.cursorForward(p1)
-	case CSI_CNL:
-		t.cursorCNL(p1)
-	case CSI_CPL:
-		t.cursorCPL(p1)
-	}
 }
 
 func makeTabs(cols int) []bool {
