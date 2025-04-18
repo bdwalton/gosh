@@ -594,16 +594,14 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 			t.print(' ')
 		}
 	case CSI_ECH:
-		// Insert n blank characters
-		n := params.getItem(0, 1)
-		last := t.cur.col + n
+		// Insert n blank characters where n is the provided parameter
+		last := t.cur.col + params.getItem(0, 1)
 		if lastCol := t.cols() - 1; last > lastCol {
 			last = lastCol
 		}
 		t.fb.setCells(t.cur.row, t.cur.row, t.cur.col, last, newCell(' ', t.curF))
 	case CSI_MODE_SET, CSI_MODE_RESET:
-		m := params.getItem(0, 0)
-		t.setMode(m, string(data), last)
+		t.setMode(params.getItem(0, 0), string(data), last)
 	case CSI_DECSTBM:
 		t.setTopBottom(params)
 	case CSI_DECSLRM:
@@ -613,11 +611,9 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_EL:
 		t.eraseLine(params)
 	case CSI_SU:
-		n := params.getItem(0, 1)
-		t.fb.scrollRows(-n)
+		t.fb.scrollRows(-params.getItem(0, 1))
 	case CSI_SD:
-		n := params.getItem(0, 1)
-		t.fb.scrollRows(n)
+		t.fb.scrollRows(params.getItem(0, 1))
 	case CSI_ED:
 		t.eraseInDisplay(params)
 	case CSI_VPA, CSI_VPR, CSI_HPA, CSI_HPR, CSI_CUP, CSI_CUU, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
@@ -632,11 +628,9 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_DECST8C:
 		t.resetTabs(params, data)
 	case CSI_CHT:
-		n := params.getItem(0, 1)
-		t.stepTabs(n)
+		t.stepTabs(params.getItem(0, 1))
 	case CSI_CBT:
-		n := params.getItem(0, 1)
-		t.stepTabs(-n)
+		t.stepTabs(-params.getItem(0, 1))
 	case CSI_TBC:
 		t.clearTabs(params)
 	default:
@@ -645,8 +639,7 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 }
 
 func (t *Terminal) resetTabs(params *parameters, data []rune) {
-	n := params.getItem(0, 0)
-	if len(data) != 1 || data[0] != '?' || n != 5 {
+	if len(data) != 1 || data[0] != '?' || params.getItem(0, 0) != 5 {
 		slog.Debug("resetTabs called without ? 5 as data and parameter", "data", string(data), "params", params)
 	}
 	cols := t.cols()
@@ -658,8 +651,7 @@ func (t *Terminal) resetTabs(params *parameters, data []rune) {
 }
 
 func (t *Terminal) clearTabs(params *parameters) {
-	m := params.getItem(0, 0)
-	switch m {
+	switch params.getItem(0, 0) {
 	case TBC_CUR:
 		t.tabs[t.cur.col] = false
 	case TBC_ALL:
@@ -690,8 +682,7 @@ func (t *Terminal) lineFeed() {
 
 func (t *Terminal) xtwinops(params *parameters) {
 	slog.Debug("handling xtwinops", "params", params)
-	cmd := params.getItem(0, 0)
-	switch cmd {
+	switch params.getItem(0, 0) {
 	case 0:
 		slog.Debug("invalid xtwinops command (0)")
 	case 22: // save title and icon
@@ -706,7 +697,7 @@ func (t *Terminal) xtwinops(params *parameters) {
 func (t *Terminal) csiQ(params *parameters, data []rune) {
 	switch string(data) {
 	case ">":
-		if n := params.getItem(0, 0); n != 0 {
+		if params.getItem(0, 0) != 0 {
 			slog.Debug("invalid xterm_version query", "params", params, "data", string(data))
 			return
 		}
@@ -719,17 +710,16 @@ func (t *Terminal) csiQ(params *parameters, data []rune) {
 }
 
 func (t *Terminal) handleDSR(params *parameters, data []rune) {
-	n := params.getItem(0, 0)
 	switch string(data) {
 	case "": // General device status report
-		switch n {
+		switch params.getItem(0, 0) {
 		case 5: // We always report OK (CSI 0 n)
 			t.Write([]byte(fmt.Sprintf("%c%c0%c", ESC, ESC_CSI, CSI_DSR)))
 		case 6: // Provide cursor location (CSI r ; c R)
 			t.Write([]byte(fmt.Sprintf("%c%c%d;%dR", ESC, ESC_CSI, t.cur.row+1, t.cur.col+1)))
 		}
 	case "?": // DEC specific device status report
-		switch n {
+		switch params.getItem(0, 0) {
 		case 6: // Provide cursor location (CSI ? r ; c R)
 
 			t.Write([]byte(fmt.Sprintf("%c%c?%d;%dR", ESC, ESC_CSI, t.cur.row+1, t.cur.col+1)))
@@ -851,8 +841,7 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 		t.cursorCHAorHPA(p1 - 1) // expects 0 based when called
 	case CSI_CUP, CSI_HVP:
 		// expects 0 based indexes when called
-		p2 := params.getItem(1, 1)
-		t.cursorCUPorHVP(p1-1, p2-1)
+		t.cursorCUPorHVP(p1-1, params.getItem(1, 1)-1)
 	case CSI_HPR:
 		t.cursorHPR(p1)
 	case CSI_VPA:
@@ -943,14 +932,12 @@ func (t *Terminal) deleteLines(params *parameters) {
 }
 
 func (t *Terminal) eraseLine(params *parameters) {
-	m := params.getItem(0, 0)
-
 	// TODO: Handle BCE properly
 	dc := defaultCell()
 	dc.f = t.curF
 
 	nc := t.cols() - 1
-	switch m {
+	switch params.getItem(0, 0) {
 	case 0: // to end of line
 		t.fb.setCells(t.cur.row, t.cur.row, t.cur.col, nc, dc)
 		slog.Debug("erase in line, pos to end", "row", t.cur.row, "col", t.cur.col)
@@ -964,11 +951,9 @@ func (t *Terminal) eraseLine(params *parameters) {
 }
 
 func (t *Terminal) eraseInDisplay(params *parameters) {
-	m := params.getItem(0, 0)
-
 	// TODO: Handle BCE properly
 	nr := t.rows()
-	switch m {
+	switch params.getItem(0, 0) {
 	case 0: // active position to end of screen, inclusive
 		t.fb.resetRows(t.cur.row+1, nr-1)
 		t.eraseLine(params)
