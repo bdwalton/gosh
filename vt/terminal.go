@@ -721,6 +721,19 @@ func (t *Terminal) lineFeed() {
 	}
 }
 
+func (t *Terminal) scrollRegion(n int) {
+	fb, err := t.getScrollingRegion()
+	if err != nil {
+		slog.Debug("couldn't get scrolling region", "err", err)
+		return
+	}
+	fb.scrollRows(n)
+}
+
+func (t *Terminal) scrollAll(n int) {
+	t.fb.scrollRows(n)
+}
+
 func (t *Terminal) xtwinops(params *parameters) {
 	slog.Debug("handling xtwinops", "params", params)
 	switch params.getItem(0, 0) {
