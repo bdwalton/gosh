@@ -769,7 +769,7 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 			return
 		}
 		m.setState(state)
-		slog.Debug("setting private mode", "mode", mode, "state", string(state))
+		slog.Debug("setting private mode", "mode", name, "state", string(state))
 		switch mode {
 		case PRIV_DECCOLM:
 			t.fb.fill(newCell(' ', t.curF))
