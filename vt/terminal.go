@@ -58,7 +58,7 @@ type Terminal struct {
 func newBasicTerminal(r, w *os.File) *Terminal {
 	modes := make(map[string]*mode)
 	for name, id := range modeToID {
-		modes[name] = newPrivMode(id, false)
+		modes[name] = newPrivMode(id)
 	}
 	return &Terminal{
 		fb:      newFramebuffer(DEF_ROWS, DEF_COLS),
@@ -458,7 +458,7 @@ func (t *Terminal) reset() {
 	t.horizMargin = newMargin(0, cols-1)
 	modes := make(map[string]*mode)
 	for name, n := range modeToID {
-		modes[name] = newPrivMode(n, false)
+		modes[name] = newPrivMode(n)
 	}
 	t.modes = modes
 }
@@ -769,24 +769,19 @@ func (t *Terminal) replyDeviceAttributes(data []rune) {
 	}
 }
 
-func (t *Terminal) setMode(mode int, data string, last rune) {
-	set := false
-	if last == CSI_MODE_SET {
-		set = true
-	}
-
+func (t *Terminal) setMode(mode int, data string, state rune) {
 	switch data {
 	case "?":
 		name := privIDToName[mode]
 		m, ok := t.modes[name]
 		if !ok {
-			slog.Debug("unknown CSI private mode toggled; ignoring", "mode", name, "data", data, "last", last)
+			slog.Debug("unknown CSI private mode toggled; ignoring", "mode", name, "data", data, "state", string(state))
 			return
 		}
-		m.set(set)
-		slog.Debug("setting private mode", "mode", mode, "set", set)
+		m.setState(state)
+		slog.Debug("setting private mode", "mode", mode, "state", string(state))
 	default:
-		slog.Debug("unexpected CSI set/reset data", "mode", mode, "data", data, "last", last)
+		slog.Debug("unexpected CSI set/reset data", "mode", mode, "data", data, "state", string(state))
 	}
 }
 

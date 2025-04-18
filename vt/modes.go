@@ -1,6 +1,9 @@
 package vt
 
-import "fmt"
+import (
+	"fmt"
+	"log/slog"
+)
 
 // Private modes here will be initialized, diff'd, copied, etc.
 var modeToID = map[string]int{
@@ -50,34 +53,37 @@ var privIDToName = map[int]string{
 }
 
 type mode struct {
-	enabled, private bool
-	code             int
+	state   rune // CSI_MODE_SET/h or CSI_MODE_RESET/l
+	private bool
+	code    int
 }
 
 func (m *mode) copy() *mode {
-	return &mode{enabled: m.enabled, private: m.private, code: m.code}
+	return &mode{state: m.state, private: m.private, code: m.code}
 }
 
-func (m *mode) set(b bool) {
-	m.enabled = b
+// r should be either CSI_MODE_SET or CSI_MODE_RESET
+func (m *mode) setState(state rune) {
+	if state != CSI_MODE_RESET && state != CSI_MODE_SET {
+		slog.Debug("mode setstate called with invalid state", "state", state)
+		return
+	}
+	m.state = state
 }
 
 func (m *mode) get() bool {
-	return m.enabled
+	return m.state == CSI_MODE_SET
 }
 
 func (m *mode) getAnsiString() string {
-	b := CSI_MODE_RESET
-	if m.enabled {
-		b = CSI_MODE_SET
-	}
-	return fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, m.code, b)
+	return fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, m.code, m.state)
 }
 
 func (m *mode) equal(other *mode) bool {
 	return m.getAnsiString() == other.getAnsiString()
 }
 
-func newPrivMode(code int, set bool) *mode {
-	return &mode{code: code, private: true, enabled: set}
+func newPrivMode(code int) *mode {
+	// Modes always start in the reset (off) state
+	return &mode{code: code, private: true, state: CSI_MODE_RESET}
 }
