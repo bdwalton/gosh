@@ -36,38 +36,69 @@ func TestLineFeed(t *testing.T) {
 		return t
 	}
 
+	vertMTerm := func() *Terminal {
+		t := &Terminal{
+			fb:         newFramebuffer(10, 10),
+			vertMargin: newMargin(2, 5),
+		}
+		t.fb.setCell(5, 5, xc)
+		t.fb.setCell(9, 5, xc)
+		return t
+	}
+
+	horizMTerm := func() *Terminal {
+		t := &Terminal{
+			fb:          newFramebuffer(10, 10),
+			horizMargin: newMargin(2, 5),
+		}
+		t.fb.setCell(5, 5, xc)
+		t.fb.setCell(9, 5, xc)
+		return t
+	}
+
+	boxMTerm := func() *Terminal {
+		t := &Terminal{
+			fb:          newFramebuffer(10, 10),
+			vertMargin:  newMargin(2, 5),
+			horizMargin: newMargin(2, 5),
+		}
+		t.fb.setCell(5, 3, xc)
+		t.fb.setCell(9, 3, xc)
+		return t
+	}
+
 	cases := []struct {
-		row, col         int //current cursor
-		t                *Terminal
-		wantRow, wantCol int
+		t            *Terminal
+		cur, wantCur cursor
 	}{
-		{0, 0, defTerm(), 1, 0},
-		{1, 1, defTerm(), 2, 1},
-		{9, 5, defTerm(), 9, 5}, // should scroll.
+		{defTerm(), cursor{0, 0}, cursor{1, 0}},
+		{defTerm(), cursor{1, 1}, cursor{2, 1}},
+		{defTerm(), cursor{9, 5}, cursor{9, 5}}, // should scroll
+		{vertMTerm(), cursor{2, 5}, cursor{3, 5}},
+		{vertMTerm(), cursor{5, 5}, cursor{5, 5}}, // should scroll
+		{horizMTerm(), cursor{5, 5}, cursor{6, 5}},
+		{horizMTerm(), cursor{5, 5}, cursor{6, 5}},
+		{horizMTerm(), cursor{9, 5}, cursor{9, 5}}, // should scroll region
+		{boxMTerm(), cursor{0, 0}, cursor{1, 0}},
+		{boxMTerm(), cursor{5, 3}, cursor{5, 3}}, // should scroll region
+		{boxMTerm(), cursor{9, 3}, cursor{9, 3}}, // should scroll
 	}
 
 	for i, c := range cases {
-		c.t.cur.row = c.row
-		c.t.cur.col = c.col
-		if c.row == c.wantRow {
-			gc, _ := c.t.fb.getCell(c.row, c.col)
-			if !gc.equal(xc) {
-				t.Errorf("%d: Invalid cell setup. Got %v, wanted %v", i, gc, xc)
-			}
-		}
+		c.t.cur = c.cur
 		c.t.lineFeed()
-		if c.row == c.wantRow {
-			gc, _ := c.t.fb.getCell(c.row-1, c.col)
+		if c.cur.row == c.wantCur.row {
+			gc, _ := c.t.fb.getCell(c.cur.row-1, c.cur.col)
 			if !gc.equal(xc) {
 				t.Errorf("%d: Invalid linefeed scroll (old line). Got %v, wanted %v", i, gc, xc)
 			}
-			gc, _ = c.t.fb.getCell(c.row, c.col)
+			gc, _ = c.t.fb.getCell(c.cur.row, c.cur.col)
 			if !gc.equal(defaultCell()) {
 				t.Errorf("%d: Invalid linefeed scroll (new line). Got %v, wanted %v", i, gc, xc)
 			}
 		}
-		if row, col := c.t.cur.row, c.t.cur.col; row != c.wantRow || col != c.wantCol {
-			t.Errorf("%d: Got (%d, %d), wanted (%d, %d)", i, row, col, c.wantRow, c.wantCol)
+		if !c.t.cur.equal(c.wantCur) {
+			t.Errorf("%d: Got %s, wanted %s", i, c.t.cur, c.wantCur)
 		}
 
 	}

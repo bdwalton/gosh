@@ -670,11 +670,37 @@ func (t *Terminal) carriageReturn() {
 	t.cursorMoveAbs(t.cur.row, nc)
 }
 
+func (t *Terminal) inScrollingRegion() bool {
+	if t.vertMargin.contains(t.cur.row) && t.horizMargin.contains(t.cur.col) {
+		return true
+	}
+	return false
+}
+
+func (t *Terminal) getScrollingRegion() (*framebuffer, error) {
+	return t.fb.getRegion(t.getTopMargin(), t.getBottomMargin(), t.getLeftMargin(), t.getRightMargin())
+}
+
 func (t *Terminal) lineFeed() {
-	if !t.fb.validPoint(t.cur.row+1, t.cur.col) {
+	var err error
+	fb := t.fb
+	cur := t.cur
+	if t.inScrollingRegion() {
+		// adjust cursor so it is relative to top margin
+		cur.row -= t.getTopMargin()
+		cur.col -= t.getLeftMargin()
+		slog.Debug("in scrolling region, adjusting cursor", "cur", cur, "orig", t.cur)
+		fb, err = t.getScrollingRegion()
+		if err != nil {
+			slog.Debug("error obtaining framebuffer region", "err", err)
+			return
+		}
+	}
+
+	if !fb.validPoint(cur.row+1, cur.col) {
 		// Add new row, but keep cursor in the same position
 		// TODO: fill the new row with BCE color?
-		t.fb.scrollRows(1)
+		fb.scrollRows(1)
 	} else {
 		t.cursorMoveAbs(t.cur.row+1, t.cur.col)
 	}
