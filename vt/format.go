@@ -6,18 +6,13 @@ import (
 	"strings"
 )
 
-type intensity uint8 // font intensity
-type ulstyle uint8   // underline style
-
 var defFmt = format{}
 
 const FMT_RESET = "\x1b[m"
 
 type format struct {
-	fg, bg                                        *color
-	brightness                                    intensity
-	underline                                     ulstyle
-	italic, blink, reversed, invisible, strikeout bool
+	fg, bg                                                 *color
+	bold, underline, blink, reversed, invisible, strikeout bool
 }
 
 func (f *format) getFG() *color {
@@ -66,13 +61,10 @@ func (src format) diff(dest format) []byte {
 		sb.WriteString(fmt.Sprintf("%c%c%s%c", ESC, ESC_CSI, dbg.getAnsiString(SET_BG), CSI_SGR))
 	}
 
-	if src.brightness != dest.brightness {
-		switch dest.brightness {
-		case FONT_BOLD:
+	if src.bold != dest.bold {
+		if dest.bold {
 			ts.WriteString(fmt.Sprintf("%d", INTENSITY_BOLD))
-		case FONT_DIM:
-			ts.WriteString(fmt.Sprintf("%d", INTENSITY_DIM))
-		default:
+		} else {
 			ts.WriteString(fmt.Sprintf("%d", INTENSITY_NORMAL))
 		}
 	}
@@ -81,25 +73,11 @@ func (src format) diff(dest format) []byte {
 		if ts.Len() > 0 {
 			ts.WriteByte(';')
 		}
-		switch dest.underline {
-		case UNDERLINE_SINGLE:
+		if dest.underline {
 			ts.WriteString(fmt.Sprintf("%d", UNDERLINE_ON))
-		case UNDERLINE_DOUBLE:
-			ts.WriteString(fmt.Sprintf("%d", DBL_UNDERLINE))
-		default: // none
+		} else {
 			ts.WriteString(fmt.Sprintf("%d", UNDERLINE_OFF))
 		}
-	}
-
-	if src.italic != dest.italic {
-		if ts.Len() > 0 {
-			ts.WriteByte(';')
-		}
-		it := ITALIC_ON
-		if !dest.italic {
-			it = ITALIC_OFF
-		}
-		ts.WriteString(fmt.Sprintf("%d", it))
 	}
 
 	if src.blink != dest.blink {
@@ -156,7 +134,7 @@ func (src format) diff(dest format) []byte {
 }
 
 func (f *format) String() string {
-	return fmt.Sprintf("fg: %s; bg: %s; bright: %d, underline: %d, italic: %t, blink: %t, reversed: %t, invisible: %t, strikeout: %t", f.getFG().getAnsiString(SET_FG), f.getBG().getAnsiString(SET_BG), f.brightness, f.underline, f.italic, f.blink, f.reversed, f.invisible, f.strikeout)
+	return fmt.Sprintf("fg: %s; bg: %s; bold: %t, underline: %t, blink: %t, reversed: %t, invisible: %t, strikeout: %t", f.getFG().getAnsiString(SET_FG), f.getBG().getAnsiString(SET_BG), f.bold, f.underline, f.blink, f.reversed, f.invisible, f.strikeout)
 }
 
 func (f format) equal(other format) bool {
@@ -168,7 +146,7 @@ func (f format) equal(other format) bool {
 		return false
 	}
 
-	if f.brightness != other.brightness || f.underline != other.underline || f.italic != other.italic || f.blink != other.blink || f.reversed != other.reversed || f.invisible != other.invisible || f.strikeout != other.strikeout {
+	if f.bold != other.bold || f.underline != other.underline || f.blink != other.blink || f.reversed != other.reversed || f.invisible != other.invisible || f.strikeout != other.strikeout {
 		return false
 	}
 
@@ -208,18 +186,14 @@ type formatter func(format, *parameters) format
 var formatters map[int]formatter = map[int]formatter{
 	RESET: func(f format, p *parameters) format { return format{} },
 	// style formats
-	INTENSITY_BOLD:   func(f format, p *parameters) format { f.brightness = FONT_BOLD; return f },
-	INTENSITY_DIM:    func(f format, p *parameters) format { f.brightness = FONT_DIM; return f },
-	ITALIC_ON:        func(f format, p *parameters) format { f.italic = true; return f },
-	UNDERLINE_ON:     func(f format, p *parameters) format { f.underline = UNDERLINE_SINGLE; return f },
+	INTENSITY_BOLD:   func(f format, p *parameters) format { f.bold = true; return f },
+	UNDERLINE_ON:     func(f format, p *parameters) format { f.underline = true; return f },
 	BLINK_ON:         func(f format, p *parameters) format { f.blink = true; return f },
 	REVERSED_ON:      func(f format, p *parameters) format { f.reversed = true; return f },
 	INVISIBLE_ON:     func(f format, p *parameters) format { f.invisible = true; return f },
 	STRIKEOUT_ON:     func(f format, p *parameters) format { f.strikeout = true; return f },
-	DBL_UNDERLINE:    func(f format, p *parameters) format { f.underline = UNDERLINE_DOUBLE; return f },
-	INTENSITY_NORMAL: func(f format, p *parameters) format { f.brightness = FONT_NORMAL; return f },
-	ITALIC_OFF:       func(f format, p *parameters) format { f.italic = false; return f },
-	UNDERLINE_OFF:    func(f format, p *parameters) format { f.underline = UNDERLINE_NONE; return f },
+	INTENSITY_NORMAL: func(f format, p *parameters) format { f.bold = false; return f },
+	UNDERLINE_OFF:    func(f format, p *parameters) format { f.underline = false; return f },
 	BLINK_OFF:        func(f format, p *parameters) format { f.blink = false; return f },
 	REVERSED_OFF:     func(f format, p *parameters) format { f.reversed = false; return f },
 	INVISIBLE_OFF:    func(f format, p *parameters) format { f.invisible = false; return f },

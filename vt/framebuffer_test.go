@@ -11,8 +11,7 @@ import (
 var nonDefFmt = format{
 	fg:        standardColors[FG_YELLOW],
 	bg:        standardColors[BG_BLUE],
-	underline: UNDERLINE_DOUBLE,
-	italic:    true,
+	underline: true,
 }
 
 func fillBuffer(fb *framebuffer) *framebuffer {
@@ -51,14 +50,14 @@ func TestCellDiff(t *testing.T) {
 			[]byte{ESC, ESC_CSI, CSI_SGR, ' '},
 		},
 		{
-			newCell('b', format{italic: true}),
+			newCell('b', format{underline: true}),
 			newCell('b', defFmt),
 			[]byte{ESC, ESC_CSI, CSI_SGR, 'b'},
 		},
 		{
 			newCell('b', defFmt),
-			newCell('b', format{italic: true}),
-			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, ESC_CSI, ITALIC_ON, CSI_SGR, 'b')),
+			newCell('b', format{underline: true}),
+			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, ESC_CSI, UNDERLINE_ON, CSI_SGR, 'b')),
 		},
 	}
 
@@ -118,13 +117,13 @@ func TestCellEquality(t *testing.T) {
 		{cell{f: defFmt}, cell{f: defFmt}, true},
 		{cell{f: defFmt}, cell{f: defFmt, frag: 2}, false},
 		{cell{r: 'a', f: defFmt}, cell{r: 'a', f: defFmt}, true},
-		{cell{r: 'a', f: format{italic: true}}, cell{r: 'a', f: format{italic: true}}, true},
+		{cell{r: 'a', f: format{underline: true}}, cell{r: 'a', f: format{underline: true}}, true},
 		{cell{f: defFmt}, cell{r: 'a', f: defFmt}, false},
 		{cell{r: 'a'}, cell{r: 'a', f: defFmt}, true},
 		{cell{r: 'a', frag: 1}, cell{r: 'a', f: defFmt}, false},
 		{cell{r: 'a'}, cell{r: 'b'}, false},
 		{cell{r: 'a', f: defFmt}, cell{r: 'a'}, true},
-		{cell{r: 'a', f: format{italic: true}}, cell{r: 'a'}, false},
+		{cell{r: 'a', f: format{underline: true}}, cell{r: 'a'}, false},
 	}
 
 	for i, c := range cases {
@@ -226,13 +225,13 @@ func TestSetAndGetCell(t *testing.T) {
 		wantErr  error
 	}{
 		{5, 5, defaultCell(), nil},
-		{1, 2, newCell('a', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true}), nil},
+		{1, 2, newCell('a', format{fg: standardColors[FG_BRIGHT_BLACK], underline: true}), nil},
 		{1, 2, newCell('b', format{fg: standardColors[FG_RED], strikeout: true}), nil},
 		{8, 3, newCell('b', format{bg: standardColors[BG_BLUE], reversed: true}), nil},
-		{10, 01, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true}), fbInvalidCell},
-		{-1, 100, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true}), fbInvalidCell},
-		{-1, 1, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true}), fbInvalidCell},
-		{1, -1, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], italic: true}), fbInvalidCell},
+		{10, 01, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], underline: true}), fbInvalidCell},
+		{-1, 100, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], underline: true}), fbInvalidCell},
+		{-1, 1, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], underline: true}), fbInvalidCell},
+		{1, -1, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], underline: true}), fbInvalidCell},
 	}
 
 	fb := newFramebuffer(10, 10)
@@ -315,7 +314,7 @@ func TestScrollRows(t *testing.T) {
 func TestFBEquality(t *testing.T) {
 	dfb := newFramebuffer(10, 10)
 	ofb := newFramebuffer(10, 10)
-	ofb.setCell(5, 5, newCell('z', format{italic: true}))
+	ofb.setCell(5, 5, newCell('z', format{underline: true}))
 
 	cases := []struct {
 		fb   *framebuffer
@@ -384,8 +383,8 @@ func TestFrameBufferDiff(t *testing.T) {
 	fb5.setCell(5, 13, newCell('c', format{fg: standardColors[FG_GREEN]}))
 
 	fb6 := fb5.copy()
-	fb6.setCell(1, 0, newCell('X', format{fg: standardColors[FG_BLUE], bg: standardColors[BG_RED], italic: true}))
-	fb6.setCell(5, 12, newCell('Y', format{fg: standardColors[FG_BLUE], bg: standardColors[BG_RED], italic: true}))
+	fb6.setCell(1, 0, newCell('X', format{fg: standardColors[FG_BLUE], bg: standardColors[BG_RED]}))
+	fb6.setCell(5, 12, newCell('Y', format{fg: standardColors[FG_BLUE], bg: standardColors[BG_RED]}))
 	fb6.setCell(5, 13, newCell('Z', format{fg: standardColors[FG_YELLOW], bg: standardColors[BG_GREEN]}))
 	fb6.resize(10, 13)
 
@@ -419,7 +418,7 @@ func TestFrameBufferDiff(t *testing.T) {
 		// cursor, set pen, write 2 runes set size, move
 		// cursor, set pen, write rune, move cursor, write
 		// rune (only Y, no Z because of resize)
-		{fb5, fb6, "\x1b]X;10;13\a\x1b[2H\x1b[34m\x1b[41m\x1b[3mX\x1b[6;13HY"},
+		{fb5, fb6, "\x1b]X;10;13\a\x1b[2H\x1b[34m\x1b[41mX\x1b[6;13HY"},
 		{fb7, fb8, "\x1b[H \x1b[40mabc \x1b[30m\x1b[44m\ue0b0 ~ \x1b[34m\x1b[49m\ue0b0\x1b[m "},
 	}
 

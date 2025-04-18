@@ -44,20 +44,6 @@ const (
 	CTRL_ST  = 0x9c // ST string terminator
 )
 
-// font intensities
-const (
-	FONT_NORMAL = iota
-	FONT_BOLD
-	FONT_DIM
-)
-
-// underline styles
-const (
-	UNDERLINE_NONE = iota
-	UNDERLINE_SINGLE
-	UNDERLINE_DOUBLE
-)
-
 // CSI codes
 const (
 	CSI_ICH        = '@' // insert blank characters
@@ -97,36 +83,21 @@ const (
 
 // CSI SGR Format codes
 const (
-	RESET                       = 0
-	INTENSITY_BOLD              = 1
-	INTENSITY_DIM               = 2
-	ITALIC_ON                   = 3
-	UNDERLINE_ON                = 4
-	BLINK_ON                    = 5
-	RAPID_BLINK_ON              = 6
-	REVERSED_ON                 = 7
-	INVISIBLE_ON                = 8
-	STRIKEOUT_ON                = 9
-	PRIMARY_FONT                = 10
-	ALT_FONT_1                  = 11
-	ALT_FONT_2                  = 12
-	ALT_FONT_3                  = 13
-	ALT_FONT_4                  = 14
-	ALT_FONT_5                  = 15
-	ALT_FONT_6                  = 16
-	ALT_FONT_7                  = 17
-	ALT_FONT_8                  = 18
-	ALT_FONT_9                  = 19
-	FRAKTUR                     = 20
-	DBL_UNDERLINE               = 21
-	INTENSITY_NORMAL            = 22
-	ITALIC_OFF                  = 23
-	UNDERLINE_OFF               = 24
-	BLINK_OFF                   = 25
-	UNUSED_PROPORTIONAL_SPACING = 26
-	REVERSED_OFF                = 27
-	INVISIBLE_OFF               = 28
-	STRIKEOUT_OFF               = 29
+	RESET            = 0
+	INTENSITY_BOLD   = 1
+	UNDERLINE_ON     = 4
+	BLINK_ON         = 5
+	RAPID_BLINK_ON   = 6
+	REVERSED_ON      = 7
+	INVISIBLE_ON     = 8
+	STRIKEOUT_ON     = 9
+	PRIMARY_FONT     = 10
+	INTENSITY_NORMAL = 22
+	UNDERLINE_OFF    = 24
+	BLINK_OFF        = 25
+	REVERSED_OFF     = 27
+	INVISIBLE_OFF    = 28
+	STRIKEOUT_OFF    = 29
 )
 
 // CSI SGR Color codes

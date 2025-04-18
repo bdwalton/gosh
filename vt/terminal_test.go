@@ -286,9 +286,9 @@ func TestTerminalDiff(t *testing.T) {
 	t13.vertMargin = newMargin(1, 6)
 	t14, _ := NewTerminal()
 	t15 := testTerminalCopy(t14)
-	t15.curF = format{fg: standardColors[FG_RED], italic: true}
+	t15.curF = format{fg: standardColors[FG_RED], underline: true}
 	t16 := testTerminalCopy(t15)
-	t16.curF = format{fg: standardColors[FG_YELLOW], italic: true, brightness: FONT_BOLD}
+	t16.curF = format{fg: standardColors[FG_YELLOW], underline: true, bold: true}
 	t17 := testTerminalCopy(t1)
 	t17.setMode(PRIV_BRACKET_PASTE, "?", CSI_MODE_SET)
 	t18 := testTerminalCopy(t17)
@@ -314,9 +314,9 @@ func TestTerminalDiff(t *testing.T) {
 		{t9, t11, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c?%d%c%c%c?%d%c", ESC, ESC_CSI, 3, 6, CSI_DECSTBM, ESC, ESC_CSI, PRIV_DECAWM, CSI_MODE_RESET, ESC, ESC_CSI, PRIV_LNM, CSI_MODE_SET))},
 		{t9, t12, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c?%d%c%c%c?%d%c", ESC, ESC_CSI, 4, 8, CSI_DECSLRM, ESC, ESC_CSI, PRIV_DECAWM, CSI_MODE_RESET, ESC, ESC_CSI, PRIV_LNM, CSI_MODE_SET))},
 		{t9, t13, []byte(fmt.Sprintf("%c%c%d;%d%c%c%c%d;%d%c%c%c?%d%c%c%c?%d%c", ESC, ESC_CSI, 1, 5, CSI_DECSLRM, ESC, ESC_CSI, 2, 7, CSI_DECSTBM, ESC, ESC_CSI, PRIV_DECAWM, CSI_MODE_RESET, ESC, ESC_CSI, PRIV_LNM, CSI_MODE_SET))},
-		{t14, t15, []byte(fmt.Sprintf("%c%c%dm%c%c%dm", ESC, ESC_CSI, FG_RED, ESC, ESC_CSI, ITALIC_ON))},
+		{t14, t15, []byte(fmt.Sprintf("%c%c%dm%c%c%dm", ESC, ESC_CSI, FG_RED, ESC, ESC_CSI, UNDERLINE_ON))},
 
-		{t15, t16, []byte(fmt.Sprintf("%c%c%d%c%c%c%dm", ESC, ESC_CSI, FG_YELLOW, CSI_SGR, ESC, ESC_CSI, FONT_BOLD))},
+		{t15, t16, []byte(fmt.Sprintf("%c%c%d%c%c%c%dm", ESC, ESC_CSI, FG_YELLOW, CSI_SGR, ESC, ESC_CSI, INTENSITY_BOLD))},
 		{t1, t17, []byte(fmt.Sprintf("%c%c?%d%c", ESC, ESC_CSI, PRIV_BRACKET_PASTE, CSI_MODE_SET))},
 		{t17, t18, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, ESC_CSI, PRIV_BRACKET_PASTE, CSI_MODE_RESET, ESC, ESC_CSI, PRIV_DECCKM, CSI_MODE_SET))},
 	}

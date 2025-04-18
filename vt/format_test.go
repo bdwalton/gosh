@@ -49,23 +49,23 @@ func TestFormatEquality(t *testing.T) {
 		want   bool
 	}{
 		{
-			format{bg: standardColors[BG_RED], italic: true},
-			format{bg: standardColors[BG_RED], italic: true},
+			format{bg: standardColors[BG_RED], underline: true},
+			format{bg: standardColors[BG_RED], underline: true},
 			true,
 		},
 		{
-			format{bg: standardColors[BG_GREEN], italic: true},
-			format{bg: standardColors[BG_RED], italic: true},
+			format{bg: standardColors[BG_GREEN], underline: true},
+			format{bg: standardColors[BG_RED], underline: true},
 			false,
 		},
 		{
-			format{bg: standardColors[BG_RED], fg: dFG, italic: true},
-			format{bg: standardColors[BG_RED], italic: true},
+			format{bg: standardColors[BG_RED], fg: dFG, bold: true},
+			format{bg: standardColors[BG_RED], bold: true},
 			true,
 		},
 		{
-			format{bg: standardColors[BG_RED], fg: standardColors[FG_YELLOW], italic: true},
-			format{bg: standardColors[BG_RED], italic: true},
+			format{bg: standardColors[BG_RED], fg: standardColors[FG_YELLOW], bold: true},
+			format{bg: standardColors[BG_RED], bold: true},
 			false,
 		},
 		{
@@ -95,14 +95,14 @@ func TestFormatApplication(t *testing.T) {
 		want    format
 	}{
 		{
-			format{bg: standardColors[BG_BLUE], underline: UNDERLINE_DOUBLE, brightness: FONT_BOLD},
+			format{bg: standardColors[BG_BLUE], underline: true, bold: true},
 			paramsFromInts([]int{}),
 			format{},
 		},
 		{
-			format{bg: standardColors[BG_BLUE], underline: UNDERLINE_DOUBLE, brightness: FONT_BOLD},
+			format{bg: standardColors[BG_BLUE], underline: true, bold: true},
 			paramsFromInts([]int{BG_BLACK, UNDERLINE_ON, STRIKEOUT_ON}),
-			format{bg: standardColors[BG_BLACK], brightness: FONT_BOLD, underline: UNDERLINE_SINGLE, strikeout: true},
+			format{bg: standardColors[BG_BLACK], bold: true, underline: true, strikeout: true},
 		},
 		{
 			format{},
@@ -112,12 +112,12 @@ func TestFormatApplication(t *testing.T) {
 		{
 			format{},
 			paramsFromInts([]int{FG_BRIGHT_RED, BG_BLACK, UNDERLINE_ON, STRIKEOUT_ON}),
-			format{fg: standardColors[FG_BRIGHT_RED], bg: standardColors[BG_BLACK], underline: UNDERLINE_SINGLE, strikeout: true},
+			format{fg: standardColors[FG_BRIGHT_RED], bg: standardColors[BG_BLACK], underline: true, strikeout: true},
 		},
 		{
 			format{bg: standardColors[BG_BLUE]},
 			paramsFromInts([]int{INTENSITY_BOLD, SET_FG, 2, 212, 219, 123, STRIKEOUT_ON, STRIKEOUT_OFF}),
-			format{fg: newRGBColor([]int{212, 219, 123}), brightness: FONT_BOLD, bg: standardColors[BG_BLUE], strikeout: false},
+			format{fg: newRGBColor([]int{212, 219, 123}), bold: true, bg: standardColors[BG_BLUE], strikeout: false},
 		},
 	}
 
@@ -134,8 +134,8 @@ func TestDiff(t *testing.T) {
 		want        []byte
 	}{
 		{
-			format{fg: standardColors[FG_WHITE], italic: true},
-			format{fg: standardColors[FG_WHITE], italic: true},
+			format{fg: standardColors[FG_WHITE], underline: true},
+			format{fg: standardColors[FG_WHITE], underline: true},
 			[]byte{},
 		},
 		{
@@ -151,8 +151,8 @@ func TestDiff(t *testing.T) {
 		},
 		{
 			defFmt,
-			format{fg: standardColors[FG_WHITE], italic: true},
-			[]byte(fmt.Sprintf("%c%c%dm%c%c%d%c", ESC, ESC_CSI, FG_WHITE, ESC, ESC_CSI, ITALIC_ON, CSI_SGR)),
+			format{fg: standardColors[FG_WHITE], bold: true},
+			[]byte(fmt.Sprintf("%c%c%dm%c%c%d%c", ESC, ESC_CSI, FG_WHITE, ESC, ESC_CSI, INTENSITY_BOLD, CSI_SGR)),
 		},
 		{
 			format{fg: standardColors[FG_WHITE], strikeout: true},
@@ -177,8 +177,8 @@ func TestDiff(t *testing.T) {
 		},
 		{
 			defFmt,
-			format{italic: true},
-			[]byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, ITALIC_ON, CSI_SGR)),
+			format{underline: true},
+			[]byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, UNDERLINE_ON, CSI_SGR)),
 		},
 	}
 
