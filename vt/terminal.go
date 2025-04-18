@@ -325,31 +325,30 @@ func (t *Terminal) getBottomMargin() int {
 func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	dstr := string(data)
 	switch r {
-
 	case 'A', 'B', 'C', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
 		slog.Debug("swallowing ESC character set command", "data", string(data))
-	case 'E':
 		if t.cur.row == t.rows()-1 {
 			t.fb.scrollRows(1)
 			t.cursorMoveAbs(t.cur.row, 0)
+	case ESC_NEL:
 		} else {
 			t.cursorMoveAbs(t.cur.row+1, 0)
 		}
 	case 'F':
 		t.cursorMoveAbs(t.rows()-1, 0)
-	case 'H': // set tab stop. note that in some vt dialects this
+	case ESC_HTS: // set tab stop. note that in some vt dialects this
 		// would actually be part of character set handling
 		// (swedish on vt220).
 		t.tabs[t.cur.col] = true
-	case 'D': // move cursor one line up, scrolling if needed
 		if t.cur.row == t.rows()-1 {
 			t.fb.scrollRows(1)
+	case ESC_IND: // move cursor one line down, scrolling if needed
 		} else {
 			t.cursorMoveAbs(t.cur.row+1, t.cur.col)
 		}
-	case 'M': // move cursor one line up, scrolling if needed
 		if t.cur.row == 0 {
 			t.fb.scrollRows(-1)
+	case ESC_RI: // move cursor one line up, scrolling if needed
 		} else {
 			t.cursorMoveAbs(t.cur.row-1, t.cur.col)
 		}

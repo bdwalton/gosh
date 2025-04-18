@@ -14,6 +14,10 @@ const (
 
 const (
 	ESC     = 0x1b
+	ESC_IND = 'D' // IND - index
+	ESC_NEL = 'E' // NEL - newline
+	ESC_HTS = 'H' // HTS - horizontal tab set
+	ESC_RI  = 'M' // RI - reverse index
 	ESC_DCS = 'P'
 	C1_DCS  = 0x8f
 	ESC_CSI = 0x5b // ]
