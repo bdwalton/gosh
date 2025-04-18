@@ -21,6 +21,7 @@ const (
 	ESC_HTS   = 'H' // HTS - horizontal tab set
 	ESC_RI    = 'M' // RI - reverse index
 	ESC_DCS   = 'P'
+	ESC_RIS   = 'c' // RIS - Full reset
 	C1_DCS    = 0x8f
 	ESC_CSI   = 0x5b // ]
 	ESC_OSC   = 0x5d // [

@@ -395,7 +395,7 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 			t.doDECALN()
 		}
 
-	case 'c':
+	case ESC_RIS:
 		t.reset()
 	default:
 		slog.Debug("ignoring ESC", "r", string(r), "params", params, "data", string(data))
