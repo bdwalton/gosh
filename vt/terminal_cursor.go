@@ -73,6 +73,19 @@ func (t *Terminal) cursorCHAorHPA(col int) {
 func (t *Terminal) cursorCUPorHVP(row, col int) {
 	// TODO: What does "format effector" mean for HVP
 	slog.Debug("horizontal vertical position/cursor position", "row", row, "col", col)
+	if t.isModeSet(privIDToName[PRIV_ORIGIN_MODE]) && t.inScrollingRegion() {
+		col += t.getLeftMargin()
+		if r := t.getRightMargin(); col > r {
+			col = r
+		}
+
+		row += t.getTopMargin()
+		if b := t.getBottomMargin(); row > b {
+			row = b
+		}
+		slog.Debug("adjusting for ORIGIN MODE", "row", row, "col", col)
+	}
+
 	t.cursorMoveAbs(row, col)
 }
 

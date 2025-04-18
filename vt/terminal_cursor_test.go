@@ -16,6 +16,23 @@ var tVertMargin = &Terminal{
 	vertMargin: newMargin(5, 15),
 }
 
+var tVertWithDECOM = &Terminal{
+	fb:         newFramebuffer(24, 80),
+	vertMargin: newMargin(5, 15),
+	modes: map[string]*mode{
+		"ORIGIN_MODE": &mode{state: CSI_MODE_SET, private: true, code: PRIV_ORIGIN_MODE},
+	},
+}
+
+var tMarginsWithDECOM = &Terminal{
+	fb:          newFramebuffer(24, 80),
+	vertMargin:  newMargin(5, 15),
+	horizMargin: newMargin(5, 15),
+	modes: map[string]*mode{
+		"ORIGIN_MODE": &mode{state: CSI_MODE_SET, private: true, code: PRIV_ORIGIN_MODE},
+	},
+}
+
 var minCol = 0
 var minRow = 0
 var maxCol = tNoMargin.getRightMargin()
@@ -147,6 +164,10 @@ func TestCursorCUPorHVP(t *testing.T) {
 		{tNoMargin, midCur, 1000, 1000, maxRow, maxCol},
 		{tNoMargin, midCur, 1000, 0, maxRow, 0},
 		{tNoMargin, midCur, 0, 1000, 0, maxCol},
+		{tVertMargin, midCur, 0, 0, 0, 0},          // no origin mode, so still home
+		{tVertWithDECOM, midCur, 0, 0, 5, 0},       // origin mode, so home in region
+		{tMarginsWithDECOM, midCur, 0, 0, 5, 5},    // origin mode, home in region
+		{tMarginsWithDECOM, bottomCur, 0, 0, 0, 0}, // origin mode, outside region
 	}
 
 	for i, c := range cases {
