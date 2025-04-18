@@ -76,6 +76,11 @@ func (m *mode) get() bool {
 }
 
 func (m *mode) getAnsiString() string {
+	if m.private {
+		// Ensure we ship the ? for private modes
+		return fmt.Sprintf("%c%c?%d%c", ESC, ESC_CSI, m.code, m.state)
+	}
+
 	return fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, m.code, m.state)
 }
 
