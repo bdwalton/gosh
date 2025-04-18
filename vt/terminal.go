@@ -526,11 +526,25 @@ func (t *Terminal) print(r rune) {
 		}
 
 		if t.isModeSet(privIDToName[PRIV_DECAWM]) {
-			col = 0
-			if row == t.rows()-1 {
-				t.fb.scrollRows(1)
+			if t.inScrollingRegion() {
+				col = t.getLeftMargin()
+				if row == t.getBottomMargin() {
+					fb, err := t.getScrollingRegion()
+					if err != nil {
+						slog.Debug("failed to get scrolling region", "err", err)
+						return
+					}
+					fb.scrollRows(1)
+				} else {
+					row += 1
+				}
 			} else {
-				row += 1
+				col = 0
+				if row == t.rows() {
+					t.fb.scrollRows(1)
+				} else {
+					row += 1
+				}
 			}
 		} else {
 			// overwrite chars at the end
@@ -665,10 +679,9 @@ func (t *Terminal) clearTabs(params *parameters) {
 
 func (t *Terminal) carriageReturn() {
 	nc := 0
-	if c := t.horizMargin.getMin(); t.horizMargin.isSet() && t.cur.col > c {
-		nc = c
+	if t.inScrollingRegion() {
+		nc = t.getLeftMargin()
 	}
-
 	t.cursorMoveAbs(t.cur.row, nc)
 }
 
