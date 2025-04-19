@@ -9,8 +9,8 @@ import (
 )
 
 var nonDefFmt = format{
-	fg:        standardColors[FG_YELLOW],
-	bg:        standardColors[BG_BLUE],
+	fg:        newColor(FG_YELLOW),
+	bg:        newColor(BG_BLUE),
 	underline: true,
 }
 
@@ -45,7 +45,7 @@ func TestCellDiff(t *testing.T) {
 			[]byte{' '},
 		},
 		{
-			newCell('b', format{fg: standardColors[FG_BLUE]}),
+			newCell('b', format{fg: newColor(FG_BLUE)}),
 			newCell(' ', defFmt),
 			[]byte{ESC, CSI, CSI_SGR, ' '},
 		},
@@ -81,20 +81,20 @@ func TestCellEfficientDiff(t *testing.T) {
 			[]byte{},
 		},
 		{
-			newCell('a', format{fg: standardColors[FG_RED]}),
-			newCell('a', format{fg: standardColors[FG_RED]}),
-			format{fg: standardColors[FG_RED]},
+			newCell('a', format{fg: newColor(FG_RED)}),
+			newCell('a', format{fg: newColor(FG_RED)}),
+			format{fg: newColor(FG_RED)},
 			[]byte{},
 		},
 		{
-			newCell('a', format{fg: standardColors[FG_RED]}),
-			newCell('a', format{fg: standardColors[FG_RED]}),
+			newCell('a', format{fg: newColor(FG_RED)}),
+			newCell('a', format{fg: newColor(FG_RED)}),
 			defFmt,
 			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, CSI, FG_RED, CSI_SGR, 'a')),
 		},
 		{
-			newCell('a', format{fg: standardColors[FG_RED]}),
-			newCell('a', format{bg: standardColors[BG_RED]}),
+			newCell('a', format{fg: newColor(FG_RED)}),
+			newCell('a', format{bg: newColor(BG_RED)}),
 			defFmt,
 			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, CSI, BG_RED, CSI_SGR, 'a')),
 		},
@@ -145,8 +145,8 @@ func TestSetCells(t *testing.T) {
 		{fillBuffer(newFramebuffer(10, 10)), 10, 10, 5, 9, defFmt},
 		{fillBuffer(newFramebuffer(10, 10)), 5, 5, 9, 5, defFmt},
 		{fillBuffer(newFramebuffer(10, 10)), 5, 5, 9, 9, defFmt},
-		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 0, 5, format{bg: standardColors[BG_BLUE]}},
-		{fillBuffer(newFramebuffer(10, 10)), 5, 5, 9, 9, format{bg: standardColors[BG_RED]}},
+		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 0, 5, format{bg: newColor(BG_BLUE)}},
+		{fillBuffer(newFramebuffer(10, 10)), 5, 5, 9, 9, format{bg: newColor(BG_RED)}},
 	}
 
 	for i, c := range cases {
@@ -225,13 +225,13 @@ func TestSetAndGetCell(t *testing.T) {
 		wantErr  error
 	}{
 		{5, 5, defaultCell(), nil},
-		{1, 2, newCell('a', format{fg: standardColors[FG_BRIGHT_BLACK], underline: true}), nil},
-		{1, 2, newCell('b', format{fg: standardColors[FG_RED], strikeout: true}), nil},
-		{8, 3, newCell('b', format{bg: standardColors[BG_BLUE], reversed: true}), nil},
-		{10, 01, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], underline: true}), fbInvalidCell},
-		{-1, 100, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], underline: true}), fbInvalidCell},
-		{-1, 1, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], underline: true}), fbInvalidCell},
-		{1, -1, newCell('b', format{fg: standardColors[FG_BRIGHT_BLACK], underline: true}), fbInvalidCell},
+		{1, 2, newCell('a', format{fg: newColor(FG_BRIGHT_BLACK), underline: true}), nil},
+		{1, 2, newCell('b', format{fg: newColor(FG_RED), strikeout: true}), nil},
+		{8, 3, newCell('b', format{bg: newColor(BG_BLUE), reversed: true}), nil},
+		{10, 01, newCell('b', format{fg: newColor(FG_BRIGHT_BLACK), underline: true}), fbInvalidCell},
+		{-1, 100, newCell('b', format{fg: newColor(FG_BRIGHT_BLACK), underline: true}), fbInvalidCell},
+		{-1, 1, newCell('b', format{fg: newColor(FG_BRIGHT_BLACK), underline: true}), fbInvalidCell},
+		{1, -1, newCell('b', format{fg: newColor(FG_BRIGHT_BLACK), underline: true}), fbInvalidCell},
 	}
 
 	fb := newFramebuffer(10, 10)
@@ -379,28 +379,28 @@ func TestFrameBufferDiff(t *testing.T) {
 	fb4 := fb3.copy()
 	fb4.setCell(5, 12, newCell('b', defFmt))
 	fb5 := fb4.copy()
-	fb5.setCell(5, 12, newCell('b', format{fg: standardColors[FG_GREEN]}))
-	fb5.setCell(5, 13, newCell('c', format{fg: standardColors[FG_GREEN]}))
+	fb5.setCell(5, 12, newCell('b', format{fg: newColor(FG_GREEN)}))
+	fb5.setCell(5, 13, newCell('c', format{fg: newColor(FG_GREEN)}))
 
 	fb6 := fb5.copy()
-	fb6.setCell(1, 0, newCell('X', format{fg: standardColors[FG_BLUE], bg: standardColors[BG_RED]}))
-	fb6.setCell(5, 12, newCell('Y', format{fg: standardColors[FG_BLUE], bg: standardColors[BG_RED]}))
-	fb6.setCell(5, 13, newCell('Z', format{fg: standardColors[FG_YELLOW], bg: standardColors[BG_GREEN]}))
+	fb6.setCell(1, 0, newCell('X', format{fg: newColor(FG_BLUE), bg: newColor(BG_RED)}))
+	fb6.setCell(5, 12, newCell('Y', format{fg: newColor(FG_BLUE), bg: newColor(BG_RED)}))
+	fb6.setCell(5, 13, newCell('Z', format{fg: newColor(FG_YELLOW), bg: newColor(BG_GREEN)}))
 	fb6.resize(10, 13)
 
 	fb7 := newFramebuffer(24, 80)
 	fb8 := fb7.copy()
 
 	fb8.setCell(0, 0, newCell(' ', defFmt))
-	fb8.setCell(0, 1, newCell('a', format{bg: standardColors[BG_BLACK]}))
-	fb8.setCell(0, 2, newCell('b', format{bg: standardColors[BG_BLACK]}))
-	fb8.setCell(0, 3, newCell('c', format{bg: standardColors[BG_BLACK]}))
-	fb8.setCell(0, 4, newCell(' ', format{bg: standardColors[BG_BLACK]}))
-	fb8.setCell(0, 5, newCell('\ue0b0', format{fg: standardColors[FG_BLACK], bg: standardColors[BG_BLUE]}))
-	fb8.setCell(0, 6, newCell(' ', format{fg: standardColors[FG_BLACK], bg: standardColors[BG_BLUE]}))
-	fb8.setCell(0, 7, newCell('~', format{fg: standardColors[FG_BLACK], bg: standardColors[BG_BLUE]}))
-	fb8.setCell(0, 8, newCell(' ', format{fg: standardColors[FG_BLACK], bg: standardColors[BG_BLUE]}))
-	fb8.setCell(0, 9, newCell('\ue0b0', format{fg: standardColors[FG_BLUE], bg: standardColors[BG_DEF]}))
+	fb8.setCell(0, 1, newCell('a', format{bg: newColor(BG_BLACK)}))
+	fb8.setCell(0, 2, newCell('b', format{bg: newColor(BG_BLACK)}))
+	fb8.setCell(0, 3, newCell('c', format{bg: newColor(BG_BLACK)}))
+	fb8.setCell(0, 4, newCell(' ', format{bg: newColor(BG_BLACK)}))
+	fb8.setCell(0, 5, newCell('\ue0b0', format{fg: newColor(FG_BLACK), bg: newColor(BG_BLUE)}))
+	fb8.setCell(0, 6, newCell(' ', format{fg: newColor(FG_BLACK), bg: newColor(BG_BLUE)}))
+	fb8.setCell(0, 7, newCell('~', format{fg: newColor(FG_BLACK), bg: newColor(BG_BLUE)}))
+	fb8.setCell(0, 8, newCell(' ', format{fg: newColor(FG_BLACK), bg: newColor(BG_BLUE)}))
+	fb8.setCell(0, 9, newCell('\ue0b0', format{fg: newColor(FG_BLUE), bg: newColor(BG_DEF)}))
 	fb8.setCell(0, 10, newCell(' ', defFmt))
 
 	cases := []struct {
@@ -446,7 +446,7 @@ func numberedFBForTest(start, rows, cols, defaultsStart, defaultsEnd int) *frame
 	for r := defaultsStart; r < rows-defaultsEnd; r++ {
 		row := fb.data[r]
 		for c := range row {
-			fb.setCell(r, c, newCell(rune(r+-defaultsStart+start+'0'), format{fg: standardColors[30+start-defaultsStart+r]}))
+			fb.setCell(r, c, newCell(rune(r+-defaultsStart+start+'0'), format{fg: newColor(30 + start - defaultsStart + r)}))
 		}
 	}
 

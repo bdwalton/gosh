@@ -263,7 +263,7 @@ func TestTerminalDiff(t *testing.T) {
 	t3, _ := NewTerminal()
 	t3.Resize(20, 15)
 	t4 := testTerminalCopy(t3)
-	t4.fb.setCell(5, 7, newCell('a', format{fg: standardColors[FG_RED]}))
+	t4.fb.setCell(5, 7, newCell('a', format{fg: newColor(FG_RED)}))
 	t5 := testTerminalCopy(t4)
 	t5.title = "mytitle"
 	t6 := testTerminalCopy(t5)
@@ -286,9 +286,9 @@ func TestTerminalDiff(t *testing.T) {
 	t13.vertMargin = newMargin(1, 6)
 	t14, _ := NewTerminal()
 	t15 := testTerminalCopy(t14)
-	t15.curF = format{fg: standardColors[FG_RED], underline: true}
+	t15.curF = format{fg: newColor(FG_RED), underline: true}
 	t16 := testTerminalCopy(t15)
-	t16.curF = format{fg: standardColors[FG_YELLOW], underline: true, bold: true}
+	t16.curF = format{fg: newColor(FG_YELLOW), underline: true, bold: true}
 	t17 := testTerminalCopy(t1)
 	t17.setMode(PRIV_BRACKET_PASTE, "?", CSI_MODE_SET)
 	t18 := testTerminalCopy(t17)

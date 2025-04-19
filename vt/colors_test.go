@@ -6,12 +6,12 @@ import (
 
 func TestColorGetAnsiString(t *testing.T) {
 	cases := []struct {
-		col  *color
+		col  color
 		fgbg int
 		want string
 	}{
-		{standardColors[FG_BLACK], SET_FG, "30"},
-		{standardColors[BG_CYAN], SET_BG, "46"},
+		{newColor(FG_BLACK), SET_FG, "30"},
+		{newColor(BG_CYAN), SET_BG, "46"},
 		{newRGBColor([]int{248, 123, 0}), SET_FG, "38;2;248;123;0"},
 		{newRGBColor([]int{248, 123, 0}), SET_BG, "48;2;248;123;0"},
 		{newAnsiColor(165), SET_FG, "38;5;165"},
@@ -32,7 +32,7 @@ func paramsFromInts(items []int) *parameters {
 func TestColorsFromParams(t *testing.T) {
 	cases := []struct {
 		params *parameters
-		want   *color
+		want   color
 	}{
 		{paramsFromInts([]int{5}), newAnsiColor(0)}, // Unspecified parameters are treated as 0
 		{paramsFromInts([]int{5, 253}), newAnsiColor(253)},
@@ -43,8 +43,8 @@ func TestColorsFromParams(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		col := colorFromParams(c.params, standardColors[FG_DEF])
-		if col == nil || !col.equal(c.want) {
+		col := colorFromParams(c.params, color{})
+		if !col.equal(c.want) {
 			t.Errorf("%d: Got %q, wanted %q, from %v", i, col, c.want, c.params.items)
 		}
 	}
@@ -52,18 +52,18 @@ func TestColorsFromParams(t *testing.T) {
 
 func TestColorEquality(t *testing.T) {
 	cases := []struct {
-		col, other *color
+		col, other color
 		want       bool
 	}{
-		{standardColors[FG_WHITE], standardColors[FG_RED], false},
-		{standardColors[FG_WHITE], newAnsiColor(1), false},
-		{standardColors[FG_WHITE], newRGBColor([]int{1, 2, 3}), false},
-		{standardColors[FG_WHITE], nil, false},
+		{newColor(FG_WHITE), newColor(FG_RED), false},
+		{newColor(FG_WHITE), newAnsiColor(1), false},
+		{newColor(FG_WHITE), newRGBColor([]int{1, 2, 3}), false},
+		{newColor(FG_WHITE), color{}, false},
 		{newAnsiColor(1), newRGBColor([]int{1, 2, 3}), false},
-		{newAnsiColor(1), nil, false},
-		{standardColors[BG_BLUE], standardColors[BG_BLUE], true},
+		{newAnsiColor(1), color{}, false},
+		{newColor(BG_BLUE), newColor(BG_BLUE), true},
 		{newAnsiColor(2), newAnsiColor(2), true},
-		{newRGBColor([]int{1, 2, 3}), nil, false},
+		{newRGBColor([]int{1, 2, 3}), color{}, false},
 		{newRGBColor([]int{1, 2, 3}), newRGBColor([]int{1, 2, 3}), true},
 	}
 
