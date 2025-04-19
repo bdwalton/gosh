@@ -396,7 +396,6 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 		case "#": // DECALN vt100 screen test
 			t.doDECALN()
 		}
-
 	case RIS:
 		t.reset()
 	default:
