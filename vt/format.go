@@ -34,14 +34,12 @@ type format struct {
 	attrs  uint8 // a bitmap of which of the attrs (^ above) are enabled
 }
 
-func (f format) setAttr(attr uint8, val bool) format {
+func setAttr(orig, new uint8, val bool) uint8 {
 	if val {
-		f.attrs |= attr
-	} else {
-		f.attrs = f.attrs &^ attr
+		return orig | new
 	}
 
-	return f
+	return orig &^ new
 }
 
 func (f format) getAttr(attr uint8) bool {
@@ -119,17 +117,17 @@ func formatFromParams(curF format, params *parameters) format {
 		case item == RESET:
 			f = format{}
 		case item == INTENSITY_BOLD || item == INTENSITY_NORMAL:
-			f = f.setAttr(BOLD, (item < 10))
+			f.attrs = setAttr(f.attrs, BOLD, (item < 10))
 		case item == UNDERLINE_ON || item == UNDERLINE_OFF:
-			f = f.setAttr(UNDERLINE, (item < 10))
+			f.attrs = setAttr(f.attrs, UNDERLINE, (item < 10))
 		case item == BLINK_ON || item == BLINK_OFF:
-			f = f.setAttr(BLINK, (item < 10))
+			f.attrs = setAttr(f.attrs, BLINK, (item < 10))
 		case item == REVERSED_ON || item == REVERSED_OFF:
-			f = f.setAttr(REVERSED, (item < 10))
+			f.attrs = setAttr(f.attrs, REVERSED, (item < 10))
 		case item == INVISIBLE_ON || item == INVISIBLE_OFF:
-			f = f.setAttr(INVISIBLE, (item < 10))
+			f.attrs = setAttr(f.attrs, INVISIBLE, (item < 10))
 		case item == STRIKEOUT_ON || item == STRIKEOUT_OFF:
-			f = f.setAttr(STRIKEOUT, (item < 10))
+			f.attrs = setAttr(f.attrs, STRIKEOUT, (item < 10))
 		case (item >= 30 && item <= 37) || (item >= 90 && item <= 97) || item == 39:
 			// item == 39 is foreground
 			// default. we treat that as a regular
