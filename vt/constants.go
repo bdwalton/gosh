@@ -141,6 +141,11 @@ const (
 	BG_BRIGHT_WHITE   = 107
 )
 
+// CSI mode parameter codes
+const (
+	IRM = 4 // Insert mode
+)
+
 // CSI private mode parameter codes
 const (
 	PRIV_DECCKM               = 1    // DEC application cursor keys

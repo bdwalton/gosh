@@ -5,8 +5,18 @@ import (
 	"log/slog"
 )
 
+// Public modes here will be initialized, diff'd, copied, etc.
+var pubModeToID = map[string]int{
+	"IRM": IRM,
+}
+
+// Public modes
+var pubIDToName = map[int]string{
+	IRM: "IRM",
+}
+
 // Private modes here will be initialized, diff'd, copied, etc.
-var modeToID = map[string]int{
+var privModeToID = map[string]int{
 	"DECCKM":               PRIV_DECCKM,
 	"DECCOLM":              PRIV_DECCOLM,
 	"SMOOTH_SCROLL":        PRIV_SMOOTH_SCROLL,
@@ -29,6 +39,7 @@ var modeToID = map[string]int{
 	"BRACKET_PASTE":        PRIV_BRACKET_PASTE,
 }
 
+// Private modes
 var privIDToName = map[int]string{
 	PRIV_DECCKM:               "DECCKM",
 	PRIV_DECCOLM:              "DECCOLM",
@@ -85,10 +96,16 @@ func (m *mode) getAnsiString() string {
 }
 
 func (m *mode) equal(other *mode) bool {
-	return m.getAnsiString() == other.getAnsiString()
+	return m.code == other.code && m.private == other.private && m.state == other.state
+}
+
+func newMode(code int) *mode {
+	// Modes always start in the reset (off) state
+	return &mode{code: code, state: CSI_MODE_RESET}
 }
 
 func newPrivMode(code int) *mode {
-	// Modes always start in the reset (off) state
-	return &mode{code: code, private: true, state: CSI_MODE_RESET}
+	m := newMode(code)
+	m.private = true
+	return m
 }

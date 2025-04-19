@@ -57,8 +57,11 @@ type Terminal struct {
 
 func newBasicTerminal(r, w *os.File) *Terminal {
 	modes := make(map[string]*mode)
-	for name, id := range modeToID {
+	for name, id := range privModeToID {
 		modes[name] = newPrivMode(id)
+	}
+	for name, id := range pubModeToID {
+		modes[name] = newMode(id)
 	}
 	return &Terminal{
 		fb:      newFramebuffer(DEF_ROWS, DEF_COLS),
@@ -168,7 +171,7 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 		sb.WriteString(dest.vertMargin.getAnsi(CSI_DECSTBM))
 	}
 
-	modeNames := make([]string, len(modeToID), len(modeToID))
+	modeNames := make([]string, len(src.modes), len(src.modes))
 	var i int
 	for n := range src.modes {
 		modeNames[i] = n
@@ -492,8 +495,11 @@ func (t *Terminal) reset() {
 	t.vertMargin = newMargin(0, rows-1)
 	t.horizMargin = newMargin(0, cols-1)
 	modes := make(map[string]*mode)
-	for name, n := range modeToID {
+	for name, n := range privModeToID {
 		modes[name] = newPrivMode(n)
+	}
+	for name, n := range pubModeToID {
+		modes[name] = newMode(n)
 	}
 	t.modes = modes
 }
@@ -878,6 +884,15 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 		case PRIV_ORIGIN_MODE:
 			t.homeCursor()
 		}
+	case "":
+		name := pubIDToName[mode]
+		m, ok := t.modes[name]
+		if !ok {
+			slog.Debug("unknown CSI public mode toggled; ignoring", "mode", name, "data", data, "state", string(state))
+			return
+		}
+		m.setState(state)
+		slog.Debug("setting public mode", "mode", name, "state", string(state))
 	default:
 		slog.Debug("unexpected CSI set/reset data", "mode", mode, "data", data, "state", string(state))
 	}
