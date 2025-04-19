@@ -23,17 +23,17 @@ const (
 	SO    = 0x0e // ^N Switch to G1/alternate charset as default
 	SI    = 0x0f // ^O Switch to G0 charset as default
 	ESC   = 0x1b
-	DECSC = '7' // DECSC - save cursor
-	DECRC = '8' // DECRC - restore cursor
-	IND   = 'D' // IND - index
-	NEL   = 'E' // NEL - newline
-	HTS   = 'H' // HTS - horizontal tab set
-	RI    = 'M' // RI - reverse index
-	DCS   = 'P'
+	DECSC = '7'  // DECSC - save cursor
+	DECRC = '8'  // DECRC - restore cursor
+	IND   = 'D'  // IND - index
+	NEL   = 'E'  // NEL - newline
+	HTS   = 'H'  // HTS - horizontal tab set
+	RI    = 'M'  // RI - reverse index
+	DCS   = 'P'  // Device control sequence
 	RIS   = 'c'  // RIS - Full reset
-	CSI   = 0x5b // ]
-	OSC   = 0x5d // [
-	ST    = '\\'
+	CSI   = 0x5b // ]; control sequence introducer
+	OSC   = 0x5d // [; operating system command
+	ST    = '\\' // string terminator
 )
 
 // Control codes
