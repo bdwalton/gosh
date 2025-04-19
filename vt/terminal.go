@@ -387,9 +387,11 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 		}
 	case DECSC: // save cursor
 		t.savedCur = t.cur.Copy()
+		slog.Debug("saved cursor", "save", t.savedCur)
 	case DECRC: // restore cursor or decaln screen test
 		switch dstr {
 		case "":
+			slog.Debug("restoring cursor", "was", t.cur, "now", t.savedCur)
 			t.cur = t.savedCur.Copy()
 		case "#": // DECALN vt100 screen test
 			t.doDECALN()
