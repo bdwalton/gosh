@@ -286,9 +286,9 @@ func TestTerminalDiff(t *testing.T) {
 	t13.vertMargin = newMargin(1, 6)
 	t14, _ := NewTerminal()
 	t15 := testTerminalCopy(t14)
-	t15.curF = format{fg: newColor(FG_RED), underline: true}
+	t15.curF = format{fg: newColor(FG_RED), attrs: UNDERLINE}
 	t16 := testTerminalCopy(t15)
-	t16.curF = format{fg: newColor(FG_YELLOW), underline: true, bold: true}
+	t16.curF = format{fg: newColor(FG_YELLOW), attrs: BOLD | UNDERLINE}
 	t17 := testTerminalCopy(t1)
 	t17.setMode(PRIV_BRACKET_PASTE, "?", CSI_MODE_SET)
 	t18 := testTerminalCopy(t17)

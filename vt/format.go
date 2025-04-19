@@ -10,9 +10,42 @@ var defFmt = format{}
 
 const FMT_RESET = "\x1b[m"
 
+const (
+	BOLD      = 1
+	UNDERLINE = 1 << 1
+	BLINK     = 1 << 2
+	REVERSED  = 1 << 3
+	INVISIBLE = 1 << 4
+	STRIKEOUT = 1 << 5
+)
+
+var attrs = []uint8{BOLD, UNDERLINE, BLINK, REVERSED, INVISIBLE, STRIKEOUT}
+var attrToggle = map[uint8]map[bool]uint8{
+	BOLD:      map[bool]uint8{true: INTENSITY_BOLD, false: INTENSITY_NORMAL},
+	UNDERLINE: map[bool]uint8{true: UNDERLINE_ON, false: UNDERLINE_OFF},
+	BLINK:     map[bool]uint8{true: BLINK_ON, false: BLINK_OFF},
+	REVERSED:  map[bool]uint8{true: REVERSED_ON, false: REVERSED_OFF},
+	INVISIBLE: map[bool]uint8{true: INVISIBLE_ON, false: INVISIBLE_OFF},
+	STRIKEOUT: map[bool]uint8{true: STRIKEOUT_ON, false: STRIKEOUT_OFF},
+}
+
 type format struct {
-	fg, bg                                                 color
-	bold, underline, blink, reversed, invisible, strikeout bool
+	fg, bg color
+	attrs  uint8 // a bitmap of which of the attrs (^ above) are enabled
+}
+
+func (f format) setAttr(attr uint8, val bool) format {
+	if val {
+		f.attrs |= attr
+	} else {
+		f.attrs = f.attrs &^ attr
+	}
+
+	return f
+}
+
+func (f format) getAttr(attr uint8) bool {
+	return (f.attrs & attr) != 0
 }
 
 func (src format) diff(dest format) []byte {
@@ -30,67 +63,13 @@ func (src format) diff(dest format) []byte {
 		sb.WriteString(fmt.Sprintf("%c%c%s%c", ESC, CSI, dest.bg.getAnsiString(SET_BG), CSI_SGR))
 	}
 
-	if src.bold != dest.bold {
-		if dest.bold {
-			ts.WriteString(fmt.Sprintf("%d", INTENSITY_BOLD))
-		} else {
-			ts.WriteString(fmt.Sprintf("%d", INTENSITY_NORMAL))
+	for _, attr := range attrs {
+		if da := dest.getAttr(attr); src.getAttr(attr) != da {
+			if ts.Len() > 0 {
+				ts.WriteByte(';')
+			}
+			ts.WriteString(fmt.Sprintf("%d", attrToggle[attr][da]))
 		}
-	}
-
-	if src.underline != dest.underline {
-		if ts.Len() > 0 {
-			ts.WriteByte(';')
-		}
-		if dest.underline {
-			ts.WriteString(fmt.Sprintf("%d", UNDERLINE_ON))
-		} else {
-			ts.WriteString(fmt.Sprintf("%d", UNDERLINE_OFF))
-		}
-	}
-
-	if src.blink != dest.blink {
-		if ts.Len() > 0 {
-			ts.WriteByte(';')
-		}
-		b := BLINK_ON
-		if !dest.blink {
-			b = BLINK_OFF
-		}
-		ts.WriteString(fmt.Sprintf("%d", b))
-	}
-
-	if src.reversed != dest.reversed {
-		if ts.Len() > 0 {
-			ts.WriteByte(';')
-		}
-		r := REVERSED_ON
-		if !dest.reversed {
-			r = REVERSED_OFF
-		}
-		ts.WriteString(fmt.Sprintf("%d", r))
-	}
-
-	if src.invisible != dest.invisible {
-		if ts.Len() > 0 {
-			ts.WriteByte(';')
-		}
-		iv := INVISIBLE_ON
-		if !dest.invisible {
-			iv = INVISIBLE_OFF
-		}
-		ts.WriteString(fmt.Sprintf("%d", iv))
-	}
-
-	if src.strikeout != dest.strikeout {
-		if ts.Len() > 0 {
-			ts.WriteByte(';')
-		}
-		s := STRIKEOUT_ON
-		if !dest.strikeout {
-			s = STRIKEOUT_OFF
-		}
-		ts.WriteString(fmt.Sprintf("%d", s))
 	}
 
 	if ts.Len() > 0 {
@@ -103,7 +82,7 @@ func (src format) diff(dest format) []byte {
 }
 
 func (f *format) String() string {
-	return fmt.Sprintf("fg: %s; bg: %s; bold: %t, underline: %t, blink: %t, reversed: %t, invisible: %t, strikeout: %t", f.fg.getAnsiString(SET_FG), f.fg.getAnsiString(SET_BG), f.bold, f.underline, f.blink, f.reversed, f.invisible, f.strikeout)
+	return fmt.Sprintf("fg: %s; bg: %s; bold: %t, underline: %t, blink: %t, reversed: %t, invisible: %t, strikeout: %t", f.fg.getAnsiString(SET_FG), f.fg.getAnsiString(SET_BG), f.getAttr(BOLD), f.getAttr(UNDERLINE), f.getAttr(BLINK), f.getAttr(REVERSED), f.getAttr(INVISIBLE), f.getAttr(STRIKEOUT))
 }
 
 func (f format) equal(other format) bool {
@@ -115,7 +94,7 @@ func (f format) equal(other format) bool {
 		return false
 	}
 
-	if f.bold != other.bold || f.underline != other.underline || f.blink != other.blink || f.reversed != other.reversed || f.invisible != other.invisible || f.strikeout != other.strikeout {
+	if f.attrs != other.attrs {
 		return false
 	}
 
@@ -140,17 +119,17 @@ func formatFromParams(curF format, params *parameters) format {
 		case item == RESET:
 			f = format{}
 		case item == INTENSITY_BOLD || item == INTENSITY_NORMAL:
-			f.bold = (item < 10)
+			f = f.setAttr(BOLD, (item < 10))
 		case item == UNDERLINE_ON || item == UNDERLINE_OFF:
-			f.underline = (item < 10)
+			f = f.setAttr(UNDERLINE, (item < 10))
 		case item == BLINK_ON || item == BLINK_OFF:
-			f.blink = (item < 10)
+			f = f.setAttr(BLINK, (item < 10))
 		case item == REVERSED_ON || item == REVERSED_OFF:
-			f.reversed = (item < 10)
+			f = f.setAttr(REVERSED, (item < 10))
 		case item == INVISIBLE_ON || item == INVISIBLE_OFF:
-			f.invisible = (item < 10)
+			f = f.setAttr(INVISIBLE, (item < 10))
 		case item == STRIKEOUT_ON || item == STRIKEOUT_OFF:
-			f.strikeout = (item < 10)
+			f = f.setAttr(STRIKEOUT, (item < 10))
 		case (item >= 30 && item <= 37) || (item >= 90 && item <= 97) || item == 39:
 			// item == 39 is foreground
 			// default. we treat that as a regular

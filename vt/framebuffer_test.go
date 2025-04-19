@@ -9,9 +9,9 @@ import (
 )
 
 var nonDefFmt = format{
-	fg:        newColor(FG_YELLOW),
-	bg:        newColor(BG_BLUE),
-	underline: true,
+	fg:    newColor(FG_YELLOW),
+	bg:    newColor(BG_BLUE),
+	attrs: UNDERLINE,
 }
 
 func fillBuffer(fb *framebuffer) *framebuffer {
@@ -50,13 +50,13 @@ func TestCellDiff(t *testing.T) {
 			[]byte{ESC, CSI, CSI_SGR, ' '},
 		},
 		{
-			newCell('b', format{underline: true}),
+			newCell('b', format{attrs: UNDERLINE}),
 			newCell('b', defFmt),
 			[]byte{ESC, CSI, CSI_SGR, 'b'},
 		},
 		{
 			newCell('b', defFmt),
-			newCell('b', format{underline: true}),
+			newCell('b', format{attrs: UNDERLINE}),
 			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, CSI, UNDERLINE_ON, CSI_SGR, 'b')),
 		},
 	}
@@ -117,13 +117,13 @@ func TestCellEquality(t *testing.T) {
 		{cell{f: defFmt}, cell{f: defFmt}, true},
 		{cell{f: defFmt}, cell{f: defFmt, frag: 2}, false},
 		{cell{r: 'a', f: defFmt}, cell{r: 'a', f: defFmt}, true},
-		{cell{r: 'a', f: format{underline: true}}, cell{r: 'a', f: format{underline: true}}, true},
+		{cell{r: 'a', f: format{attrs: UNDERLINE}}, cell{r: 'a', f: format{attrs: UNDERLINE}}, true},
 		{cell{f: defFmt}, cell{r: 'a', f: defFmt}, false},
 		{cell{r: 'a'}, cell{r: 'a', f: defFmt}, true},
 		{cell{r: 'a', frag: 1}, cell{r: 'a', f: defFmt}, false},
 		{cell{r: 'a'}, cell{r: 'b'}, false},
 		{cell{r: 'a', f: defFmt}, cell{r: 'a'}, true},
-		{cell{r: 'a', f: format{underline: true}}, cell{r: 'a'}, false},
+		{cell{r: 'a', f: format{attrs: UNDERLINE}}, cell{r: 'a'}, false},
 	}
 
 	for i, c := range cases {
@@ -225,13 +225,13 @@ func TestSetAndGetCell(t *testing.T) {
 		wantErr  error
 	}{
 		{5, 5, defaultCell(), nil},
-		{1, 2, newCell('a', format{fg: newColor(FG_BRIGHT_BLACK), underline: true}), nil},
-		{1, 2, newCell('b', format{fg: newColor(FG_RED), strikeout: true}), nil},
-		{8, 3, newCell('b', format{bg: newColor(BG_BLUE), reversed: true}), nil},
-		{10, 01, newCell('b', format{fg: newColor(FG_BRIGHT_BLACK), underline: true}), fbInvalidCell},
-		{-1, 100, newCell('b', format{fg: newColor(FG_BRIGHT_BLACK), underline: true}), fbInvalidCell},
-		{-1, 1, newCell('b', format{fg: newColor(FG_BRIGHT_BLACK), underline: true}), fbInvalidCell},
-		{1, -1, newCell('b', format{fg: newColor(FG_BRIGHT_BLACK), underline: true}), fbInvalidCell},
+		{1, 2, newCell('a', format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}), nil},
+		{1, 2, newCell('b', format{fg: newColor(FG_RED), attrs: STRIKEOUT}), nil},
+		{8, 3, newCell('b', format{bg: newColor(BG_BLUE), attrs: REVERSED}), nil},
+		{10, 01, newCell('b', format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}), fbInvalidCell},
+		{-1, 100, newCell('b', format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}), fbInvalidCell},
+		{-1, 1, newCell('b', format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}), fbInvalidCell},
+		{1, -1, newCell('b', format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}), fbInvalidCell},
 	}
 
 	fb := newFramebuffer(10, 10)
@@ -314,7 +314,7 @@ func TestScrollRows(t *testing.T) {
 func TestFBEquality(t *testing.T) {
 	dfb := newFramebuffer(10, 10)
 	ofb := newFramebuffer(10, 10)
-	ofb.setCell(5, 5, newCell('z', format{underline: true}))
+	ofb.setCell(5, 5, newCell('z', format{attrs: UNDERLINE}))
 
 	cases := []struct {
 		fb   *framebuffer
