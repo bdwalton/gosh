@@ -402,6 +402,12 @@ func TestFrameBufferDiff(t *testing.T) {
 	fb8.setCell(0, 8, newCell(' ', format{fg: newColor(FG_BLACK), bg: newColor(BG_BLUE)}))
 	fb8.setCell(0, 9, newCell('\ue0b0', format{fg: newColor(FG_BLUE), bg: newColor(BG_DEF)}))
 	fb8.setCell(0, 10, newCell(' ', defFmt))
+	fb9 := newFramebuffer(10, 10)
+	fb9.setCell(0, 0, newCell('A', defFmt))
+	fb10 := fb9.copy()
+	fb10.setCell(0, 1, newCell('*', defFmt))
+	fb11 := fb9.copy()
+	fb11.setCell(0, 0, newCell('B', defFmt))
 
 	cases := []struct {
 		srcFB, destFB *framebuffer
@@ -420,6 +426,8 @@ func TestFrameBufferDiff(t *testing.T) {
 		// rune (only Y, no Z because of resize)
 		{fb5, fb6, "\x1b]X;10;13\a\x1b[2H\x1b[34m\x1b[41mX\x1b[6;13HY"},
 		{fb7, fb8, "\x1b[H \x1b[40mabc \x1b[30m\x1b[44m\ue0b0 ~ \x1b[34m\x1b[49m\ue0b0\x1b[m "},
+		{fb9, fb10, "\x1b[;2H*"},
+		{fb9, fb11, "\x1b[HB"},
 	}
 
 	for i, c := range cases {

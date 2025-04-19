@@ -296,6 +296,12 @@ func TestTerminalDiff(t *testing.T) {
 	t18.setMode(BRACKET_PASTE, "?", CSI_MODE_RESET)
 	t18.setMode(DECCKM, "?", CSI_MODE_SET)
 	t18.setMode(IRM, "", CSI_MODE_RESET)
+	t19, _ := NewTerminal()
+	t19.Resize(10, 10)
+	t19.fb.setCell(0, 0, newCell('A', defFmt))
+	t20 := t19.Copy()
+	t20.fb.setCell(0, 1, newCell('*', defFmt))
+	t20.lastChg = time.Now()
 
 	cases := []struct {
 		src, dest *Terminal
@@ -321,6 +327,7 @@ func TestTerminalDiff(t *testing.T) {
 		{t15, t16, []byte(fmt.Sprintf("%c%c%d%c%c%c%dm", ESC, CSI, FG_YELLOW, CSI_SGR, ESC, CSI, INTENSITY_BOLD))},
 		{t1, t17, []byte(fmt.Sprintf("%c%c?%d%c%c%c%d%c", ESC, CSI, BRACKET_PASTE, CSI_MODE_SET, ESC, CSI, IRM, CSI_MODE_SET))},
 		{t17, t18, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c%c%c%d%c", ESC, CSI, BRACKET_PASTE, CSI_MODE_RESET, ESC, CSI, DECCKM, CSI_MODE_SET, ESC, CSI, IRM, CSI_MODE_RESET))},
+		{t19, t20, []byte(fmt.Sprintf("%c%c%c%c%c;2%c*%c%c%c", ESC, CSI, CSI_SGR, ESC, CSI, CSI_CUP, ESC, CSI, CSI_CUP))},
 	}
 
 	for i, c := range cases {

@@ -122,7 +122,7 @@ func (src *framebuffer) diff(dest *framebuffer) []byte {
 	var sb strings.Builder
 
 	lastF := defFmt
-	lastCur := cursor{0, 0}
+	lastCur := cursor{-1, -1}
 
 	sz := dest.ansiOSCSize()
 	if !slices.Equal(sz, src.ansiOSCSize()) {
@@ -196,9 +196,12 @@ func (f *framebuffer) equal(other *framebuffer) bool {
 		return false
 	}
 
-	for r, row := range f.data {
+	for r, row := range other.data {
 		for c, cell := range row {
-			oc, _ := other.getCell(r, c)
+			oc, err := f.getCell(r, c)
+			if err != nil {
+				oc = defaultCell()
+			}
 			if !cell.equal(oc) {
 				return false
 			}
