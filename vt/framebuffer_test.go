@@ -47,17 +47,17 @@ func TestCellDiff(t *testing.T) {
 		{
 			newCell('b', format{fg: standardColors[FG_BLUE]}),
 			newCell(' ', defFmt),
-			[]byte{ESC, ESC_CSI, CSI_SGR, ' '},
+			[]byte{ESC, CSI, CSI_SGR, ' '},
 		},
 		{
 			newCell('b', format{underline: true}),
 			newCell('b', defFmt),
-			[]byte{ESC, ESC_CSI, CSI_SGR, 'b'},
+			[]byte{ESC, CSI, CSI_SGR, 'b'},
 		},
 		{
 			newCell('b', defFmt),
 			newCell('b', format{underline: true}),
-			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, ESC_CSI, UNDERLINE_ON, CSI_SGR, 'b')),
+			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, CSI, UNDERLINE_ON, CSI_SGR, 'b')),
 		},
 	}
 
@@ -90,13 +90,13 @@ func TestCellEfficientDiff(t *testing.T) {
 			newCell('a', format{fg: standardColors[FG_RED]}),
 			newCell('a', format{fg: standardColors[FG_RED]}),
 			defFmt,
-			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, ESC_CSI, FG_RED, CSI_SGR, 'a')),
+			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, CSI, FG_RED, CSI_SGR, 'a')),
 		},
 		{
 			newCell('a', format{fg: standardColors[FG_RED]}),
 			newCell('a', format{bg: standardColors[BG_RED]}),
 			defFmt,
-			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, ESC_CSI, BG_RED, CSI_SGR, 'a')),
+			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, CSI, BG_RED, CSI_SGR, 'a')),
 		},
 	}
 
@@ -358,9 +358,9 @@ func TestAnsiOSCSize(t *testing.T) {
 		fb   *framebuffer
 		want []byte
 	}{
-		{newFramebuffer(10, 10), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, ESC_OSC, 10, 10, CTRL_BEL))},
-		{newFramebuffer(10, 5), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, ESC_OSC, 10, 5, CTRL_BEL))},
-		{newFramebuffer(15, 22), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, ESC_OSC, 15, 22, CTRL_BEL))},
+		{newFramebuffer(10, 10), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, OSC, 10, 10, BEL))},
+		{newFramebuffer(10, 5), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, OSC, 10, 5, BEL))},
+		{newFramebuffer(15, 22), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, OSC, 15, 22, BEL))},
 	}
 
 	for i, c := range cases {

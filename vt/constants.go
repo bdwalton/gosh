@@ -13,25 +13,27 @@ const (
 )
 
 const (
-	CTRL_BEL  = 0x07 // ^G Bell
-	CTRL_BS   = 0x08 // ^H Backspace
-	CTRL_TAB  = 0x09 // ^I Tab \t
-	CTRL_LF   = 0x0a // ^J Line feed \n
-	CTRL_VT   = 0x0b // ^K Vertical tab \v
-	CTRL_FF   = 0x0c // ^L Form feed \f
-	CTRL_CR   = 0x0d // ^M Carriage return \r
-	ESC       = 0x1b
-	ESC_DECSC = '7' // DECSC - save cursor
-	ESC_DECRC = '8' // DECRC - restore cursor
-	ESC_IND   = 'D' // IND - index
-	ESC_NEL   = 'E' // NEL - newline
-	ESC_HTS   = 'H' // HTS - horizontal tab set
-	ESC_RI    = 'M' // RI - reverse index
-	ESC_DCS   = 'P'
-	ESC_RIS   = 'c'  // RIS - Full reset
-	ESC_CSI   = 0x5b // ]
-	ESC_OSC   = 0x5d // [
-	ESC_ST    = '\\'
+	BEL   = 0x07 // ^G Bell
+	BS    = 0x08 // ^H Backspace
+	TAB   = 0x09 // ^I Tab \t
+	LF    = 0x0a // ^J Line feed \n
+	VT    = 0x0b // ^K Vertical tab \v
+	FF    = 0x0c // ^L Form feed \f
+	CR    = 0x0d // ^M Carriage return \r
+	SO    = 0x0e // ^N Switch to G1/alternate charset as default
+	SI    = 0x0f // ^O Switch to G0 charset as default
+	ESC   = 0x1b
+	DECSC = '7' // DECSC - save cursor
+	DECRC = '8' // DECRC - restore cursor
+	IND   = 'D' // IND - index
+	NEL   = 'E' // NEL - newline
+	HTS   = 'H' // HTS - horizontal tab set
+	RI    = 'M' // RI - reverse index
+	DCS   = 'P'
+	RIS   = 'c'  // RIS - Full reset
+	CSI   = 0x5b // ]
+	OSC   = 0x5d // [
+	ST    = '\\'
 )
 
 // Control codes

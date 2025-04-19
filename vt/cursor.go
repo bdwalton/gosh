@@ -15,7 +15,7 @@ func (c cursor) Copy() cursor {
 
 func (c cursor) getMoveToAnsi() string {
 	var sb strings.Builder
-	sb.Write([]byte{ESC, ESC_CSI})
+	sb.Write([]byte{ESC, CSI})
 	if c.row != 0 {
 		sb.WriteString(fmt.Sprintf("%d", c.row+1))
 	}

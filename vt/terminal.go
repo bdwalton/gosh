@@ -149,13 +149,13 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 	if src.title != dest.title || src.icon != dest.icon {
 		switch {
 		case dest.title == dest.icon:
-			sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON_TITLE, string(dest.title), CTRL_BEL))
+			sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_ICON_TITLE, string(dest.title), BEL))
 		default:
 			if src.icon != dest.icon {
-				sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_ICON, string(dest.icon), CTRL_BEL))
+				sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_ICON, string(dest.icon), BEL))
 			}
 			if src.title != dest.title {
-				sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, ESC_OSC, OSC_TITLE, string(dest.title), CTRL_BEL))
+				sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_TITLE, string(dest.title), BEL))
 			}
 		}
 	}
@@ -327,7 +327,7 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	switch r {
 	case 'A', 'B', 'C', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
 		slog.Debug("swallowing ESC character set command", "data", string(data))
-	case ESC_NEL:
+	case NEL:
 		max := t.rows() - 1
 		if t.inScrollingRegion() {
 			max = t.getBottomMargin()
@@ -349,11 +349,11 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 		} else {
 			t.cursorMoveAbs(t.rows()-1, 0)
 		}
-	case ESC_HTS: // set tab stop. note that in some vt dialects this
+	case HTS: // set tab stop. note that in some vt dialects this
 		// would actually be part of character set handling
 		// (swedish on vt220).
 		t.tabs[t.cur.col] = true
-	case ESC_IND: // move cursor one line down, scrolling if needed
+	case IND: // move cursor one line down, scrolling if needed
 		max := t.rows() - 1
 		if t.inScrollingRegion() {
 			max = t.getBottomMargin()
@@ -369,7 +369,7 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 				t.cursorMoveAbs(t.cur.row+1, t.cur.col)
 			}
 		}
-	case ESC_RI: // move cursor one line up, scrolling if needed
+	case RI: // move cursor one line up, scrolling if needed
 		min := 0
 		if t.inScrollingRegion() {
 			min = t.getTopMargin()
@@ -385,9 +385,9 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 				t.cursorMoveAbs(t.cur.row-1, t.cur.col)
 			}
 		}
-	case ESC_DECSC: // save cursor
+	case DECSC: // save cursor
 		t.savedCur = t.cur.Copy()
-	case ESC_DECRC: // restore cursor or decaln screen test
+	case DECRC: // restore cursor or decaln screen test
 		switch dstr {
 		case "":
 			t.cur = t.savedCur.Copy()
@@ -395,7 +395,7 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 			t.doDECALN()
 		}
 
-	case ESC_RIS:
+	case RIS:
 		t.reset()
 	default:
 		slog.Debug("ignoring ESC", "r", string(r), "params", params, "data", string(data))
@@ -604,18 +604,20 @@ func (t *Terminal) print(r rune) {
 
 func (t *Terminal) handleExecute(last rune) {
 	switch last {
-	case CTRL_BEL:
+	case BEL:
 		// just swallow this for now
-	case CTRL_BS:
+	case BS:
 		t.cursorMoveAbs(t.cur.row, t.cur.col-1)
-	case CTRL_CR:
+	case CR:
 		t.carriageReturn()
-	case CTRL_LF, CTRL_FF: // libvte treats lf and ff the same, so we do too
+	case LF, FF: // libvte treats lf and ff the same, so we do too
 		t.lineFeed()
-	case CTRL_TAB:
+	case TAB:
 		t.stepTabs(1)
-	case CTRL_VT:
+	case VT:
 		t.cursorDown(1)
+	case SO, SI:
+		slog.Debug("swallowing charset switching command", "cmd", string(last))
 	default:
 		slog.Debug("handleExecute: UNHANDLED Command", "last", string(last))
 	}
@@ -787,7 +789,7 @@ func (t *Terminal) csiQ(params *parameters, data []rune) {
 			slog.Debug("invalid xterm_version query", "params", params, "data", string(data))
 			return
 		}
-		r := fmt.Sprintf("%c%c>|gosh(%s)%c%c", ESC, ESC_DCS, GOSH_VT_VER, ESC, ESC_ST)
+		r := fmt.Sprintf("%c%c>|gosh(%s)%c%c", ESC, DCS, GOSH_VT_VER, ESC, ST)
 		t.Write([]byte(r))
 		slog.Debug("identifying as gosh version", "ver", GOSH_VT_VER)
 	default:
@@ -800,17 +802,17 @@ func (t *Terminal) handleDSR(params *parameters, data []rune) {
 	case "": // General device status report
 		switch params.getItem(0, 0) {
 		case 5: // We always report OK (CSI 0 n)
-			t.Write([]byte(fmt.Sprintf("%c%c0%c", ESC, ESC_CSI, CSI_DSR)))
+			t.Write([]byte(fmt.Sprintf("%c%c0%c", ESC, CSI, CSI_DSR)))
 		case 6: // Provide cursor location (CSI r ; c R)
-			t.Write([]byte(fmt.Sprintf("%c%c%d;%dR", ESC, ESC_CSI, t.cur.row+1, t.cur.col+1)))
+			t.Write([]byte(fmt.Sprintf("%c%c%d;%dR", ESC, CSI, t.cur.row+1, t.cur.col+1)))
 		}
 	case "?": // DEC specific device status report
 		switch params.getItem(0, 0) {
 		case 6: // Provide cursor location (CSI ? r ; c R)
 
-			t.Write([]byte(fmt.Sprintf("%c%c?%d;%dR", ESC, ESC_CSI, t.cur.row+1, t.cur.col+1)))
+			t.Write([]byte(fmt.Sprintf("%c%c?%d;%dR", ESC, CSI, t.cur.row+1, t.cur.col+1)))
 		case 15: // report printer status; always "not ready" (CSI ? 1 1 n)
-			t.Write([]byte(fmt.Sprintf("%c%c?11%c", ESC, ESC_CSI, CSI_DSR)))
+			t.Write([]byte(fmt.Sprintf("%c%c?11%c", ESC, CSI, CSI_DSR)))
 		default:
 			slog.Debug("swallowing CSI ? DSR code", "params", params, "data", string(data))
 		}

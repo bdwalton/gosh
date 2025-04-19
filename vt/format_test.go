@@ -147,38 +147,38 @@ func TestDiff(t *testing.T) {
 		{
 			format{fg: newRGBColor([]int{10, 20, 30})},
 			format{bg: standardColors[BG_YELLOW]},
-			[]byte(fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, ESC_CSI, FG_DEF, CSI_SGR, ESC, ESC_CSI, BG_YELLOW, CSI_SGR)),
+			[]byte(fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, CSI, FG_DEF, CSI_SGR, ESC, CSI, BG_YELLOW, CSI_SGR)),
 		},
 		{
 			defFmt,
 			format{fg: standardColors[FG_WHITE], bold: true},
-			[]byte(fmt.Sprintf("%c%c%dm%c%c%d%c", ESC, ESC_CSI, FG_WHITE, ESC, ESC_CSI, INTENSITY_BOLD, CSI_SGR)),
+			[]byte(fmt.Sprintf("%c%c%dm%c%c%d%c", ESC, CSI, FG_WHITE, ESC, CSI, INTENSITY_BOLD, CSI_SGR)),
 		},
 		{
 			format{fg: standardColors[FG_WHITE], strikeout: true},
 			format{bg: newAnsiColor(243), reversed: true},
-			[]byte(fmt.Sprintf("%c%c%d%c%c%c%d;5;%d%c%c%c%d;%d%c", ESC, ESC_CSI, FG_DEF, CSI_SGR, ESC, ESC_CSI, SET_BG, 243, CSI_SGR, ESC, ESC_CSI, REVERSED_ON, STRIKEOUT_OFF, CSI_SGR)),
+			[]byte(fmt.Sprintf("%c%c%d%c%c%c%d;5;%d%c%c%c%d;%d%c", ESC, CSI, FG_DEF, CSI_SGR, ESC, CSI, SET_BG, 243, CSI_SGR, ESC, CSI, REVERSED_ON, STRIKEOUT_OFF, CSI_SGR)),
 		},
 		{
 			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
 			format{fg: newRGBColor([]int{30, 20, 10}), bg: newRGBColor([]int{10, 20, 30})},
-			[]byte(fmt.Sprintf("%c%c%d;2;%d;%d;%d%c%c%c%d;2;%d;%d;%d%c", ESC, ESC_CSI, SET_FG, 30, 20, 10, CSI_SGR, ESC, ESC_CSI, SET_BG, 10, 20, 30, CSI_SGR)),
+			[]byte(fmt.Sprintf("%c%c%d;2;%d;%d;%d%c%c%c%d;2;%d;%d;%d%c", ESC, CSI, SET_FG, 30, 20, 10, CSI_SGR, ESC, CSI, SET_BG, 10, 20, 30, CSI_SGR)),
 		},
 		{
 			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
 			format{fg: standardColors[FG_BLUE], bg: newAnsiColor(124)},
-			[]byte(fmt.Sprintf("%c%c%d%c%c%c%d;5;%d%c", ESC, ESC_CSI, FG_BLUE, CSI_SGR, ESC, ESC_CSI, SET_BG, 124, CSI_SGR)),
+			[]byte(fmt.Sprintf("%c%c%d%c%c%c%d;5;%d%c", ESC, CSI, FG_BLUE, CSI_SGR, ESC, CSI, SET_BG, 124, CSI_SGR)),
 		},
 
 		{
 			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
 			format{fg: newRGBColor([]int{10, 20, 30}), bg: newAnsiColor(124)},
-			[]byte(fmt.Sprintf("%c%c%d;5;%d%c", ESC, ESC_CSI, SET_BG, 124, CSI_SGR)),
+			[]byte(fmt.Sprintf("%c%c%d;5;%d%c", ESC, CSI, SET_BG, 124, CSI_SGR)),
 		},
 		{
 			defFmt,
 			format{underline: true},
-			[]byte(fmt.Sprintf("%c%c%d%c", ESC, ESC_CSI, UNDERLINE_ON, CSI_SGR)),
+			[]byte(fmt.Sprintf("%c%c%d%c", ESC, CSI, UNDERLINE_ON, CSI_SGR)),
 		},
 	}
 

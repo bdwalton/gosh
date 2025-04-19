@@ -54,11 +54,11 @@ func (src format) diff(dest format) []byte {
 	var sb, ts strings.Builder
 
 	if dfg := dest.getFG(); !dfg.equal(src.getFG()) {
-		sb.WriteString(fmt.Sprintf("%c%c%s%c", ESC, ESC_CSI, dfg.getAnsiString(SET_FG), CSI_SGR))
+		sb.WriteString(fmt.Sprintf("%c%c%s%c", ESC, CSI, dfg.getAnsiString(SET_FG), CSI_SGR))
 	}
 
 	if dbg := dest.getBG(); !dbg.equal(src.getBG()) {
-		sb.WriteString(fmt.Sprintf("%c%c%s%c", ESC, ESC_CSI, dbg.getAnsiString(SET_BG), CSI_SGR))
+		sb.WriteString(fmt.Sprintf("%c%c%s%c", ESC, CSI, dbg.getAnsiString(SET_BG), CSI_SGR))
 	}
 
 	if src.bold != dest.bold {
@@ -125,7 +125,7 @@ func (src format) diff(dest format) []byte {
 	}
 
 	if ts.Len() > 0 {
-		sb.Write([]byte{ESC, ESC_CSI})
+		sb.Write([]byte{ESC, CSI})
 		sb.WriteString(ts.String())
 		sb.WriteRune(CSI_SGR)
 	}

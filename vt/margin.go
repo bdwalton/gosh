@@ -47,7 +47,7 @@ func (m margin) equal(other margin) bool {
 
 func (m margin) getAnsi(csi rune) string {
 	// +1 because we're zero based internally
-	return fmt.Sprintf("%c%c%d;%d%c", ESC, ESC_CSI, m.val1+1, m.val2+1, csi)
+	return fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, m.val1+1, m.val2+1, csi)
 }
 
 func (m margin) String() string {
