@@ -137,7 +137,7 @@ func (src *framebuffer) diff(dest *framebuffer) []byte {
 				srcCell = defaultCell()
 			}
 
-			if !srcCell.equal(destCell) {
+			if destCell.frag != FRAG_SECONDARY && !srcCell.equal(destCell) {
 				if cur.row != lastCur.row || cur.col != lastCur.col+1 {
 					sb.WriteString(cur.getMoveToAnsi())
 				}

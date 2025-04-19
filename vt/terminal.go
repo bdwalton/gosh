@@ -516,7 +516,7 @@ func (t *Terminal) isModeSet(name string) bool {
 }
 
 func (t *Terminal) print(r rune) {
-	row, col := t.cur.row, t.cur.col
+	row, col := t.row(), t.col()
 	rw := runewidth.StringWidth(string(r))
 
 	switch rw {
@@ -557,6 +557,33 @@ func (t *Terminal) print(r rune) {
 			t.clearFrags(row, col)
 			nc := newCell(r, t.curF)
 
+			ins := t.isModeSet(pubIDToName[IRM])
+			if ins {
+				right := t.cols()
+				if t.inScrollingRegion() {
+					right = t.getRightMargin()
+				}
+				r, c := t.row(), t.col()
+				cells, err := t.fb.getRegion(r, r, c, right)
+				if err != nil {
+					slog.Debug("invalid framebuffer region", "r", r, "c", c, "right", right, "err", err)
+					return
+				}
+				last := cells.getNumCols() - 1
+				if last > rw {
+					for i := last; i >= rw; i-- {
+						c, err := cells.getCell(0, i-rw)
+						if err != nil {
+							slog.Debug("invalid cell in region", "row", 0, "col", i-1, "err", err)
+							return
+						}
+						cells.setCell(0, i, c)
+					}
+				} else {
+					cells.fill(newCell(' ', t.curF))
+				}
+			}
+
 			if rw > 1 {
 				// Clear adjacent cells and note fragments
 				t.fb.setCell(row, col+1, fragCell(0, t.curF, FRAG_SECONDARY))
@@ -564,7 +591,11 @@ func (t *Terminal) print(r rune) {
 			}
 
 			t.fb.setCell(row, col, nc)
-			t.cur.col += rw
+
+			if !ins {
+				t.cur.col += rw
+			}
+
 			return
 		}
 
@@ -591,7 +622,7 @@ func (t *Terminal) print(r rune) {
 			}
 		} else {
 			// overwrite chars at the end
-			col = t.rows() - rw
+			col = t.cols() - rw
 		}
 
 		t.clearFrags(row, col)

@@ -585,3 +585,69 @@ func TestStepTabs(t *testing.T) {
 		}
 	}
 }
+
+func TestIRM(t *testing.T) {
+	t1, _ := NewTerminal()
+	want1 := t1.Copy()
+	t1.print('a')
+	t1.print('b')
+	t1.setMode(IRM, "", CSI_MODE_SET)
+	t1.cursorMoveAbs(0, 1) // on top of the b
+	t1.print('*')
+	t1.setMode(IRM, "", CSI_MODE_RESET)
+	want1.print('a')
+	want1.print('*')
+	want1.print('b')
+	want1.lastChg = time.Now()
+
+	t2, _ := NewTerminal()
+	want2 := t2.Copy()
+	want2.lastChg = time.Now()
+	t2.cursorMoveAbs(0, 79)
+	t2.print('b')
+	t2.cursorMoveAbs(0, 79)
+	t2.setMode(IRM, "", CSI_MODE_SET)
+	t2.print('*')
+	t2.setMode(IRM, "", CSI_MODE_RESET)
+	want2.cursorMoveAbs(0, 79)
+	want2.print('*')
+
+	t3, _ := NewTerminal()
+	want3 := t3.Copy()
+	want3.lastChg = time.Now()
+	t3.cursorMoveAbs(0, 79)
+	t3.print('x')
+	t3.cursorMoveAbs(0, 79)
+	t3.setMode(IRM, "", CSI_MODE_SET)
+	t3.print('世')
+	t3.setMode(IRM, "", CSI_MODE_RESET)
+	want3.cursorMoveAbs(0, 79)
+	want3.print('世')
+
+	t4, _ := NewTerminal()
+	want4 := t4.Copy()
+	want4.lastChg = time.Now()
+	t4.print('x')
+	t4.cursorMoveAbs(0, 0)
+	t4.setMode(IRM, "", CSI_MODE_SET)
+	t4.print('世')
+	t4.setMode(IRM, "", CSI_MODE_RESET)
+	want4.print('世')
+	want4.print('x')
+
+	cases := []struct {
+		t, cmp *Terminal
+		want   string
+	}{
+		{t1, want1, "\x1b[;4H"}, // the want terminal moves the cursor as it prints
+		{t2, want2, "\x1b[;81H"},
+		{t3, want3, ""},         // we moved the cursor back to become equivalent
+		{t4, want4, "\x1b[;4H"}, // we didn't move the cursor back
+	}
+
+	for i, c := range cases {
+		if d := c.t.Diff(c.cmp); string(d) != c.want {
+			t.Errorf("%d: Got %q, wanted %q.", i, d, c.want)
+		}
+	}
+}
