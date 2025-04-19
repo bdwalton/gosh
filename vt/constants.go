@@ -148,26 +148,26 @@ const (
 
 // CSI private mode parameter codes
 const (
-	PRIV_DECCKM               = 1    // DEC application cursor keys
-	PRIV_DECCOLM              = 3    // DEC 80 (l) / 132 (h) mode DECCOLM
-	PRIV_SMOOTH_SCROLL        = 4    // Smooth scroll DECSCLM
-	PRIV_REV_VIDEO            = 5    // Reverse video DECSCNM
-	PRIV_ORIGIN_MODE          = 6    // Origin Mode DECOM
-	PRIV_DECAWM               = 7    // DEC autowrap mode, default reset
-	PRIV_AUTO_REPEAT          = 8    // Auto-repeat keys DECARM
-	PRIV_BLINK_CURSOR         = 12   // Start blinking cursor
-	PRIV_LNM                  = 20   // Line Feed/New Line Mode, default reset
-	PRIV_SHOW_CURSOR          = 25   // Show cursor DECTCEM
-	PRIV_XTERM_80_132_ALLOW   = 40   // Xterm specific to enable/disable 80/132 col reset
-	PRIV_REVERSE_WRAP         = 45   // Xterm's reverse-wraparound mode
-	PRIV_DISABLE_MOUSE_XY     = 1000 // Don't send Mouse X & Y on button press and release
-	PRIV_DISABLE_MOUSE_HILITE = 1001 // Don't use Hilite Mouse Tracking
-	PRIV_DISABLE_MOUSE_MOTION = 1002 // Don't use Cell Motion Mouse Tracking
-	PRIV_DISABLE_MOUSE_ALL    = 1003 // Don't use All Motion Mouse Tracking
-	PRIV_DISABLE_MOUSE_FOCUS  = 1004 // Don't send FocusIn/FocusOut events
-	PRIV_DISABLE_MOUSE_UTF8   = 1005 // Disable UTF-8 Mouse Mode
-	PRIV_DISABLE_MOUSE_SGR    = 1006 // Disable SGR Mouse Mode
-	PRIV_BRACKET_PASTE        = 2004 // Bracketed paste, ala xterm
+	DECCKM               = 1    // DEC application cursor keys
+	DECCOLM              = 3    // DEC 80 (l) / 132 (h) mode DECCOLM
+	SMOOTH_SCROLL        = 4    // Smooth scroll DECSCLM
+	REV_VIDEO            = 5    // Reverse video DECSCNM
+	DECOM                = 6    // Origin Mode DECOM
+	DECAWM               = 7    // DEC autowrap mode, default reset
+	AUTO_REPEAT          = 8    // Auto-repeat keys DECARM
+	BLINK_CURSOR         = 12   // Start blinking cursor
+	LNM                  = 20   // Line Feed/New Line Mode, default reset
+	SHOW_CURSOR          = 25   // Show cursor DECTCEM
+	XTERM_80_132         = 40   // Xterm specific to enable/disable 80/132 col reset
+	REV_WRAP             = 45   // Xterm's reverse-wraparound mode
+	DISABLE_MOUSE_XY     = 1000 // Don't send Mouse X & Y on button press and release
+	DISABLE_MOUSE_HILITE = 1001 // Don't use Hilite Mouse Tracking
+	DISABLE_MOUSE_MOTION = 1002 // Don't use Cell Motion Mouse Tracking
+	DISABLE_MOUSE_ALL    = 1003 // Don't use All Motion Mouse Tracking
+	DISABLE_MOUSE_FOCUS  = 1004 // Don't send FocusIn/FocusOut events
+	DISABLE_MOUSE_UTF8   = 1005 // Disable UTF-8 Mouse Mode
+	DISABLE_MOUSE_SGR    = 1006 // Disable SGR Mouse Mode
+	BRACKET_PASTE        = 2004 // Bracketed paste, ala xterm
 )
 
 // OSC actions

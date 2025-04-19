@@ -519,7 +519,7 @@ func (t *Terminal) print(r rune) {
 
 	switch rw {
 	case 0: // combining
-		if col == 0 && !t.isModeSet(privIDToName[PRIV_DECAWM]) {
+		if col == 0 && !t.isModeSet(privIDToName[DECAWM]) {
 			// can't do anything with this. if we're in
 			// the first position but hadn't wrapped, we
 			// don't have something to combine with, so
@@ -529,7 +529,7 @@ func (t *Terminal) print(r rune) {
 		}
 
 		switch {
-		case col == 0 && t.isModeSet(privIDToName[PRIV_DECAWM]): // we wrapped
+		case col == 0 && t.isModeSet(privIDToName[DECAWM]): // we wrapped
 			col = t.cols() - 1
 			row -= 1
 		case col >= t.cols(): // we're at the end of a row but didn't wrap
@@ -566,7 +566,7 @@ func (t *Terminal) print(r rune) {
 			return
 		}
 
-		if t.isModeSet(privIDToName[PRIV_DECAWM]) {
+		if t.isModeSet(privIDToName[DECAWM]) {
 			if t.inScrollingRegion() {
 				col = t.getLeftMargin()
 				if row == t.getBottomMargin() {
@@ -878,10 +878,10 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 		m.setState(state)
 		slog.Debug("setting private mode", "mode", name, "state", string(state))
 		switch mode {
-		case PRIV_DECCOLM:
+		case DECCOLM:
 			t.fb.fill(newCell(' ', t.curF))
 			t.homeCursor()
-		case PRIV_ORIGIN_MODE:
+		case DECOM:
 			t.homeCursor()
 		}
 	case "":
