@@ -13,6 +13,13 @@ const (
 )
 
 const (
+	CTRL_BEL  = 0x07 // ^G Bell
+	CTRL_BS   = 0x08 // ^H Backspace
+	CTRL_TAB  = 0x09 // ^I Tab \t
+	CTRL_LF   = 0x0a // ^J Line feed \n
+	CTRL_VT   = 0x0b // ^K Vertical tab \v
+	CTRL_FF   = 0x0c // ^L Form feed \f
+	CTRL_CR   = 0x0d // ^M Carriage return \r
 	ESC       = 0x1b
 	ESC_DECSC = '7' // DECSC - save cursor
 	ESC_DECRC = '8' // DECRC - restore cursor
@@ -21,27 +28,19 @@ const (
 	ESC_HTS   = 'H' // HTS - horizontal tab set
 	ESC_RI    = 'M' // RI - reverse index
 	ESC_DCS   = 'P'
-	ESC_RIS   = 'c' // RIS - Full reset
-	C1_DCS    = 0x8f
+	ESC_RIS   = 'c'  // RIS - Full reset
 	ESC_CSI   = 0x5b // ]
 	ESC_OSC   = 0x5d // [
 	ESC_ST    = '\\'
-	C1_CSI    = 0x9b
-	C1_ST     = 0x9c
-	C1_OSC    = 0x9d
 )
 
 // Control codes
 const (
-	CTRL_BEL = 0x07 // ^G Bell
-	CTRL_BS  = 0x08 // ^H Backspace
-	CTRL_TAB = 0x09 // ^I Tab \t
-	CTRL_LF  = 0x0a // ^J Line feed \n
-	CTRL_VT  = 0x0b // ^K Vertical tab \v
-	CTRL_FF  = 0x0c // ^L Form feed \f
-	CTRL_CR  = 0x0d // ^M Carriage return \r
-	CTRL_HTS = 0x88 // Set tab stop
-	CTRL_ST  = 0x9c // ST string terminator
+	C1_HTS = 0x88
+	C1_DCS = 0x8f
+	C1_CSI = 0x9b
+	C1_ST  = 0x9c
+	C1_OSC = 0x9d
 )
 
 // CSI codes

@@ -156,8 +156,9 @@ func TestOSCString(t *testing.T) {
 		wantOSC string
 	}{
 		{[]rune{C1_OSC, '0', ';', 'i', 'c', 'o', 'n', 't', 'i', 't', 'l', 'e', CTRL_BEL}, "0;icontitle"},
-		{[]rune{C1_OSC, '1', ';', 'i', 'c', 'o', 'n', CTRL_ST}, "1;icon"},
-		{[]rune{ESC, ESC_OSC, '2', ';', 't', 'i', 't', 'l', 'e', CTRL_ST}, "2;title"},
+		{[]rune{C1_OSC, '1', ';', 'i', 'c', 'o', 'n', C1_ST}, "1;icon"},
+		{[]rune{ESC, ESC_OSC, '2', ';', 't', 'i', 't', 'l', 'e', C1_ST}, "2;title"},
+		{[]rune{ESC, ESC_OSC, '2', ';', 't', 'i', 't', 'l', 'e', ESC, ESC_ST}, "2;title"},
 		{[]rune{ESC, ESC_OSC, '3', ';', 'F', 'o', 'O', CTRL_BEL}, "3;FoO"},
 	}
 
