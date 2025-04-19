@@ -193,8 +193,6 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 		}
 
 		sb.Write(fbd)
-		// Always reset the cursor
-		sb.WriteString(dest.cur.getMoveToAnsi())
 
 		// We assume that the pen was changed during the
 		// writing of the framebuffer diff, so always generate
@@ -204,6 +202,10 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 		// If we didn't write anything, the pen may still be
 		// different so we should ship the delta.
 		sb.Write(src.curF.diff(dest.curF))
+	}
+
+	if len(fbd) > 0 || !src.cur.equal(dest.cur) {
+		sb.WriteString(dest.cur.getMoveToAnsi())
 	}
 
 	return []byte(sb.String())
