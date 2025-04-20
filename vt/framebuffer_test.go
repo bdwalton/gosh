@@ -409,6 +409,12 @@ func TestFrameBufferDiff(t *testing.T) {
 	fb11 := fb9.copy()
 	fb11.setCell(0, 0, newCell('B', defFmt))
 
+	fb12 := newFramebuffer(24, 80)
+	fb12.setCell(0, 78, newCell('y', defFmt))
+	fb12.setCell(0, 79, newCell('y', defFmt))
+	fb13 := newFramebuffer(24, 80)
+	fb13.setCell(0, 78, newCell('y', defFmt))
+
 	cases := []struct {
 		srcFB, destFB *framebuffer
 		want          string
@@ -428,6 +434,7 @@ func TestFrameBufferDiff(t *testing.T) {
 		{fb7, fb8, "\x1b[H \x1b[40mabc \x1b[30m\x1b[44m\ue0b0 ~ \x1b[34m\x1b[49m\ue0b0\x1b[m "},
 		{fb9, fb10, "\x1b[;2H*"},
 		{fb9, fb11, "\x1b[HB"},
+		{fb12, fb13, "\x1b[;80H "},
 	}
 
 	for i, c := range cases {
