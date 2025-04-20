@@ -603,19 +603,14 @@ func (t *Terminal) print(r rune) {
 			if t.inScrollingRegion() {
 				col = t.getLeftMargin()
 				if row == t.getBottomMargin() {
-					fb, err := t.getScrollingRegion()
-					if err != nil {
-						slog.Debug("failed to get scrolling region", "err", err)
-						return
-					}
-					fb.scrollRows(1)
+					t.scrollRegion(1)
 				} else {
 					row += 1
 				}
 			} else {
 				col = 0
 				if row == t.rows() {
-					t.fb.scrollRows(1)
+					t.scrollAll(1)
 				} else {
 					row += 1
 				}
