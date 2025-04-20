@@ -670,6 +670,8 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		t.csiQ(params, data)
 	case CSI_XTWINOPS:
 		t.xtwinops(params)
+	case CSI_DCH:
+		t.deleteChars(params, data)
 	case CSI_ICH:
 		// Insert n blank characters
 		n := params.getItem(0, 1)
@@ -1042,6 +1044,46 @@ func (t *Terminal) deleteLines(params *parameters) {
 
 	for i := t.cur.row; i < t.cur.row+m && t.vertMargin.contains(i); i++ {
 		t.fb.data[i] = newRow(cols)
+	}
+}
+
+func (t *Terminal) deleteChars(params *parameters, data []rune) {
+	if len(data) != 0 {
+		slog.Debug("skipping CSI DCH with unexpected data", "params", params, "data", string(data))
+		return
+	}
+
+	n := params.getItem(0, 1)
+	if n == 0 {
+		n = 1
+	}
+
+	row := t.row()
+	if row == t.rows()-1 {
+		return
+	}
+
+	right := t.rows() - 1
+	if t.inScrollingRegion() {
+		right = t.getRightMargin()
+	}
+
+	col := t.col()
+	cells, err := t.fb.getRegion(row, row, col, right)
+	if err != nil {
+		slog.Debug("invalid framebuffer region", "r", row, "c", col, "right", right)
+	}
+
+	offset := 1
+	for x := 0; x < n; x++ {
+		for i := 1; i < cells.getNumCols(); i++ {
+			c, err := cells.getCell(0, i)
+			if err != nil {
+				slog.Error("invalid cell request during deleteChars", "col", i, "cur", t.cur)
+			}
+
+			cells.setCell(0, i-offset, c)
+		}
 	}
 }
 

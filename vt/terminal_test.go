@@ -651,3 +651,31 @@ func TestIRM(t *testing.T) {
 		}
 	}
 }
+
+func TestDeleteChars(t *testing.T) {
+	t1, _ := NewTerminal()
+	want1 := t1.Copy()
+	t1.print('a')
+	t1.print('b')
+	t1.print('c')
+	t1.cursorMoveAbs(0, 1) // on top of the b
+	want1.print('a')
+	want1.print('c')
+	want1.lastChg = time.Now()
+	p1 := &parameters{num: 1, items: []int{1}}
+
+	cases := []struct {
+		t, cmp *Terminal
+		n      int // number of chars to delete
+		want   string
+	}{
+		{t1, want1, 0, "\x1b[;3H"}, // the want terminal moves the cursor as it prints
+	}
+
+	for i, c := range cases {
+		c.t.deleteChars(p1, []rune{})
+		if d := string(c.t.Diff(c.cmp)); d != c.want {
+			t.Errorf("%d: Got %q, wanted %q.", i, d, c.want)
+		}
+	}
+}
