@@ -131,19 +131,27 @@ func (t *Terminal) Copy() *Terminal {
 		modes[name] = m.copy()
 	}
 
+	// note that we don't copy margins and we also don't compare
+	// them for diffs. this is only important for the server side
+	// rendering so we can ignore it as long as we handle it
+	// appropriately and ship the visual diff to the client.
 	return &Terminal{
-		fb:          t.fb.copy(),
-		title:       t.title,
-		icon:        t.icon,
-		cur:         t.cur,
-		curF:        t.curF,
-		modes:       modes,
-		lastChg:     t.lastChg,
-		vertMargin:  t.vertMargin,
-		horizMargin: t.horizMargin,
+		fb:      t.fb.copy(),
+		title:   t.title,
+		icon:    t.icon,
+		cur:     t.cur,
+		curF:    t.curF,
+		modes:   modes,
+		lastChg: t.lastChg,
 	}
 }
 
+// Diff will generate a sequence of bytes that, when applied, would
+// move src to dest. This is at a visual level only as the server will
+// ship these diffs to the client which is stateless and only used to
+// display output. Because of that, we can ignore some properties like
+// margins which are only important if you're applying all of the
+// display updating based on the output from the pty directly.
 func (src *Terminal) Diff(dest *Terminal) []byte {
 	var sb strings.Builder
 
@@ -163,14 +171,6 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 				sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_TITLE, string(dest.title), BEL))
 			}
 		}
-	}
-
-	if !src.horizMargin.equal(dest.horizMargin) {
-		sb.WriteString(dest.horizMargin.getAnsi(CSI_DECSLRM))
-	}
-
-	if !src.vertMargin.equal(dest.vertMargin) {
-		sb.WriteString(dest.vertMargin.getAnsi(CSI_DECSTBM))
 	}
 
 	modeNames := make([]string, len(src.modes), len(src.modes))
