@@ -62,6 +62,14 @@ func (p *parameters) getItem(item, def int) int {
 	return p.items[item]
 }
 
+func (p *parameters) getItemOneIfZero(item, def int) int {
+	n := p.getItem(item, def)
+	if n == 0 {
+		return 1
+	}
+	return n
+}
+
 func (p *parameters) lastItem() int {
 	if p.num == 0 {
 		return 0

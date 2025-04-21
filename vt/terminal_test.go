@@ -683,21 +683,11 @@ func TestDeleteChars(t *testing.T) {
 		prtCmd{0, 0, "ac"},
 		prtCmd{0, 1, ""},
 	}, nil)
-	p1 := &parameters{num: 1, items: []int{1}}
-
-	t2 := t1.Copy()
-	want2 := want1.Copy()
-	p2 := &parameters{num: 0, items: []int{}}
-
-	t3 := t1.Copy()
-	want3 := want1.Copy()
-	p3 := &parameters{num: 1, items: []int{0}}
 
 	t4 := t1.Copy()
 	want4 := mt([]prtCmd{
 		prtCmd{0, 0, "a"},
 	}, nil)
-	p4 := &parameters{num: 1, items: []int{2}}
 
 	t5 := mt([]prtCmd{
 		prtCmd{0, 0, "axy世"},
@@ -709,7 +699,6 @@ func TestDeleteChars(t *testing.T) {
 		prtCmd{0, 75, "z"},
 		prtCmd{0, 1, ""}, // on top of the empty cell beside a
 	}, nil)
-	p5 := &parameters{num: 1, items: []int{3}} // delete b
 
 	t6 := mt([]prtCmd{
 		prtCmd{0, 0, "x世y"},
@@ -723,7 +712,6 @@ func TestDeleteChars(t *testing.T) {
 		// 2 columns, so not 78
 		prtCmd{0, 1, ""}, // on top of the y
 	}, nil)
-	p6 := &parameters{num: 1, items: []int{1}} // delete wide char 世
 
 	t7 := mt([]prtCmd{
 		prtCmd{0, 0, "x世y世z"},
@@ -737,7 +725,6 @@ func TestDeleteChars(t *testing.T) {
 		// 2 columns, so not 78
 		prtCmd{0, 1, ""}, // on top of the y
 	}, nil)
-	p7 := &parameters{num: 1, items: []int{1}} // delete wide char 世
 
 	t8 := mt([]prtCmd{
 		prtCmd{0, 0, "x世y"},
@@ -751,25 +738,22 @@ func TestDeleteChars(t *testing.T) {
 		prtCmd{0, 79, "z"},
 		prtCmd{0, 1, ""}, // on top of the y
 	}, &margin{0, 51, true})
-	p8 := &parameters{num: 1, items: []int{1}} // delete wide char 世
 
 	cases := []struct {
 		t, cmp *Terminal
-		p      *parameters
+		n      int // how many characters to delete
 		want   string
 	}{
-		{t1, want1, p1, ""}, // the want terminal moves the cursor as it prints
-		{t2, want2, p2, ""}, // 0 param treated as 1, same as previous test
-		{t3, want3, p3, ""}, // 0 param treated as 1, same as previous test
-		{t4, want4, p4, ""},
-		{t5, want5, p5, ""},
-		{t6, want6, p6, ""},
-		{t7, want7, p7, ""},
-		{t8, want8, p8, ""},
+		{t1, want1, 1, ""}, // the want terminal moves the cursor as it prints
+		{t4, want4, 2, ""},
+		{t5, want5, 3, ""},
+		{t6, want6, 1, ""},
+		{t7, want7, 1, ""},
+		{t8, want8, 1, ""},
 	}
 
 	for i, c := range cases {
-		c.t.deleteChars(c.p, []rune{})
+		c.t.deleteChars(c.n)
 		if d := string(c.t.Diff(c.cmp)); d != c.want {
 			t.Errorf("%d: Got %q, wanted %q.", i, d, c.want)
 		}

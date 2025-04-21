@@ -673,7 +673,11 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_XTWINOPS:
 		t.xtwinops(params)
 	case CSI_DCH:
-		t.deleteChars(params, data)
+		if len(data) != 0 {
+			slog.Debug("skipping CSI DCH with unexpected data", "params", params, "data", string(data))
+			return
+		}
+		t.deleteChars(params.getItemOneIfZero(0, 1))
 	case CSI_ICH:
 		// Insert n blank characters
 		n := params.getItem(0, 1)
@@ -1049,16 +1053,7 @@ func (t *Terminal) deleteLines(params *parameters) {
 	}
 }
 
-func (t *Terminal) deleteChars(params *parameters, data []rune) {
-	if len(data) != 0 {
-		slog.Debug("skipping CSI DCH with unexpected data", "params", params, "data", string(data))
-		return
-	}
-
-	n := params.getItem(0, 1)
-	if n == 0 {
-		n = 1
-	}
+func (t *Terminal) deleteChars(n int) {
 
 	row, col := t.row(), t.col()
 	right := t.cols()
