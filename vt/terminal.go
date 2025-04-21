@@ -132,13 +132,15 @@ func (t *Terminal) Copy() *Terminal {
 	}
 
 	return &Terminal{
-		fb:      t.fb.copy(),
-		title:   t.title,
-		icon:    t.icon,
-		cur:     t.cur,
-		curF:    t.curF,
-		modes:   modes,
-		lastChg: t.lastChg,
+		fb:          t.fb.copy(),
+		title:       t.title,
+		icon:        t.icon,
+		cur:         t.cur,
+		curF:        t.curF,
+		modes:       modes,
+		lastChg:     t.lastChg,
+		vertMargin:  t.vertMargin,
+		horizMargin: t.horizMargin,
 	}
 }
 
