@@ -1058,32 +1058,56 @@ func (t *Terminal) deleteChars(params *parameters, data []rune) {
 		n = 1
 	}
 
-	row := t.row()
-	if row == t.rows()-1 {
-		return
-	}
-
-	right := t.rows() - 1
+	row, col := t.row(), t.col()
+	right := t.cols()
 	if t.inScrollingRegion() {
 		right = t.getRightMargin()
 	}
 
-	col := t.col()
-	cells, err := t.fb.getRegion(row, row, col, right)
-	if err != nil {
-		slog.Debug("invalid framebuffer region", "r", row, "c", col, "right", right)
+	// If the cursor happens to be parked on a fragment cell, we
+	// need to adjust for how we do our deletion.
+	c, _ := t.fb.getCell(row, col)
+	if c.isFragment() {
+		// we need to ensure we overwrite this character and
+		// the secondary fragment, so pull everything back by
+		// an additional 1 column.
+		n += 1
+	}
+	if c.isSecondaryFrag() {
+		// We need to account for the the primary fragment in
+		// how we handle this, so in addition to pulling all
+		// chars back an extra column, we also start our range
+		// on the primary
+		col -= 1
 	}
 
-	offset := 1
-	for x := 0; x < n; x++ {
-		for i := 1; i < cells.getNumCols(); i++ {
-			c, err := cells.getCell(0, i)
-			if err != nil {
-				slog.Error("invalid cell request during deleteChars", "col", i, "cur", t.cur)
-			}
+	reg, err := t.fb.getRegion(row, row, col, right)
+	if err != nil {
+		slog.Debug("invalid framebuffer region", "r", row, "c", col, "right", right, "err", err)
+	}
 
-			cells.setCell(0, i-offset, c)
+	nc := reg.getNumCols()
+	offset := n
+	for i := n; i < nc; i++ {
+		c, err := reg.getCell(0, i)
+		// If we start on a secondary fragment, we need to
+		// skip it and then increase the offset at which we
+		// shift cells back.
+		if i == n && c.isSecondaryFrag() {
+			offset += 1
+			continue
 		}
+		if err != nil {
+			slog.Error("invalid cell request during deleteChars", "col", i, "cur", t.cur, "err", err)
+		}
+
+		reg.setCell(0, i-offset, c)
+	}
+	// TODO: Handle format more appropriately here.  Leave
+	// it intact? Default as we do now? Does BCE come into
+	// play?
+	for i := nc - 1; i > nc-1-n; i-- {
+		reg.setCell(0, i, defaultCell())
 	}
 }
 

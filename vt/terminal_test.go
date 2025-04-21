@@ -652,28 +652,124 @@ func TestIRM(t *testing.T) {
 	}
 }
 
+type prtCmd struct {
+	row, col int
+	chars    string
+}
+
+func mt(cmds []prtCmd, m *margin) *Terminal {
+	nt, _ := NewTerminal()
+	nt.lastChg = time.Now()
+	for _, c := range cmds {
+		nt.cursorMoveAbs(c.row, c.col)
+		for _, r := range c.chars {
+			nt.print(r)
+		}
+	}
+	if m != nil {
+		nt.horizMargin = *m
+	}
+
+	return nt
+}
+
 func TestDeleteChars(t *testing.T) {
-	t1, _ := NewTerminal()
-	want1 := t1.Copy()
-	t1.print('a')
-	t1.print('b')
-	t1.print('c')
-	t1.cursorMoveAbs(0, 1) // on top of the b
-	want1.print('a')
-	want1.print('c')
-	want1.lastChg = time.Now()
+	t1 := mt([]prtCmd{
+		prtCmd{0, 0, "abc"},
+		prtCmd{0, 1, ""}, // on top of the b
+	}, nil)
+
+	want1 := mt([]prtCmd{
+		prtCmd{0, 0, "ac"},
+		prtCmd{0, 1, ""},
+	}, nil)
 	p1 := &parameters{num: 1, items: []int{1}}
+
+	t2 := t1.Copy()
+	want2 := want1.Copy()
+	p2 := &parameters{num: 0, items: []int{}}
+
+	t3 := t1.Copy()
+	want3 := want1.Copy()
+	p3 := &parameters{num: 1, items: []int{0}}
+
+	t4 := t1.Copy()
+	want4 := mt([]prtCmd{
+		prtCmd{0, 0, "a"},
+	}, nil)
+	p4 := &parameters{num: 1, items: []int{2}}
+
+	t5 := mt([]prtCmd{
+		prtCmd{0, 0, "axy世"},
+		prtCmd{0, 79, "z"},
+		prtCmd{0, 1, ""}, // one top of the x
+	}, nil)
+	want5 := mt([]prtCmd{
+		prtCmd{0, 0, "a"},
+		prtCmd{0, 75, "z"},
+		prtCmd{0, 1, ""}, // on top of the empty cell beside a
+	}, nil)
+	p5 := &parameters{num: 1, items: []int{3}} // delete b
+
+	t6 := mt([]prtCmd{
+		prtCmd{0, 0, "x世y"},
+		prtCmd{0, 79, "z"},
+		prtCmd{0, 1, ""}, // one top of the 世
+	}, nil)
+	want6 := mt([]prtCmd{
+		prtCmd{0, 0, "xy"},
+		prtCmd{0, 77, "z"}, // Deleting the 世 should delete
+		// the frag and pull this back by
+		// 2 columns, so not 78
+		prtCmd{0, 1, ""}, // on top of the y
+	}, nil)
+	p6 := &parameters{num: 1, items: []int{1}} // delete wide char 世
+
+	t7 := mt([]prtCmd{
+		prtCmd{0, 0, "x世y世z"},
+		prtCmd{0, 79, "z"},
+		prtCmd{0, 1, ""}, // one top of the 世
+	}, nil)
+	want7 := mt([]prtCmd{
+		prtCmd{0, 0, "xy世z"},
+		prtCmd{0, 77, "z"}, // Deleting the 世 should delete
+		// the frag and pull this back by
+		// 2 columns, so not 78
+		prtCmd{0, 1, ""}, // on top of the y
+	}, nil)
+	p7 := &parameters{num: 1, items: []int{1}} // delete wide char 世
+
+	t8 := mt([]prtCmd{
+		prtCmd{0, 0, "x世y"},
+		prtCmd{0, 50, "世"},
+		prtCmd{0, 79, "z"},
+		prtCmd{0, 1, ""}, // one top of the 世
+	}, &margin{0, 51, true})
+	want8 := mt([]prtCmd{
+		prtCmd{0, 0, "xy"},
+		prtCmd{0, 48, "世"},
+		prtCmd{0, 79, "z"},
+		prtCmd{0, 1, ""}, // on top of the y
+	}, &margin{0, 51, true})
+	p8 := &parameters{num: 1, items: []int{1}} // delete wide char 世
 
 	cases := []struct {
 		t, cmp *Terminal
-		n      int // number of chars to delete
+		p      *parameters
 		want   string
 	}{
-		{t1, want1, 0, "\x1b[;3H"}, // the want terminal moves the cursor as it prints
+		{t1, want1, p1, ""}, // the want terminal moves the cursor as it prints
+		{t2, want2, p2, ""}, // 0 param treated as 1, same as previous test
+		{t3, want3, p3, ""}, // 0 param treated as 1, same as previous test
+		{t4, want4, p4, ""},
+		{t5, want5, p5, ""},
+		{t6, want6, p6, ""},
+		{t7, want7, p7, ""},
+		{t8, want8, p8, ""},
 	}
 
 	for i, c := range cases {
-		c.t.deleteChars(p1, []rune{})
+		c.t.deleteChars(c.p, []rune{})
 		if d := string(c.t.Diff(c.cmp)); d != c.want {
 			t.Errorf("%d: Got %q, wanted %q.", i, d, c.want)
 		}
