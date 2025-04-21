@@ -335,20 +335,15 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	case 'A', 'B', 'C', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
 		slog.Debug("swallowing ESC character set command", "params", params, "data", string(data), "cmd", string(r))
 	case NEL:
-		max := t.rows() - 1
+		max := t.getBottomMargin()
+		left := 0
 		if t.inScrollingRegion() {
-			max = t.getBottomMargin()
-			if t.cur.row == max {
-				t.scrollRegion(1)
-			} else {
-				t.cursorMoveAbs(t.cur.row+1, t.getLeftMargin())
-			}
+			left = t.getLeftMargin()
+		}
+		if t.cur.row == max {
+			t.scrollRegion(1)
 		} else {
-			if t.cur.row == max {
-				t.scrollAll(1)
-			} else {
-				t.cursorMoveAbs(t.cur.row+1, 0)
-			}
+			t.cursorMoveAbs(t.cur.row+1, left)
 		}
 	case 'F':
 		if t.inScrollingRegion() {
@@ -361,36 +356,18 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 		// (swedish on vt220).
 		t.tabs[t.cur.col] = true
 	case IND: // move cursor one line down, scrolling if needed
-		max := t.rows() - 1
-		if t.inScrollingRegion() {
-			max = t.getBottomMargin()
-			if t.cur.row == max {
-				t.scrollRegion(1)
-			} else {
-				t.cursorMoveAbs(t.cur.row+1, t.cur.col)
-			}
+		max := t.getBottomMargin()
+		if t.cur.row == max {
+			t.scrollRegion(1)
 		} else {
-			if t.cur.row == max {
-				t.scrollAll(1)
-			} else {
-				t.cursorMoveAbs(t.cur.row+1, t.cur.col)
-			}
+			t.cursorMoveAbs(t.cur.row+1, t.cur.col)
 		}
 	case RI: // move cursor one line up, scrolling if needed
-		min := 0
-		if t.inScrollingRegion() {
-			min = t.getTopMargin()
-			if t.cur.row == min {
-				t.scrollRegion(-1)
-			} else {
-				t.cursorMoveAbs(t.cur.row-1, t.cur.col)
-			}
+		min := t.getTopMargin()
+		if t.cur.row == min {
+			t.scrollRegion(-1)
 		} else {
-			if t.cur.row == min {
-				t.scrollAll(-11)
-			} else {
-				t.cursorMoveAbs(t.cur.row-1, t.cur.col)
-			}
+			t.cursorMoveAbs(t.cur.row-1, t.cur.col)
 		}
 	case DECSC: // save cursor
 		t.savedCur = t.cur.Copy()
@@ -612,7 +589,7 @@ func (t *Terminal) print(r rune) {
 			} else {
 				col = 0
 				if row == t.rows() {
-					t.scrollAll(1)
+					t.scrollRegion(1)
 				} else {
 					row += 1
 				}
@@ -706,19 +683,9 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_EL:
 		t.eraseLine(params)
 	case CSI_SU:
-		n := params.getItem(0, 1)
-		if t.inScrollingRegion() {
-			t.scrollRegion(-n)
-		} else {
-			t.scrollAll(-n)
-		}
+		t.scrollRegion(-params.getItem(0, 1))
 	case CSI_SD:
-		n := params.getItem(0, 1)
-		if t.inScrollingRegion() {
-			t.scrollRegion(n)
-		} else {
-			t.scrollAll(n)
-		}
+		t.scrollRegion(params.getItem(0, 1))
 	case CSI_ED:
 		t.eraseInDisplay(params)
 	case CSI_VPA, CSI_VPR, CSI_HPA, CSI_HPR, CSI_CUP, CSI_CUU, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
@@ -817,10 +784,6 @@ func (t *Terminal) scrollRegion(n int) {
 		return
 	}
 	fb.scrollRows(n)
-}
-
-func (t *Terminal) scrollAll(n int) {
-	t.fb.scrollRows(n)
 }
 
 func (t *Terminal) xtwinops(params *parameters) {
