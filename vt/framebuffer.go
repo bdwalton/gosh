@@ -34,6 +34,18 @@ type cell struct {
 	frag int
 }
 
+func (c cell) isFragment() bool {
+	return c.frag != FRAG_NONE
+}
+
+func (c cell) isPrimaryFrag() bool {
+	return c.frag == FRAG_PRIMARY
+}
+
+func (c cell) isSecondaryFrag() bool {
+	return c.frag == FRAG_SECONDARY
+}
+
 func defaultCell() cell {
 	return cell{r: ' '} // set == false, so our placeholder rune is a space
 }
