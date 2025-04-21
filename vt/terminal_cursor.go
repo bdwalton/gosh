@@ -68,7 +68,7 @@ func (t *Terminal) cursorCHAorHPA(col int) {
 	t.cursorMoveAbs(t.row(), col)
 }
 
-// Move to an absolute position. Param m and n are assumed to be
+// Move to an absolute position. Param row and col are assumed to be
 // normalized to our 0 indexing by the caller.
 func (t *Terminal) cursorCUPorHVP(row, col int) {
 	// TODO: What does "format effector" mean for HVP
