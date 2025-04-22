@@ -118,62 +118,34 @@ func (t *Terminal) cursorCPL(n int) {
 }
 
 func (t *Terminal) cursorUp(n int) {
-	row := t.row()
-	top := t.topMargin()
-	if row < top {
-		top = 0
-	}
-
-	row -= n
-	if row < top {
+	row := t.row() - n
+	if top := t.boundedMarginTop(); row < top {
 		row = top
 	}
-
 	t.cursorMoveAbs(row, t.col())
 }
 
 func (t *Terminal) cursorDown(n int) {
-	row := t.row()
-	bottom := t.bottomMargin()
-	if row > bottom {
-		bottom = t.rows()
-	}
-
-	row += n
-	if row > bottom {
+	row := t.row() + n
+	if bottom := t.boundedMarginBottom(); row > bottom {
 		row = bottom
 	}
 	t.cursorMoveAbs(row, t.col())
 }
 
 func (t *Terminal) cursorForward(n int) {
-	col := t.col()
-	right := t.rightMargin()
-	if col > right {
-		right = t.cols() - 1
-	}
-
-	col += n
-	if col > right {
-		// TODO: handle wrap
+	col := t.col() + n
+	if right := t.boundedMarginRight(); col > right {
 		col = right
 	}
-
 	t.cursorMoveAbs(t.row(), col)
 }
 
 func (t *Terminal) cursorBack(n int) {
-	col := t.col()
-	left := t.leftMargin()
-	if col < left {
-		left = 0
-	}
-
-	col -= n
-	if col < left {
+	col := t.col() - n
+	if left := t.boundedMarginLeft(); col < left {
 		col = left
 	}
-
 	t.cursorMoveAbs(t.row(), col)
 }
 

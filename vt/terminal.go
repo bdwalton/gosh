@@ -301,6 +301,34 @@ func (t *Terminal) rows() int {
 	return t.fb.rows()
 }
 
+func (t *Terminal) boundedMarginLeft() int {
+	if t.horizMargin.isSet() && t.horizMargin.min() <= t.col() {
+		return t.horizMargin.min()
+	}
+	return 0
+}
+
+func (t *Terminal) boundedMarginRight() int {
+	if t.horizMargin.isSet() && t.horizMargin.max() >= t.col() {
+		return t.horizMargin.max()
+	}
+	return t.cols() - 1
+}
+
+func (t *Terminal) boundedMarginTop() int {
+	if t.vertMargin.isSet() && t.vertMargin.min() <= t.row() {
+		return t.vertMargin.min()
+	}
+	return 0
+}
+
+func (t *Terminal) boundedMarginBottom() int {
+	if t.vertMargin.isSet() && t.vertMargin.max() >= t.row() {
+		return t.vertMargin.max()
+	}
+	return t.rows() - 1
+}
+
 func (t *Terminal) leftMargin() int {
 	if t.horizMargin.isSet() {
 		return t.horizMargin.min()
