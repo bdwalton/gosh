@@ -81,13 +81,13 @@ func TestLineFeed(t *testing.T) {
 		{horizMTerm(), cursor{9, 5}, cursor{9, 5}}, // should scroll region
 		{boxMTerm(), cursor{0, 0}, cursor{1, 0}},
 		{boxMTerm(), cursor{5, 3}, cursor{5, 3}}, // should scroll region
-		{boxMTerm(), cursor{9, 3}, cursor{9, 3}}, // should scroll
+		{boxMTerm(), cursor{9, 3}, cursor{9, 3}}, // no scroll (out marg, last row)
 	}
 
 	for i, c := range cases {
 		c.t.cur = c.cur
 		c.t.lineFeed()
-		if c.cur.row == c.wantCur.row {
+		if c.cur.row == c.wantCur.row && c.cur.row != c.t.rows()-1 { // we hit bottom so scrolled
 			gc, _ := c.t.fb.cell(c.cur.row-1, c.cur.col)
 			if !gc.equal(xc) {
 				t.Errorf("%d: Invalid linefeed scroll (old line). Got %v, wanted %v", i, gc, xc)

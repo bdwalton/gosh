@@ -767,27 +767,15 @@ func (t *Terminal) scrollingRegion() (*framebuffer, error) {
 }
 
 func (t *Terminal) lineFeed() {
-	var err error
-	fb := t.fb
-	cur := t.cur
-	if t.inScrollingRegion() {
-		// adjust cursor so it is relative to top margin
-		cur.row -= t.topMargin()
-		cur.col -= t.leftMargin()
-		slog.Debug("in scrolling region, adjusting cursor", "cur", cur, "orig", t.cur)
-		fb, err = t.scrollingRegion()
-		if err != nil {
-			slog.Debug("error obtaining framebuffer region", "err", err)
-			return
+	row := t.row()
+	if bottom := t.boundedMarginBottom(); row == bottom {
+		// else nothing because we're at the vert margin, but
+		// outside the horiz margin and we stop.
+		if t.horizMargin.contains(t.col()) {
+			t.scrollRegion(1)
 		}
-	}
-
-	if !fb.validPoint(cur.row+1, cur.col) {
-		// Add new row, but keep cursor in the same position
-		// TODO: fill the new row with BCE color?
-		fb.scrollRows(1)
 	} else {
-		t.cursorMoveAbs(t.cur.row+1, t.cur.col)
+		t.cursorMoveAbs(row+1, t.col())
 	}
 }
 
