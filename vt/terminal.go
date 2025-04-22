@@ -1066,12 +1066,14 @@ func (t *Terminal) deleteChars(n int) {
 
 // insertChars  will insert r, n times
 func (t *Terminal) insertChars(r rune, n int) {
-	lastCol := t.cols() - 1
+	slog.Debug("insertChars", "r", string(r), "n", n)
+	om := t.isModeSet(pubIDToName[IRM])
+	t.setMode(IRM, "", CSI_MODE_SET)
 	for i := 0; i < n; i++ {
-		if t.col() == lastCol {
-			break
-		}
-		t.print(' ')
+		t.print(r)
+	}
+	if !om {
+		t.setMode(IRM, "", CSI_MODE_RESET)
 	}
 }
 
