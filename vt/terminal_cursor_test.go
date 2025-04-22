@@ -188,13 +188,11 @@ func TestCursorUp(t *testing.T) {
 	}{
 		// CUU - cursor up
 		{tNoMargin, homeCursor, 1, 0, 0},
-		{tNoMargin, midCur, 0, 14, 5},
 		{tNoMargin, homeCursor, 2, 0, 0},
 		{tNoMargin, midCur, 1, 14, 5},
 		{tNoMargin, midCur, 2, 13, 5},
 		{tVertMargin, midCur, 2, 13, 5},
 		{tVertMargin, midCur, 11, minVMargRow, 5},
-		{tVertMargin, midCur, 0, 14, 5},
 	}
 
 	for i, c := range cases {
@@ -215,11 +213,10 @@ func TestCursorDown(t *testing.T) {
 	}{
 		// CUD - cursor down
 		{tNoMargin, bottomCur, 0, maxRow, 15},
-		{tNoMargin, midCur, 0, 16, 5},
+		{tNoMargin, midCur, 1, 16, 5},
 		{tNoMargin, bottomCur, 1, maxRow, 15},
 		{tNoMargin, bottomCur, 3, maxRow, 15},
 		{tNoMargin, homeCursor, 1, 1, 0},
-		{tNoMargin, homeCursor, 0, 1, 0},
 		{tNoMargin, homeCursor, 3, 3, 0},
 		{tVertMargin, midCur, 2, 15, 5},
 		{tVertMargin, midCur, 3, 15, 5},
@@ -245,9 +242,7 @@ func TestCursorBack(t *testing.T) {
 		wantRow, wantCol int
 	}{
 		// CUB - cursor back
-		{tNoMargin, cursor{15, 15}, 0, 15, 14},
 		{tNoMargin, cursor{15, 15}, 1, 15, 14},
-		{tNoMargin, cursor{15, 0}, 0, 15, 0},
 		{tNoMargin, cursor{15, 0}, 1, 15, 0},
 		{tNoMargin, cursor{15, 0}, 2, 15, 0},
 		{tNoMargin, cursor{15, 3}, 2, 15, 1},
@@ -275,7 +270,6 @@ func TestCursorForward(t *testing.T) {
 		wantRow, wantCol int
 	}{
 		// CUF - cursor forward
-		{tNoMargin, cursor{15, 0}, 0, 15, 1}, // zero isn't valid, treat as 1
 		{tNoMargin, cursor{15, 0}, 1, 15, 1},
 		{tNoMargin, cursor{15, 0}, 10, 15, 10},
 		{tNoMargin, cursor{15, tNoMargin.cols() - 1}, 0, 15, tNoMargin.cols() - 1},

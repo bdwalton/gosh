@@ -21,35 +21,32 @@ func (t *Terminal) homeCursor() {
 }
 
 func (t *Terminal) cursorMove(params *parameters, moveType rune) {
-	// No paramter indicates a 0 value, but for cursor
-	// movement, we always default to 1. That allows more
-	// efficient specification of the common movements.
-	p1 := params.item(0, 1)
-
 	switch moveType {
 	case CSI_HPA, CSI_CHA:
-		t.cursorCHAorHPA(p1 - 1) // expects 0 based when called
+		// expects 0 based indexes when called
+		t.cursorCHAorHPA(params.item(0, 1) - 1)
 	case CSI_CUP, CSI_HVP:
 		// expects 0 based indexes when called
-		t.cursorCUPorHVP(p1-1, params.item(1, 1)-1)
-	case CSI_HPR:
-		t.cursorHPR(p1)
+		t.cursorCUPorHVP(params.item(0, 1)-1, params.item(1, 1)-1)
 	case CSI_VPA:
-		t.cursorVPA(p1 - 1) // expects 0 based when called
+		// expects 0 based when called
+		t.cursorVPA(params.item(0, 1) - 1)
+	case CSI_HPR:
+		t.cursorHPR(params.item(0, 1))
 	case CSI_VPR:
-		t.cursorVPR(p1)
+		t.cursorVPR(params.item(0, 1))
 	case CSI_CUU:
-		t.cursorUp(p1)
+		t.cursorUp(params.itemDefaultOneIfZero(0, 1))
 	case CSI_CUD:
-		t.cursorDown(p1)
+		t.cursorDown(params.itemDefaultOneIfZero(0, 1))
 	case CSI_CUB:
-		t.cursorBack(p1)
+		t.cursorBack(params.itemDefaultOneIfZero(0, 1))
 	case CSI_CUF:
-		t.cursorForward(p1)
+		t.cursorForward(params.itemDefaultOneIfZero(0, 1))
 	case CSI_CNL:
-		t.cursorCNL(p1)
+		t.cursorCNL(params.item(0, 1))
 	case CSI_CPL:
-		t.cursorCPL(p1)
+		t.cursorCPL(params.item(0, 1))
 	}
 }
 
@@ -121,9 +118,6 @@ func (t *Terminal) cursorCPL(n int) {
 }
 
 func (t *Terminal) cursorUp(n int) {
-	if n == 0 {
-		n = 1
-	}
 	row := t.row()
 	top := t.topMargin()
 	if row < top {
@@ -139,9 +133,6 @@ func (t *Terminal) cursorUp(n int) {
 }
 
 func (t *Terminal) cursorDown(n int) {
-	if n == 0 {
-		n = 1
-	}
 	row := t.row()
 	bottom := t.bottomMargin()
 	if row > bottom {
@@ -156,9 +147,6 @@ func (t *Terminal) cursorDown(n int) {
 }
 
 func (t *Terminal) cursorForward(n int) {
-	if n == 0 {
-		n += 1
-	}
 	col := t.col()
 	right := t.rightMargin()
 	if col > right {
@@ -175,10 +163,6 @@ func (t *Terminal) cursorForward(n int) {
 }
 
 func (t *Terminal) cursorBack(n int) {
-	if n == 0 {
-		n += 1
-	}
-
 	col := t.col()
 	left := t.leftMargin()
 	if col < left {
