@@ -335,15 +335,14 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	case 'A', 'B', 'C', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
 		slog.Debug("swallowing ESC character set command", "params", params, "data", string(data), "cmd", string(r))
 	case NEL:
-		max := t.getBottomMargin()
 		left := 0
 		if t.inScrollingRegion() {
 			left = t.getLeftMargin()
 		}
-		if t.cur.row == max {
+		if row, max := t.row(), t.getBottomMargin(); row == max {
 			t.scrollRegion(1)
 		} else {
-			t.cursorMoveAbs(t.cur.row+1, left)
+			t.cursorMoveAbs(row+1, left)
 		}
 	case 'F':
 		if t.inScrollingRegion() {
@@ -356,18 +355,16 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 		// (swedish on vt220).
 		t.tabs[t.cur.col] = true
 	case IND: // move cursor one line down, scrolling if needed
-		max := t.getBottomMargin()
-		if t.cur.row == max {
+		if row, max := t.row(), t.getBottomMargin(); row == max {
 			t.scrollRegion(1)
 		} else {
-			t.cursorMoveAbs(t.cur.row+1, t.cur.col)
+			t.cursorMoveAbs(row+1, t.cur.col)
 		}
 	case RI: // move cursor one line up, scrolling if needed
-		min := t.getTopMargin()
-		if t.cur.row == min {
+		if row, min := t.row(), t.getTopMargin(); row == min {
 			t.scrollRegion(-1)
 		} else {
-			t.cursorMoveAbs(t.cur.row-1, t.cur.col)
+			t.cursorMoveAbs(row-1, t.cur.col)
 		}
 	case DECSC: // save cursor
 		t.savedCur = t.cur.Copy()
