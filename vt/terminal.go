@@ -759,10 +759,7 @@ func (t *Terminal) carriageReturn() {
 }
 
 func (t *Terminal) inScrollingRegion() bool {
-	if t.vertMargin.contains(t.cur.row) && t.horizMargin.contains(t.cur.col) {
-		return true
-	}
-	return false
+	return t.vertMargin.contains(t.row()) && t.horizMargin.contains(t.col())
 }
 
 func (t *Terminal) scrollingRegion() (*framebuffer, error) {
