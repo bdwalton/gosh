@@ -8,11 +8,13 @@ import (
 // Public modes here will be initialized, diff'd, copied, etc.
 var pubModeToID = map[string]int{
 	"IRM": IRM,
+	"LNM": LNM,
 }
 
 // Public modes
 var pubIDToName = map[int]string{
 	IRM: "IRM",
+	LNM: "LNM",
 }
 
 // Private modes here will be initialized, diff'd, copied, etc.

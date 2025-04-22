@@ -144,7 +144,8 @@ const (
 
 // CSI mode parameter codes
 const (
-	IRM = 4 // Insert mode
+	IRM = 4  // Insert mode
+	LNM = 20 // Automatic New Line Mode
 )
 
 // CSI private mode parameter codes
