@@ -373,11 +373,7 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 			t.cursorMoveAbs(row+1, left)
 		}
 	case 'F':
-		if t.inScrollingRegion() {
-			t.cursorMoveAbs(t.rows()-1, t.leftMargin())
-		} else {
-			t.cursorMoveAbs(t.rows()-1, 0)
-		}
+		t.cursorMoveAbs(t.rows()-1, t.boundedMarginLeft())
 	case HTS: // set tab stop. note that in some vt dialects this
 		// would actually be part of character set handling
 		// (swedish on vt220).
@@ -759,11 +755,7 @@ func (t *Terminal) clearTabs(params *parameters) {
 }
 
 func (t *Terminal) carriageReturn() {
-	nc := 0
-	if t.inScrollingRegion() {
-		nc = t.leftMargin()
-	}
-	t.cursorMoveAbs(t.cur.row, nc)
+	t.cursorMoveAbs(t.row(), t.boundedMarginLeft())
 }
 
 func (t *Terminal) inScrollingRegion() bool {
