@@ -357,21 +357,20 @@ func (t *Terminal) bottomMargin() int {
 	return t.rows() - 1
 }
 
+// Move to first position on next line. If we're at the bottom margin,
+// scroll.
+func (t *Terminal) ctrlNEL() {
+	t.lineFeed()
+	t.carriageReturn()
+}
+
 func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	dstr := string(data)
 	switch r {
 	case 'A', 'B', 'C', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
 		slog.Debug("swallowing ESC character set command", "params", params, "data", string(data), "cmd", string(r))
 	case NEL:
-		left := 0
-		if t.inScrollingRegion() {
-			left = t.leftMargin()
-		}
-		if row, max := t.row(), t.bottomMargin(); row == max {
-			t.scrollRegion(1)
-		} else {
-			t.cursorMoveAbs(row+1, left)
-		}
+		t.ctrlNEL()
 	case 'F':
 		t.cursorMoveAbs(t.rows()-1, t.boundedMarginLeft())
 	case HTS: // set tab stop. note that in some vt dialects this
