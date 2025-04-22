@@ -82,11 +82,11 @@ func (m *mode) setState(state rune) {
 	m.state = state
 }
 
-func (m *mode) get() bool {
+func (m *mode) enabled() bool {
 	return m.state == CSI_MODE_SET
 }
 
-func (m *mode) getAnsiString() string {
+func (m *mode) ansiString() string {
 	if m.private {
 		// Ensure we ship the ? for private modes
 		return fmt.Sprintf("%c%c?%d%c", ESC, CSI, m.code, m.state)

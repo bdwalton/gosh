@@ -42,7 +42,7 @@ func setAttr(orig, new uint8, val bool) uint8 {
 	return orig &^ new
 }
 
-func (f format) getAttr(attr uint8) bool {
+func (f format) attrIsSet(attr uint8) bool {
 	return (f.attrs & attr) != 0
 }
 
@@ -54,15 +54,15 @@ func (src format) diff(dest format) []byte {
 	var sb, ts strings.Builder
 
 	if !dest.fg.equal(src.fg) {
-		sb.WriteString(fmt.Sprintf("%c%c%s%c", ESC, CSI, dest.fg.getAnsiString(SET_FG), CSI_SGR))
+		sb.WriteString(fmt.Sprintf("%c%c%s%c", ESC, CSI, dest.fg.ansiString(SET_FG), CSI_SGR))
 	}
 
 	if !dest.bg.equal(src.bg) {
-		sb.WriteString(fmt.Sprintf("%c%c%s%c", ESC, CSI, dest.bg.getAnsiString(SET_BG), CSI_SGR))
+		sb.WriteString(fmt.Sprintf("%c%c%s%c", ESC, CSI, dest.bg.ansiString(SET_BG), CSI_SGR))
 	}
 
 	for _, attr := range attrs {
-		if da := dest.getAttr(attr); src.getAttr(attr) != da {
+		if da := dest.attrIsSet(attr); src.attrIsSet(attr) != da {
 			if ts.Len() > 0 {
 				ts.WriteByte(';')
 			}
@@ -80,7 +80,7 @@ func (src format) diff(dest format) []byte {
 }
 
 func (f *format) String() string {
-	return fmt.Sprintf("fg: %s; bg: %s; bold: %t, underline: %t, blink: %t, reversed: %t, invisible: %t, strikeout: %t", f.fg.getAnsiString(SET_FG), f.fg.getAnsiString(SET_BG), f.getAttr(BOLD), f.getAttr(UNDERLINE), f.getAttr(BLINK), f.getAttr(REVERSED), f.getAttr(INVISIBLE), f.getAttr(STRIKEOUT))
+	return fmt.Sprintf("fg: %s; bg: %s; bold: %t, underline: %t, blink: %t, reversed: %t, invisible: %t, strikeout: %t", f.fg.ansiString(SET_FG), f.fg.ansiString(SET_BG), f.attrIsSet(BOLD), f.attrIsSet(UNDERLINE), f.attrIsSet(BLINK), f.attrIsSet(REVERSED), f.attrIsSet(INVISIBLE), f.attrIsSet(STRIKEOUT))
 }
 
 func (f format) equal(other format) bool {

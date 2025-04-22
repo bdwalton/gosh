@@ -55,15 +55,15 @@ func (p *parameters) numItems() int {
 	return p.num
 }
 
-func (p *parameters) getItem(item, def int) int {
+func (p *parameters) item(item, def int) int {
 	if p.num == 0 || p.num <= item {
 		return def
 	}
 	return p.items[item]
 }
 
-func (p *parameters) getItemOneIfZero(item, def int) int {
-	n := p.getItem(item, def)
+func (p *parameters) itemDefaultOneIfZero(item, def int) int {
+	n := p.item(item, def)
 	if n == 0 {
 		return 1
 	}

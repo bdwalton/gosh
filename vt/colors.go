@@ -22,7 +22,7 @@ func (c color) equal(other color) bool {
 	return c.colType == other.colType && slices.Equal(c.data, other.data)
 }
 
-func (c color) getAnsiString(set int) string {
+func (c color) ansiString(set int) string {
 	switch c.colType {
 	case UNSET:
 		if set == SET_FG {

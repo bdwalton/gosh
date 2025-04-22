@@ -66,12 +66,12 @@ func (c cell) copy() cell {
 	return cell{r: c.r, set: c.set, f: c.f, frag: c.frag}
 }
 
-func (c cell) getFormat() format {
+func (c cell) format() format {
 	return c.f
 }
 
 func (c cell) equal(other cell) bool {
-	return c.set == other.set && c.r == other.r && c.frag == other.frag && c.getFormat().equal(other.getFormat())
+	return c.set == other.set && c.r == other.r && c.frag == other.frag && c.format().equal(other.format())
 }
 
 func (c cell) diff(dest cell) []byte {
@@ -84,7 +84,7 @@ func (c cell) diff(dest cell) []byte {
 
 	var sb strings.Builder
 
-	cf, df := c.getFormat(), dest.getFormat()
+	cf, df := c.format(), dest.format()
 	fe := cf.equal(df)
 
 	if !fe {
@@ -127,7 +127,7 @@ func newFramebuffer(rows, cols int) *framebuffer {
 }
 
 func (f *framebuffer) ansiOSCSize() []byte {
-	return []byte(fmt.Sprintf("%c%c%s;%d;%d%c", ESC, OSC, OSC_SETSIZE, f.getNumRows(), f.getNumCols(), BEL))
+	return []byte(fmt.Sprintf("%c%c%s;%d;%d%c", ESC, OSC, OSC_SETSIZE, f.rows(), f.cols(), BEL))
 }
 
 func (src *framebuffer) diff(dest *framebuffer) []byte {
@@ -144,14 +144,14 @@ func (src *framebuffer) diff(dest *framebuffer) []byte {
 	for r, row := range dest.data {
 		for c, destCell := range row {
 			cur := cursor{r, c}
-			srcCell, err := src.getCell(r, c)
+			srcCell, err := src.cell(r, c)
 			if err != nil {
 				srcCell = defaultCell()
 			}
 
 			if destCell.frag != FRAG_SECONDARY && !srcCell.equal(destCell) {
 				if cur.row != lastCur.row || cur.col != lastCur.col+1 {
-					sb.WriteString(cur.getMoveToAnsi())
+					sb.WriteString(cur.ansiString())
 				}
 
 				d := srcCell.efficientDiff(destCell, lastF)
@@ -159,7 +159,7 @@ func (src *framebuffer) diff(dest *framebuffer) []byte {
 					d = []byte(fmt.Sprintf("%c", destCell.r))
 				}
 				sb.Write(d)
-				lastF = destCell.getFormat()
+				lastF = destCell.format()
 				lastCur = cur
 			}
 		}
@@ -169,8 +169,8 @@ func (src *framebuffer) diff(dest *framebuffer) []byte {
 }
 
 func (f *framebuffer) copy() *framebuffer {
-	rows := f.getNumRows()
-	cols := f.getNumCols()
+	rows := f.rows()
+	cols := f.cols()
 
 	nf := &framebuffer{
 		data: make([][]cell, rows, rows),
@@ -178,7 +178,7 @@ func (f *framebuffer) copy() *framebuffer {
 
 	for row := range f.data {
 		nf.data[row] = make([]cell, cols, cols)
-		copy(nf.data[row], f.getRow(row))
+		copy(nf.data[row], f.row(row))
 	}
 
 	return nf
@@ -204,13 +204,13 @@ func (f *framebuffer) String() string {
 }
 
 func (f *framebuffer) equal(other *framebuffer) bool {
-	if f.getNumCols() != other.getNumCols() || f.getNumRows() != other.getNumRows() {
+	if f.cols() != other.cols() || f.rows() != other.rows() {
 		return false
 	}
 
 	for r, row := range other.data {
 		for c, cell := range row {
-			oc, err := f.getCell(r, c)
+			oc, err := f.cell(r, c)
 			if err != nil {
 				oc = defaultCell()
 			}
@@ -223,8 +223,8 @@ func (f *framebuffer) equal(other *framebuffer) bool {
 }
 
 func (f *framebuffer) scrollRows(n int) {
-	nc := f.getNumCols()
-	nr := f.getNumRows()
+	nc := f.cols()
+	nr := f.rows()
 
 	if n < 0 {
 		// i starts at the bottom, backed up n (negative) so
@@ -243,7 +243,7 @@ func (f *framebuffer) scrollRows(n int) {
 			x := i + n
 			switch x < nr {
 			case true:
-				copy(f.data[i], f.getRow(x))
+				copy(f.data[i], f.row(x))
 			default:
 				copy(f.data[i], newRow(nc))
 			}
@@ -278,7 +278,7 @@ func (f *framebuffer) resize(rows, cols int) bool {
 			f.data[i] = row[0:cols]
 			// Don't leave dangling fragments, if we
 			// happen to chop one in half.
-			c, err := f.getCell(i, cols-1)
+			c, err := f.cell(i, cols-1)
 			if err == nil && c.frag > 0 {
 				f.setCell(i, cols-1, defaultCell())
 			}
@@ -294,7 +294,7 @@ func (f *framebuffer) resize(rows, cols int) bool {
 }
 
 func (f *framebuffer) resetRows(from, to int) bool {
-	if from > to || from < 0 || to >= f.getNumRows() {
+	if from > to || from < 0 || to >= f.rows() {
 		return false
 	}
 
@@ -308,7 +308,7 @@ func (f *framebuffer) resetRows(from, to int) bool {
 }
 
 func (f *framebuffer) setCells(rowFrom, rowTo, colFrom, colTo int, c cell) {
-	fr, err := f.getRegion(rowFrom, rowTo, colFrom, colTo)
+	fr, err := f.subRegion(rowFrom, rowTo, colFrom, colTo)
 	if err != nil {
 		slog.Error("couldn't get region to set cells", "err", err)
 		return
@@ -325,16 +325,16 @@ func newRow(cols int) []cell {
 	return row
 }
 
-func (f *framebuffer) getNumRows() int {
+func (f *framebuffer) rows() int {
 	return len(f.data)
 }
 
-func (f *framebuffer) getNumCols() int {
+func (f *framebuffer) cols() int {
 	return len(f.data[0])
 }
 
 func (f *framebuffer) validPoint(row, col int) bool {
-	if row < 0 || row >= f.getNumRows() || col < 0 || col >= f.getNumCols() {
+	if row < 0 || row >= f.rows() || col < 0 || col >= f.cols() {
 		return false
 	}
 	return true
@@ -342,27 +342,27 @@ func (f *framebuffer) validPoint(row, col int) bool {
 
 func (f *framebuffer) setCell(row, col int, c cell) {
 	if f.validPoint(row, col) {
-		f.getRow(row)[col] = c
+		f.row(row)[col] = c
 	}
 }
 
-func (f *framebuffer) getCell(row, col int) (cell, error) {
+func (f *framebuffer) cell(row, col int) (cell, error) {
 	if f.validPoint(row, col) {
-		return f.getRow(row)[col], nil
+		return f.row(row)[col], nil
 	}
 
 	return defaultCell(), fmt.Errorf("invalid coordinates (%d, %d): %w", col, row, fbInvalidCell)
 }
 
-func (f *framebuffer) getRow(row int) []cell {
+func (f *framebuffer) row(row int) []cell {
 	return f.data[row]
 }
 
 var invalidRegion = errors.New("invalid region specification")
 
-func (f *framebuffer) getRegion(t, b, l, r int) (*framebuffer, error) {
-	nr := f.getNumRows() - 1
-	nc := f.getNumCols() - 1
+func (f *framebuffer) subRegion(t, b, l, r int) (*framebuffer, error) {
+	nr := f.rows() - 1
+	nc := f.cols() - 1
 
 	if t < 0 || t > b || b > nr || l < 0 || l > r || r > nc {
 		return nil, invalidRegion

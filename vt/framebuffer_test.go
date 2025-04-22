@@ -15,8 +15,8 @@ var nonDefFmt = format{
 }
 
 func fillBuffer(fb *framebuffer) *framebuffer {
-	for row := 0; row < fb.getNumRows(); row++ {
-		for col := 0; col < fb.getNumCols(); col++ {
+	for row := 0; row < fb.rows(); row++ {
+		for col := 0; col < fb.cols(); col++ {
 			fb.setCell(row, col, newCell('a'+rune(rand.Intn(26)), nonDefFmt))
 		}
 	}
@@ -157,7 +157,7 @@ func TestSetCells(t *testing.T) {
 
 		for row := range c.fb.data {
 			for col := range row {
-				got, _ := c.fb.getCell(row, col)
+				got, _ := c.fb.cell(row, col)
 				if row >= c.t && row <= c.b && col >= c.l && col <= c.r {
 					if !got.equal(empty) {
 						t.Errorf("%d: (row:%d, col:%d) Got\n\t%v, wanted\n\t%v", i, row, col, got, empty)
@@ -196,11 +196,11 @@ func TestResetRows(t *testing.T) {
 			t.Errorf("%d: Got %t, wanted %t", i, resetWorked, c.want)
 		} else {
 			if resetWorked {
-				nr := c.fb.getNumRows()
-				nc := c.fb.getNumCols()
+				nr := c.fb.rows()
+				nc := c.fb.cols()
 				for row := 0; row < nr; row++ {
 					for col := 0; col < nc; col++ {
-						got, _ := c.fb.getCell(row, col)
+						got, _ := c.fb.cell(row, col)
 						if row < c.start || row > c.end {
 							if got.equal(empty) {
 								t.Errorf("%d: (row:%d, col:%d) Got %v, wanted non-default", i, row, col, got)
@@ -237,7 +237,7 @@ func TestSetAndGetCell(t *testing.T) {
 	fb := newFramebuffer(10, 10)
 	for i, c := range cases {
 		fb.setCell(c.row, c.col, c.c)
-		got, err := fb.getCell(c.row, c.col)
+		got, err := fb.cell(c.row, c.col)
 
 		if err == nil && !got.equal(c.c) {
 			t.Errorf("%d: Got %v (%v), wanted %v (%v)", i, got, c.c, err, c.wantErr)
@@ -270,8 +270,8 @@ func TestResize(t *testing.T) {
 		if got != c.want {
 			t.Errorf("%d: Expected %t resize, but got %t", i, c.want, got)
 		} else {
-			if got && (c.fb.getNumRows() != c.nrows || c.fb.getNumCols() != c.ncols) {
-				t.Errorf("%d: Expected (%d, %d), got (%d, %d)", i, c.nrows, c.ncols, c.fb.getNumRows(), c.fb.getNumCols())
+			if got && (c.fb.rows() != c.nrows || c.fb.cols() != c.ncols) {
+				t.Errorf("%d: Expected (%d, %d), got (%d, %d)", i, c.nrows, c.ncols, c.fb.rows(), c.fb.cols())
 			}
 		}
 	}
@@ -471,7 +471,7 @@ func numberedFBForTest(start, rows, cols, defaultsStart, defaultsEnd int) *frame
 	return fb
 }
 
-func TestGetRegion(t *testing.T) {
+func TestSubRegion(t *testing.T) {
 	dfb := numberedFBForTest(0, 8, 10, 0, 0)
 	cases := []struct {
 		fb         *framebuffer
@@ -489,7 +489,7 @@ func TestGetRegion(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		if got, err := c.fb.getRegion(c.t, c.b, c.l, c.r); !errors.Is(err, c.wantErr) || (got != nil && !got.equal(c.want)) {
+		if got, err := c.fb.subRegion(c.t, c.b, c.l, c.r); !errors.Is(err, c.wantErr) || (got != nil && !got.equal(c.want)) {
 			t.Errorf("%d: Got\n%v (%v) wanted:\n%v (%v)", i, got, err, c.want, c.wantErr)
 		}
 	}

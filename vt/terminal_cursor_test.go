@@ -35,12 +35,12 @@ var tMarginsWithDECOM = &Terminal{
 
 var minCol = 0
 var minRow = 0
-var maxCol = tNoMargin.getRightMargin()
-var maxRow = tNoMargin.getBottomMargin()
-var minVMargRow = tVertMargin.getTopMargin()
-var maxVMargRow = tVertMargin.getBottomMargin()
-var minHMargCol = tHorizMargin.getLeftMargin()
-var maxHMargCol = tHorizMargin.getRightMargin()
+var maxCol = tNoMargin.rightMargin()
+var maxRow = tNoMargin.bottomMargin()
+var minVMargRow = tVertMargin.topMargin()
+var maxVMargRow = tVertMargin.bottomMargin()
+var minHMargCol = tHorizMargin.leftMargin()
+var maxHMargCol = tHorizMargin.rightMargin()
 
 var homeCursor = cursor{0, 0}
 var midCur = cursor{15, 5}

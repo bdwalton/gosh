@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestColorGetAnsiString(t *testing.T) {
+func TestColorAnsiString(t *testing.T) {
 	cases := []struct {
 		col  color
 		fgbg int
@@ -19,7 +19,7 @@ func TestColorGetAnsiString(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		if got := c.col.getAnsiString(c.fgbg); got != c.want {
+		if got := c.col.ansiString(c.fgbg); got != c.want {
 			t.Errorf("%d: Got %q, wanted %q, from %v", i, got, c.want, c.col)
 		}
 	}
@@ -69,7 +69,7 @@ func TestColorEquality(t *testing.T) {
 
 	for i, c := range cases {
 		if got := c.col.equal(c.other); got != c.want {
-			t.Errorf("%d: Got %t, wanted %t, from %s == %s", i, got, c.want, c.col.getAnsiString(SET_FG), c.other.getAnsiString(SET_FG))
+			t.Errorf("%d: Got %t, wanted %t, from %s == %s", i, got, c.want, c.col.ansiString(SET_FG), c.other.ansiString(SET_FG))
 		}
 
 	}

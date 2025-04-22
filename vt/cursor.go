@@ -13,7 +13,7 @@ func (c cursor) Copy() cursor {
 	return cursor{row: c.row, col: c.col}
 }
 
-func (c cursor) getMoveToAnsi() string {
+func (c cursor) ansiString() string {
 	var sb strings.Builder
 	sb.Write([]byte{ESC, CSI})
 	if c.row != 0 {

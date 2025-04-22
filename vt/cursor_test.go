@@ -17,7 +17,7 @@ func TestCursorMoveToAnsi(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		if got := c.cur.getMoveToAnsi(); got != c.want {
+		if got := c.cur.ansiString(); got != c.want {
 			t.Errorf("%d: Got %q, wanted %q", i, got, c.want)
 		}
 	}

@@ -183,7 +183,7 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 
 	for _, name := range modeNames {
 		if !src.modes[name].equal(dest.modes[name]) {
-			sb.WriteString(dest.modes[name].getAnsiString())
+			sb.WriteString(dest.modes[name].ansiString())
 		}
 	}
 
@@ -207,7 +207,7 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 	}
 
 	if len(fbd) > 0 || !src.cur.equal(dest.cur) {
-		sb.WriteString(dest.cur.getMoveToAnsi())
+		sb.WriteString(dest.cur.ansiString())
 	}
 
 	return []byte(sb.String())
@@ -294,37 +294,37 @@ func (t *Terminal) Resize(rows, cols int) {
 }
 
 func (t *Terminal) cols() int {
-	return t.fb.getNumCols()
+	return t.fb.cols()
 }
 
 func (t *Terminal) rows() int {
-	return t.fb.getNumRows()
+	return t.fb.rows()
 }
 
-func (t *Terminal) getLeftMargin() int {
+func (t *Terminal) leftMargin() int {
 	if t.horizMargin.isSet() {
-		return t.horizMargin.getMin()
+		return t.horizMargin.min()
 	}
 	return 0
 }
 
-func (t *Terminal) getRightMargin() int {
+func (t *Terminal) rightMargin() int {
 	if t.horizMargin.isSet() {
-		return t.horizMargin.getMax()
+		return t.horizMargin.max()
 	}
 	return t.cols() - 1
 }
 
-func (t *Terminal) getTopMargin() int {
+func (t *Terminal) topMargin() int {
 	if t.vertMargin.isSet() {
-		return t.vertMargin.getMin()
+		return t.vertMargin.min()
 	}
 	return 0
 }
 
-func (t *Terminal) getBottomMargin() int {
+func (t *Terminal) bottomMargin() int {
 	if t.vertMargin.isSet() {
-		return t.vertMargin.getMax()
+		return t.vertMargin.max()
 	}
 	return t.rows() - 1
 }
@@ -337,16 +337,16 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	case NEL:
 		left := 0
 		if t.inScrollingRegion() {
-			left = t.getLeftMargin()
+			left = t.leftMargin()
 		}
-		if row, max := t.row(), t.getBottomMargin(); row == max {
+		if row, max := t.row(), t.bottomMargin(); row == max {
 			t.scrollRegion(1)
 		} else {
 			t.cursorMoveAbs(row+1, left)
 		}
 	case 'F':
 		if t.inScrollingRegion() {
-			t.cursorMoveAbs(t.rows()-1, t.getLeftMargin())
+			t.cursorMoveAbs(t.rows()-1, t.leftMargin())
 		} else {
 			t.cursorMoveAbs(t.rows()-1, 0)
 		}
@@ -355,13 +355,13 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 		// (swedish on vt220).
 		t.tabs[t.cur.col] = true
 	case IND: // move cursor one line down, scrolling if needed
-		if row, max := t.row(), t.getBottomMargin(); row == max {
+		if row, max := t.row(), t.bottomMargin(); row == max {
 			t.scrollRegion(1)
 		} else {
 			t.cursorMoveAbs(row+1, t.cur.col)
 		}
 	case RI: // move cursor one line up, scrolling if needed
-		if row, min := t.row(), t.getTopMargin(); row == min {
+		if row, min := t.row(), t.topMargin(); row == min {
 			t.scrollRegion(-1)
 		} else {
 			t.cursorMoveAbs(row-1, t.cur.col)
@@ -452,7 +452,7 @@ func (t *Terminal) handleOSC(act pAction, last rune) {
 // whether the current cell is the primary or secondary piece of the
 // fragment.
 func (t *Terminal) clearFrags(row, col int) {
-	if gc, err := t.fb.getCell(row, col); err == nil {
+	if gc, err := t.fb.cell(row, col); err == nil {
 		switch gc.frag {
 		case FRAG_PRIMARY: // primary cell
 			t.fb.setCell(row, col+1, defaultCell())
@@ -488,7 +488,7 @@ func (t *Terminal) isModeSet(name string) bool {
 		slog.Debug("asked if unknown mode was set", "mode", name)
 		return false
 	}
-	return m.get()
+	return m.enabled()
 }
 
 func (t *Terminal) print(r rune) {
@@ -515,7 +515,7 @@ func (t *Terminal) print(r rune) {
 		default:
 			col -= 1
 		}
-		c, err := t.fb.getCell(row, col)
+		c, err := t.fb.cell(row, col)
 		if err != nil {
 			slog.Debug("couldn't fetch cell", "row", row, "col", col)
 			return
@@ -537,18 +537,18 @@ func (t *Terminal) print(r rune) {
 			if ins {
 				right := t.cols()
 				if t.inScrollingRegion() {
-					right = t.getRightMargin()
+					right = t.rightMargin()
 				}
 				r, c := t.row(), t.col()
-				cells, err := t.fb.getRegion(r, r, c, right)
+				cells, err := t.fb.subRegion(r, r, c, right)
 				if err != nil {
 					slog.Debug("invalid framebuffer region", "r", r, "c", c, "right", right, "err", err)
 					return
 				}
-				last := cells.getNumCols() - 1
+				last := cells.cols() - 1
 				if last > rw {
 					for i := last; i >= rw; i-- {
-						c, err := cells.getCell(0, i-rw)
+						c, err := cells.cell(0, i-rw)
 						if err != nil {
 							slog.Debug("invalid cell in region", "row", 0, "col", i-1, "err", err)
 							return
@@ -577,8 +577,8 @@ func (t *Terminal) print(r rune) {
 
 		if t.isModeSet(privIDToName[DECAWM]) {
 			if t.inScrollingRegion() {
-				col = t.getLeftMargin()
-				if row == t.getBottomMargin() {
+				col = t.leftMargin()
+				if row == t.bottomMargin() {
 					t.scrollRegion(1)
 				} else {
 					row += 1
@@ -651,10 +651,10 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 			slog.Debug("skipping CSI DCH with unexpected data", "params", params, "data", string(data))
 			return
 		}
-		t.deleteChars(params.getItemOneIfZero(0, 1))
+		t.deleteChars(params.itemDefaultOneIfZero(0, 1))
 	case CSI_ICH:
 		// Insert n blank characters
-		n := params.getItem(0, 1)
+		n := params.item(0, 1)
 		lastCol := t.cols() - 1
 		for i := 0; i < n; i++ {
 			if t.cur.col == lastCol {
@@ -664,13 +664,13 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		}
 	case CSI_ECH:
 		// Insert n blank characters where n is the provided parameter
-		last := t.cur.col + params.getItem(0, 1)
+		last := t.cur.col + params.item(0, 1)
 		if lastCol := t.cols() - 1; last > lastCol {
 			last = lastCol
 		}
 		t.fb.setCells(t.cur.row, t.cur.row, t.cur.col, last, newCell(' ', t.curF))
 	case CSI_MODE_SET, CSI_MODE_RESET:
-		t.setMode(params.getItem(0, 0), string(data), last)
+		t.setMode(params.item(0, 0), string(data), last)
 	case CSI_DECSTBM:
 		t.setTopBottom(params)
 	case CSI_DECSLRM:
@@ -680,9 +680,9 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_EL:
 		t.eraseLine(params)
 	case CSI_SU:
-		t.scrollRegion(-params.getItem(0, 1))
+		t.scrollRegion(-params.item(0, 1))
 	case CSI_SD:
-		t.scrollRegion(params.getItem(0, 1))
+		t.scrollRegion(params.item(0, 1))
 	case CSI_ED:
 		t.eraseInDisplay(params)
 	case CSI_VPA, CSI_VPR, CSI_HPA, CSI_HPR, CSI_CUP, CSI_CUU, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
@@ -697,9 +697,9 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_DECST8C:
 		t.resetTabs(params, data)
 	case CSI_CHT:
-		t.stepTabs(params.getItem(0, 1))
+		t.stepTabs(params.item(0, 1))
 	case CSI_CBT:
-		t.stepTabs(-params.getItem(0, 1))
+		t.stepTabs(-params.item(0, 1))
 	case CSI_TBC:
 		t.clearTabs(params)
 	default:
@@ -708,7 +708,7 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 }
 
 func (t *Terminal) resetTabs(params *parameters, data []rune) {
-	if len(data) != 1 || data[0] != '?' || params.getItem(0, 0) != 5 {
+	if len(data) != 1 || data[0] != '?' || params.item(0, 0) != 5 {
 		slog.Debug("resetTabs called without ? 5 as data and parameter", "data", string(data), "params", params)
 	}
 	cols := t.cols()
@@ -720,7 +720,7 @@ func (t *Terminal) resetTabs(params *parameters, data []rune) {
 }
 
 func (t *Terminal) clearTabs(params *parameters) {
-	switch params.getItem(0, 0) {
+	switch params.item(0, 0) {
 	case TBC_CUR:
 		t.tabs[t.cur.col] = false
 	case TBC_ALL:
@@ -733,7 +733,7 @@ func (t *Terminal) clearTabs(params *parameters) {
 func (t *Terminal) carriageReturn() {
 	nc := 0
 	if t.inScrollingRegion() {
-		nc = t.getLeftMargin()
+		nc = t.leftMargin()
 	}
 	t.cursorMoveAbs(t.cur.row, nc)
 }
@@ -745,8 +745,8 @@ func (t *Terminal) inScrollingRegion() bool {
 	return false
 }
 
-func (t *Terminal) getScrollingRegion() (*framebuffer, error) {
-	return t.fb.getRegion(t.getTopMargin(), t.getBottomMargin(), t.getLeftMargin(), t.getRightMargin())
+func (t *Terminal) scrollingRegion() (*framebuffer, error) {
+	return t.fb.subRegion(t.topMargin(), t.bottomMargin(), t.leftMargin(), t.rightMargin())
 }
 
 func (t *Terminal) lineFeed() {
@@ -755,10 +755,10 @@ func (t *Terminal) lineFeed() {
 	cur := t.cur
 	if t.inScrollingRegion() {
 		// adjust cursor so it is relative to top margin
-		cur.row -= t.getTopMargin()
-		cur.col -= t.getLeftMargin()
+		cur.row -= t.topMargin()
+		cur.col -= t.leftMargin()
 		slog.Debug("in scrolling region, adjusting cursor", "cur", cur, "orig", t.cur)
-		fb, err = t.getScrollingRegion()
+		fb, err = t.scrollingRegion()
 		if err != nil {
 			slog.Debug("error obtaining framebuffer region", "err", err)
 			return
@@ -775,7 +775,7 @@ func (t *Terminal) lineFeed() {
 }
 
 func (t *Terminal) scrollRegion(n int) {
-	fb, err := t.getScrollingRegion()
+	fb, err := t.scrollingRegion()
 	if err != nil {
 		slog.Debug("couldn't get scrolling region", "err", err)
 		return
@@ -785,7 +785,7 @@ func (t *Terminal) scrollRegion(n int) {
 
 func (t *Terminal) xtwinops(params *parameters) {
 	slog.Debug("handling xtwinops", "params", params)
-	switch params.getItem(0, 0) {
+	switch params.item(0, 0) {
 	case 0:
 		slog.Debug("invalid xtwinops command (0)")
 	case 22: // save title and icon
@@ -800,7 +800,7 @@ func (t *Terminal) xtwinops(params *parameters) {
 func (t *Terminal) csiQ(params *parameters, data []rune) {
 	switch string(data) {
 	case ">":
-		if params.getItem(0, 0) != 0 {
+		if params.item(0, 0) != 0 {
 			slog.Debug("invalid xterm_version query", "params", params, "data", string(data))
 			return
 		}
@@ -815,14 +815,14 @@ func (t *Terminal) csiQ(params *parameters, data []rune) {
 func (t *Terminal) handleDSR(params *parameters, data []rune) {
 	switch string(data) {
 	case "": // General device status report
-		switch params.getItem(0, 0) {
+		switch params.item(0, 0) {
 		case 5: // We always report OK (CSI 0 n)
 			t.Write([]byte(fmt.Sprintf("%c%c0%c", ESC, CSI, CSI_DSR)))
 		case 6: // Provide cursor location (CSI r ; c R)
 			t.Write([]byte(fmt.Sprintf("%c%c%d;%dR", ESC, CSI, t.cur.row+1, t.cur.col+1)))
 		}
 	case "?": // DEC specific device status report
-		switch params.getItem(0, 0) {
+		switch params.item(0, 0) {
 		case 6: // Provide cursor location (CSI ? r ; c R)
 
 			t.Write([]byte(fmt.Sprintf("%c%c?%d;%dR", ESC, CSI, t.cur.row+1, t.cur.col+1)))
@@ -896,8 +896,8 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 
 func (t *Terminal) setTopBottom(params *parameters) {
 	nr := t.rows()
-	top := params.getItem(0, 1)
-	bottom := params.getItem(1, nr)
+	top := params.item(0, 1)
+	bottom := params.item(1, nr)
 	if bottom <= top || top > nr || (top == 0 && bottom == 1) {
 		return // matches xterm
 	}
@@ -911,8 +911,8 @@ func (t *Terminal) setTopBottom(params *parameters) {
 
 func (t *Terminal) setLeftRight(params *parameters) {
 	nc := t.cols()
-	left := params.getItem(0, 1)
-	right := params.getItem(1, nc)
+	left := params.item(0, 1)
+	right := params.item(1, nc)
 	if right <= left || left >= nc || (left == 0 && right == 1) {
 		return // matches xterm
 	}
@@ -1005,7 +1005,7 @@ func (t *Terminal) stepTabs(steps int) {
 }
 
 func (t *Terminal) deleteLines(params *parameters) {
-	m := params.getItem(0, 1)
+	m := params.item(0, 1)
 	cols := t.cols()
 
 	for i := t.cur.row; i < t.cur.row+m && t.vertMargin.contains(i); i++ {
@@ -1018,12 +1018,12 @@ func (t *Terminal) deleteChars(n int) {
 	row, col := t.row(), t.col()
 	right := t.cols()
 	if t.inScrollingRegion() {
-		right = t.getRightMargin()
+		right = t.rightMargin()
 	}
 
 	// If the cursor happens to be parked on a fragment cell, we
 	// need to adjust for how we do our deletion.
-	c, _ := t.fb.getCell(row, col)
+	c, _ := t.fb.cell(row, col)
 	if c.isFragment() {
 		// we need to ensure we overwrite this character and
 		// the secondary fragment, so pull everything back by
@@ -1038,15 +1038,15 @@ func (t *Terminal) deleteChars(n int) {
 		col -= 1
 	}
 
-	reg, err := t.fb.getRegion(row, row, col, right)
+	reg, err := t.fb.subRegion(row, row, col, right)
 	if err != nil {
 		slog.Debug("invalid framebuffer region", "r", row, "c", col, "right", right, "err", err)
 	}
 
-	nc := reg.getNumCols()
+	nc := reg.cols()
 	offset := n
 	for i := n; i < nc; i++ {
-		c, err := reg.getCell(0, i)
+		c, err := reg.cell(0, i)
 		// If we start on a secondary fragment, we need to
 		// skip it and then increase the offset at which we
 		// shift cells back.
@@ -1074,7 +1074,7 @@ func (t *Terminal) eraseLine(params *parameters) {
 	dc.f = t.curF
 
 	nc := t.cols() - 1
-	switch params.getItem(0, 0) {
+	switch params.item(0, 0) {
 	case 0: // to end of line
 		t.fb.setCells(t.cur.row, t.cur.row, t.cur.col, nc, dc)
 		slog.Debug("erase in line, pos to end", "row", t.cur.row, "col", t.cur.col)
@@ -1090,7 +1090,7 @@ func (t *Terminal) eraseLine(params *parameters) {
 func (t *Terminal) eraseInDisplay(params *parameters) {
 	// TODO: Handle BCE properly
 	nr := t.rows()
-	switch params.getItem(0, 0) {
+	switch params.item(0, 0) {
 	case 0: // active position to end of screen, inclusive
 		t.fb.resetRows(t.cur.row+1, nr-1)
 		t.eraseLine(params)

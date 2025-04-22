@@ -19,7 +19,7 @@ func newMargin(val1, val2 int) margin {
 }
 
 func (m margin) contains(v int) bool {
-	if !m.isSet() || (m.getMin() <= v && v <= m.getMax()) {
+	if !m.isSet() || (m.min() <= v && v <= m.max()) {
 		return true
 	}
 	return false
@@ -29,23 +29,23 @@ func (m margin) isSet() bool {
 	return m.set
 }
 
-func (m margin) getMin() int {
+func (m margin) min() int {
 	return m.val1
 }
 
-func (m margin) getMax() int {
+func (m margin) max() int {
 	return m.val2
 }
 
 func (m margin) equal(other margin) bool {
-	if m.isSet() != other.isSet() || m.getMin() != other.getMin() || m.getMax() != other.getMax() {
+	if m.isSet() != other.isSet() || m.min() != other.min() || m.max() != other.max() {
 		return false
 	}
 
 	return true
 }
 
-func (m margin) getAnsi(csi rune) string {
+func (m margin) ansiString(csi rune) string {
 	// +1 because we're zero based internally
 	return fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, m.val1+1, m.val2+1, csi)
 }

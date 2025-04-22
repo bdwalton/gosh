@@ -14,7 +14,7 @@ func (t *Terminal) col() int {
 
 func (t *Terminal) homeCursor() {
 	if t.isModeSet(privIDToName[DECOM]) {
-		t.cursorMoveAbs(t.getTopMargin(), t.getLeftMargin())
+		t.cursorMoveAbs(t.topMargin(), t.leftMargin())
 	} else {
 		t.cursorMoveAbs(0, 0)
 	}
@@ -24,14 +24,14 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 	// No paramter indicates a 0 value, but for cursor
 	// movement, we always default to 1. That allows more
 	// efficient specification of the common movements.
-	p1 := params.getItem(0, 1)
+	p1 := params.item(0, 1)
 
 	switch moveType {
 	case CSI_HPA, CSI_CHA:
 		t.cursorCHAorHPA(p1 - 1) // expects 0 based when called
 	case CSI_CUP, CSI_HVP:
 		// expects 0 based indexes when called
-		t.cursorCUPorHVP(p1-1, params.getItem(1, 1)-1)
+		t.cursorCUPorHVP(p1-1, params.item(1, 1)-1)
 	case CSI_HPR:
 		t.cursorHPR(p1)
 	case CSI_VPA:
@@ -58,8 +58,8 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 func (t *Terminal) cursorCHAorHPA(col int) {
 	slog.Debug("horizontal position absolute / horizontal attribute", "col", col)
 	if t.isModeSet(privIDToName[DECOM]) {
-		col += t.getLeftMargin()
-		if r := t.getRightMargin(); col > r {
+		col += t.leftMargin()
+		if r := t.rightMargin(); col > r {
 			col = r
 		}
 		slog.Debug("adjusting column for ORIGIN MODE", "col", col)
@@ -74,13 +74,13 @@ func (t *Terminal) cursorCUPorHVP(row, col int) {
 	// TODO: What does "format effector" mean for HVP
 	slog.Debug("horizontal vertical position/cursor position", "row", row, "col", col)
 	if t.isModeSet(privIDToName[DECOM]) && t.inScrollingRegion() {
-		col += t.getLeftMargin()
-		if r := t.getRightMargin(); col > r {
+		col += t.leftMargin()
+		if r := t.rightMargin(); col > r {
 			col = r
 		}
 
-		row += t.getTopMargin()
-		if b := t.getBottomMargin(); row > b {
+		row += t.topMargin()
+		if b := t.bottomMargin(); row > b {
 			row = b
 		}
 		slog.Debug("adjusting for ORIGIN MODE", "row", row, "col", col)
@@ -125,7 +125,7 @@ func (t *Terminal) cursorUp(n int) {
 		n = 1
 	}
 	row := t.row()
-	top := t.getTopMargin()
+	top := t.topMargin()
 	if row < top {
 		top = 0
 	}
@@ -143,7 +143,7 @@ func (t *Terminal) cursorDown(n int) {
 		n = 1
 	}
 	row := t.row()
-	bottom := t.getBottomMargin()
+	bottom := t.bottomMargin()
 	if row > bottom {
 		bottom = t.rows()
 	}
@@ -160,7 +160,7 @@ func (t *Terminal) cursorForward(n int) {
 		n += 1
 	}
 	col := t.col()
-	right := t.getRightMargin()
+	right := t.rightMargin()
 	if col > right {
 		right = t.cols() - 1
 	}
@@ -180,7 +180,7 @@ func (t *Terminal) cursorBack(n int) {
 	}
 
 	col := t.col()
-	left := t.getLeftMargin()
+	left := t.leftMargin()
 	if col < left {
 		left = 0
 	}

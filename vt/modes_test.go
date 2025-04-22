@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestModeGetAnsiString(t *testing.T) {
+func TestModeAnsiString(t *testing.T) {
 	cases := []struct {
 		m    *mode
 		want string
@@ -16,7 +16,7 @@ func TestModeGetAnsiString(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		if got := c.m.getAnsiString(); got != c.want {
+		if got := c.m.ansiString(); got != c.want {
 			t.Errorf("%d: Got %q, wanted %q", i, got, c.want)
 		}
 	}

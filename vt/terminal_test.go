@@ -88,11 +88,11 @@ func TestLineFeed(t *testing.T) {
 		c.t.cur = c.cur
 		c.t.lineFeed()
 		if c.cur.row == c.wantCur.row {
-			gc, _ := c.t.fb.getCell(c.cur.row-1, c.cur.col)
+			gc, _ := c.t.fb.cell(c.cur.row-1, c.cur.col)
 			if !gc.equal(xc) {
 				t.Errorf("%d: Invalid linefeed scroll (old line). Got %v, wanted %v", i, gc, xc)
 			}
-			gc, _ = c.t.fb.getCell(c.cur.row, c.cur.col)
+			gc, _ = c.t.fb.cell(c.cur.row, c.cur.col)
 			if !gc.equal(defaultCell()) {
 				t.Errorf("%d: Invalid linefeed scroll (new line). Got %v, wanted %v", i, gc, xc)
 			}
@@ -314,7 +314,7 @@ func TestTerminalDiff(t *testing.T) {
 		{t1, t1, []byte{}},
 		{t1, t2, []byte{}},
 		{t2, t3, []byte(fmt.Sprintf("%c%c%c%c%c%s;%d;%d%c%c%c%c", ESC, CSI, CSI_SGR, ESC, OSC, OSC_SETSIZE, 20, 15, BEL, ESC, CSI, CSI_CUP))},
-		{t3, t4, []byte(fmt.Sprintf("%c%c%c%s%c%c%d%c%c%s", ESC, CSI, CSI_SGR, cursor{5, 7}.getMoveToAnsi(), ESC, CSI, FG_RED, CSI_SGR, 'a', cursor{}.getMoveToAnsi()))},
+		{t3, t4, []byte(fmt.Sprintf("%c%c%c%s%c%c%d%c%c%s", ESC, CSI, CSI_SGR, cursor{5, 7}.ansiString(), ESC, CSI, FG_RED, CSI_SGR, 'a', cursor{}.ansiString()))},
 		{t4, t5, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_TITLE, "mytitle", BEL))},
 		{t4, t6, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_ICON_TITLE, "mytitle", BEL))},
 		{t4, t7, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_ICON, "myicon", BEL))},
