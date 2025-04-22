@@ -648,7 +648,7 @@ func (t *Terminal) handleExecute(last rune) {
 	case BEL:
 		// just swallow this for now
 	case BS:
-		t.cursorMoveAbs(t.cur.row, t.cur.col-1)
+		t.cursorBack(1)
 	case CR:
 		t.carriageReturn()
 	case LF, FF: // libvte treats lf and ff the same, so we do too
