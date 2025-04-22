@@ -676,15 +676,7 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		}
 		t.deleteChars(params.itemDefaultOneIfZero(0, 1))
 	case CSI_ICH:
-		// Insert n blank characters
-		n := params.item(0, 1)
-		lastCol := t.cols() - 1
-		for i := 0; i < n; i++ {
-			if t.cur.col == lastCol {
-				break
-			}
-			t.print(' ')
-		}
+		t.insertChars(' ', params.itemDefaultOneIfZero(0, 1))
 	case CSI_ECH:
 		// Insert n blank characters where n is the provided parameter
 		last := t.cur.col + params.item(0, 1)
@@ -1069,6 +1061,17 @@ func (t *Terminal) deleteChars(n int) {
 	// play?
 	for i := nc - 1; i > nc-1-n; i-- {
 		reg.setCell(0, i, defaultCell())
+	}
+}
+
+// insertChars  will insert r, n times
+func (t *Terminal) insertChars(r rune, n int) {
+	lastCol := t.cols() - 1
+	for i := 0; i < n; i++ {
+		if t.col() == lastCol {
+			break
+		}
+		t.print(' ')
 	}
 }
 
