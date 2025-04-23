@@ -20,7 +20,7 @@ var tVertWithDECOM = &Terminal{
 	fb:         newFramebuffer(24, 80),
 	vertMargin: newMargin(5, 15),
 	modes: map[string]*mode{
-		"DECOM": &mode{state: CSI_MODE_SET, private: true, code: DECOM},
+		"?6": &mode{state: CSI_MODE_SET, code: DECOM},
 	},
 }
 
@@ -29,7 +29,7 @@ var tMarginsWithDECOM = &Terminal{
 	vertMargin:  newMargin(5, 15),
 	horizMargin: newMargin(5, 15),
 	modes: map[string]*mode{
-		"DECOM": &mode{state: CSI_MODE_SET, private: true, code: DECOM},
+		"?6": &mode{state: CSI_MODE_SET, code: DECOM},
 	},
 }
 

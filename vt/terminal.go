@@ -57,12 +57,10 @@ type Terminal struct {
 
 func newBasicTerminal(r, w *os.File) *Terminal {
 	modes := make(map[string]*mode)
-	for name, id := range privModeToID {
-		modes[name] = newPrivMode(id)
+	for id, md := range modeDefaults {
+		modes[id] = md.copy()
 	}
-	for name, id := range pubModeToID {
-		modes[name] = newMode(id)
-	}
+
 	return &Terminal{
 		fb:      newFramebuffer(DEF_ROWS, DEF_COLS),
 		oscTemp: make([]rune, 0),
@@ -173,17 +171,18 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 		}
 	}
 
-	modeNames := make([]string, len(src.modes), len(src.modes))
+	modeNames := make([]string, len(modeNameToID), len(modeNameToID))
 	var i int
-	for n := range src.modes {
+	for n := range modeNameToID {
 		modeNames[i] = n
 		i += 1
 	}
 	slices.Sort(modeNames)
 
 	for _, name := range modeNames {
-		if !src.modes[name].equal(dest.modes[name]) {
-			sb.WriteString(dest.modes[name].ansiString())
+		id := modeNameToID[name]
+		if !src.modes[id].equal(dest.modes[id]) {
+			sb.WriteString(dest.modes[id].ansiString())
 		}
 	}
 
@@ -483,11 +482,8 @@ func (t *Terminal) reset() {
 	t.title = ""
 	t.icon = ""
 	modes := make(map[string]*mode)
-	for name, n := range privModeToID {
-		modes[name] = newPrivMode(n)
-	}
-	for name, n := range pubModeToID {
-		modes[name] = newMode(n)
+	for id, md := range modeDefaults {
+		modes[id] = md.copy()
 	}
 	t.modes = modes
 	t.vertMargin = margin{}
@@ -498,7 +494,7 @@ func (t *Terminal) reset() {
 }
 
 func (t *Terminal) isModeSet(name string) bool {
-	m, ok := t.modes[name]
+	m, ok := t.modes[modeNameToID[name]]
 	if !ok {
 		slog.Debug("asked if unknown mode was set", "mode", name)
 		return false
@@ -512,7 +508,7 @@ func (t *Terminal) print(r rune) {
 
 	switch rw {
 	case 0: // combining
-		if col == 0 && !t.isModeSet(privIDToName[DECAWM]) {
+		if col == 0 && !t.isModeSet("DECAWM") {
 			// can't do anything with this. if we're in
 			// the first position but hadn't wrapped, we
 			// don't have something to combine with, so
@@ -522,7 +518,7 @@ func (t *Terminal) print(r rune) {
 		}
 
 		switch {
-		case col == 0 && t.isModeSet(privIDToName[DECAWM]): // we wrapped
+		case col == 0 && t.isModeSet("DECAWM"): // we wrapped
 			col = t.boundedMarginRight()
 			row -= 1
 		case col > t.boundedMarginRight(): // we're at the end of a row but didn't wrap
@@ -548,7 +544,7 @@ func (t *Terminal) print(r rune) {
 			t.clearFrags(row, col)
 			nc := newCell(r, t.curF)
 
-			ins := t.isModeSet(pubIDToName[IRM])
+			ins := t.isModeSet("IRM")
 			if ins {
 				right := t.cols()
 				if t.inScrollingRegion() {
@@ -590,7 +586,7 @@ func (t *Terminal) print(r rune) {
 			return
 		}
 
-		if t.isModeSet(privIDToName[DECAWM]) {
+		if t.isModeSet("DECAWM") {
 			if t.inScrollingRegion() {
 				col = t.leftMargin()
 				if row == t.bottomMargin() {
@@ -809,7 +805,7 @@ func (t *Terminal) handleDSR(params *parameters, data []rune) {
 			t.Write([]byte(fmt.Sprintf("%c%c0%c", ESC, CSI, CSI_DSR)))
 		case 6: // Provide cursor location (CSI r ; c R)
 			row, col := t.row(), t.col()
-			if t.isModeSet(privIDToName[DECOM]) {
+			if t.isModeSet("DECOM") {
 				row -= t.topMargin()
 				col -= t.leftMargin()
 			}
@@ -860,34 +856,22 @@ func (t *Terminal) replyDeviceAttributes(data []rune) {
 }
 
 func (t *Terminal) setMode(mode int, data string, state rune) {
-	switch data {
-	case "?":
-		name := privIDToName[mode]
-		m, ok := t.modes[name]
-		if !ok {
-			slog.Debug("unknown CSI private mode toggled; ignoring", "mode", name, "data", data, "state", string(state))
-			return
-		}
-		m.setState(state)
-		slog.Debug("setting private mode", "mode", name, "state", string(state))
-		switch mode {
-		case DECCOLM:
-			t.fb.fill(newCell(' ', t.curF))
-			t.homeCursor()
-		case DECOM:
-			t.homeCursor()
-		}
-	case "":
-		name := pubIDToName[mode]
-		m, ok := t.modes[name]
-		if !ok {
-			slog.Debug("unknown CSI public mode toggled; ignoring", "mode", name, "data", data, "state", string(state))
-			return
-		}
-		m.setState(state)
-		slog.Debug("setting public mode", "mode", name, "state", string(state))
-	default:
-		slog.Debug("unexpected CSI set/reset data", "mode", mode, "data", data, "state", string(state))
+	mid := fmt.Sprintf("%s%d", data, mode)
+	m, ok := t.modes[mid]
+	if !ok {
+		slog.Debug("unknown CSI mode", "id", mid)
+		return
+	}
+
+	m.setState(state)
+	slog.Debug("set CSI mode", "id", mid, "state", state)
+
+	switch mid {
+	case "?3": // DECCOLM
+		t.fb.fill(newCell(' ', t.curF))
+		t.homeCursor()
+	case "?6": // DECOM
+		t.homeCursor()
 	}
 }
 
@@ -1070,7 +1054,7 @@ func (t *Terminal) deleteChars(n int) {
 // insertChars  will insert r, n times
 func (t *Terminal) insertChars(r rune, n int) {
 	slog.Debug("insertChars", "r", string(r), "n", n)
-	om := t.isModeSet(pubIDToName[IRM])
+	om := t.isModeSet("IRM")
 	t.setMode(IRM, "", CSI_MODE_SET)
 	for i := 0; i < n; i++ {
 		t.print(r)

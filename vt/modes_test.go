@@ -9,10 +9,10 @@ func TestModeAnsiString(t *testing.T) {
 		m    *mode
 		want string
 	}{
-		{&mode{state: CSI_MODE_SET, private: true, code: 5}, "\x1b[?5h"},
-		{&mode{state: CSI_MODE_RESET, private: true, code: 3}, "\x1b[?3l"},
-		{&mode{state: CSI_MODE_SET, private: false, code: 4}, "\x1b[4h"},
-		{&mode{state: CSI_MODE_RESET, private: false, code: 2}, "\x1b[2l"},
+		{&mode{state: CSI_MODE_SET, code: REV_VIDEO}, "\x1b[?5h"},
+		{&mode{state: CSI_MODE_RESET, code: DECCOLM}, "\x1b[?3l"},
+		{&mode{state: CSI_MODE_SET, public: true, code: IRM}, "\x1b[4h"},
+		{&mode{state: CSI_MODE_RESET, public: true, code: LNM}, "\x1b[20l"},
 	}
 
 	for i, c := range cases {

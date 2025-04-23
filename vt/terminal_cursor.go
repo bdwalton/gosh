@@ -29,7 +29,7 @@ func (t *Terminal) setCol(c int) {
 }
 
 func (t *Terminal) homeCursor() {
-	if t.isModeSet(privIDToName[DECOM]) {
+	if t.isModeSet("DECOM") {
 		t.cursorMoveAbs(t.topMargin(), t.leftMargin())
 	} else {
 		t.cursorMoveAbs(0, 0)
@@ -70,7 +70,7 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 // our 0 indexing by the caller.
 func (t *Terminal) cursorCHAorHPA(col int) {
 	slog.Debug("horizontal position absolute / horizontal attribute", "col", col)
-	if t.isModeSet(privIDToName[DECOM]) {
+	if t.isModeSet("DECOM") {
 		col += t.leftMargin()
 		if r := t.rightMargin(); col > r {
 			col = r
@@ -86,7 +86,7 @@ func (t *Terminal) cursorCHAorHPA(col int) {
 func (t *Terminal) cursorCUPorHVP(row, col int) {
 	// TODO: What does "format effector" mean for HVP
 	slog.Debug("horizontal vertical position/cursor position", "row", row, "col", col)
-	if t.isModeSet(privIDToName[DECOM]) && t.inScrollingRegion() {
+	if t.isModeSet("DECOM") && t.inScrollingRegion() {
 		col += t.leftMargin()
 		if r := t.rightMargin(); col > r {
 			col = r
