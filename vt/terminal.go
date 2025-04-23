@@ -806,7 +806,7 @@ func (t *Terminal) handleDSR(params *parameters, data []rune) {
 	case "": // General device status report
 		switch params.item(0, 0) {
 		case 5: // We always report OK (CSI 0 n)
-			t.Write([]byte(fmt.Sprintf("%c%c0%c", ESC, CSI, CSI_DSR)))
+			t.Write([]byte(fmt.Sprintf("%c%c%d%c", ESC, CSI, 0, CSI_DSR)))
 		case 6: // Provide cursor location (CSI r ; c R)
 			row, col := t.row(), t.col()
 			if t.isModeSet("DECOM") {
@@ -814,16 +814,18 @@ func (t *Terminal) handleDSR(params *parameters, data []rune) {
 				col -= t.leftMargin()
 			}
 			slog.Debug("reporting cursor position", "row", row, "col", col)
-			t.Write([]byte(fmt.Sprintf("%c%c%d;%dR", ESC, CSI, row+1, col+1)))
+			t.Write([]byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, row+1, col+1, CSI_POS)))
 		default:
 			slog.Debug("unhandled CSI DSR request", "params", params, "data", string(data))
 		}
 	case "?": // DEC specific device status report
 		switch params.item(0, 0) {
 		case 6: // Provide cursor location (CSI ? r ; c R)
-			t.Write([]byte(fmt.Sprintf("%c%c?%d;%dR", ESC, CSI, t.row()+1, t.col()+1)))
+			t.Write([]byte(fmt.Sprintf("%c%c?%d;%d%c", ESC, CSI, t.row()+1, t.col()+1, CSI_POS)))
 		case 15: // report printer status; always "not ready" (CSI ? 1 1 n)
 			t.Write([]byte(fmt.Sprintf("%c%c?11%c", ESC, CSI, CSI_DSR)))
+		case 25: // UDK (universal disk kit); always "unlocked" (CSI ? 2 0 n)
+			t.Write([]byte(fmt.Sprintf("%c%c?%d%c", ESC, CSI, 20, CSI_DSR)))
 		default:
 			slog.Debug("unhandled CSI ? DSR request", "params", params, "data", string(data))
 		}
