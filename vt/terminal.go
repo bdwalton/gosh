@@ -478,15 +478,10 @@ func (t *Terminal) clearFrags(row, col int) {
 }
 
 func (t *Terminal) reset() {
-	rows, cols := t.rows(), t.cols()
-	t.fb = newFramebuffer(rows, cols)
+	cols := t.cols()
+	t.fb = newFramebuffer(t.rows(), cols)
 	t.title = ""
 	t.icon = ""
-	t.homeCursor()
-	t.savedCur = cursor{0, 0}
-	t.tabs = makeTabs(cols)
-	t.vertMargin = newMargin(0, rows-1)
-	t.horizMargin = newMargin(0, cols-1)
 	modes := make(map[string]*mode)
 	for name, n := range privModeToID {
 		modes[name] = newPrivMode(n)
@@ -495,6 +490,11 @@ func (t *Terminal) reset() {
 		modes[name] = newMode(n)
 	}
 	t.modes = modes
+	t.vertMargin = margin{}
+	t.horizMargin = margin{}
+	t.homeCursor()
+	t.savedCur = cursor{0, 0}
+	t.tabs = makeTabs(cols)
 }
 
 func (t *Terminal) isModeSet(name string) bool {
