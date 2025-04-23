@@ -193,12 +193,8 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 	// we always generate diffs as from previous to current
 	fbd := src.fb.diff(dest.fb)
 	if len(fbd) > 0 {
-		if dest.curF.equal(defFmt) {
-			sb.WriteString(FMT_RESET)
-		}
-
+		sb.WriteString(FMT_RESET)
 		sb.Write(fbd)
-
 		// We assume that the pen was changed during the
 		// writing of the framebuffer diff, so always generate
 		// a full format reset for the diff
