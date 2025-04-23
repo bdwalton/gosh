@@ -4,8 +4,16 @@ import (
 	"log/slog"
 )
 
+func (t *Terminal) rows() int {
+	return t.fb.rows()
+}
+
 func (t *Terminal) row() int {
 	return t.cur.row
+}
+
+func (t *Terminal) cols() int {
+	return t.fb.cols()
 }
 
 func (t *Terminal) col() int {

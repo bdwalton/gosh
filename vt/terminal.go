@@ -293,14 +293,6 @@ func (t *Terminal) Resize(rows, cols int) {
 	slog.Debug("changed window size", "rows", rows, "cols", rows)
 }
 
-func (t *Terminal) cols() int {
-	return t.fb.cols()
-}
-
-func (t *Terminal) rows() int {
-	return t.fb.rows()
-}
-
 func (t *Terminal) boundedMarginLeft() int {
 	if t.horizMargin.isSet() && t.horizMargin.min() <= t.col() {
 		return t.horizMargin.min()
