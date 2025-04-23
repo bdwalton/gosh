@@ -12,12 +12,20 @@ func (t *Terminal) row() int {
 	return t.cur.row
 }
 
+func (t *Terminal) setRow(r int) {
+	t.cur.row = r
+}
+
 func (t *Terminal) cols() int {
 	return t.fb.cols()
 }
 
 func (t *Terminal) col() int {
 	return t.cur.col
+}
+
+func (t *Terminal) setCol(c int) {
+	t.cur.col = c
 }
 
 func (t *Terminal) homeCursor() {

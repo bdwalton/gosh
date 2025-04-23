@@ -621,9 +621,8 @@ func (t *Terminal) print(r rune) {
 		}
 
 		t.fb.setCell(row, col, nc)
-
-		t.cur.col = col + rw
-		t.cur.row = row
+		t.setRow(row)
+		t.setCol(col + rw)
 
 		// punt, otherwise
 		return
