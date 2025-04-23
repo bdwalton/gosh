@@ -171,12 +171,10 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 		}
 	}
 
-	transportModes := make([]string, len(modeNameToID), len(modeNameToID))
-	var i int
+	transportModes := make([]string, 0, len(modeNameToID))
 	for n, id := range modeNameToID {
 		if src.modes[id].shouldTransport() {
-			transportModes[i] = n
-			i += 1
+			transportModes = append(transportModes, n)
 		}
 	}
 	slices.Sort(transportModes)
@@ -184,7 +182,7 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 	for _, name := range transportModes {
 		id, ok := modeNameToID[name]
 		if !ok {
-			slog.Debug("invalid modeNameToID", "id", id)
+			slog.Debug("invalid modeNameToID", "name", name)
 			continue
 		}
 		if !src.modes[id].equal(dest.modes[id]) {
@@ -823,7 +821,6 @@ func (t *Terminal) handleDSR(params *parameters, data []rune) {
 	case "?": // DEC specific device status report
 		switch params.item(0, 0) {
 		case 6: // Provide cursor location (CSI ? r ; c R)
-
 			t.Write([]byte(fmt.Sprintf("%c%c?%d;%dR", ESC, CSI, t.row()+1, t.col()+1)))
 		case 15: // report printer status; always "not ready" (CSI ? 1 1 n)
 			t.Write([]byte(fmt.Sprintf("%c%c?11%c", ESC, CSI, CSI_DSR)))
