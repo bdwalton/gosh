@@ -158,7 +158,6 @@ const (
 	DECAWM               = 7    // DEC autowrap mode, default reset
 	AUTO_REPEAT          = 8    // Auto-repeat keys DECARM
 	BLINK_CURSOR         = 12   // Start blinking cursor
-	LNM                  = 20   // Line Feed/New Line Mode, default reset
 	SHOW_CURSOR          = 25   // Show cursor DECTCEM
 	XTERM_80_132         = 40   // Xterm specific to enable/disable 80/132 col reset
 	REV_WRAP             = 45   // Xterm's reverse-wraparound mode

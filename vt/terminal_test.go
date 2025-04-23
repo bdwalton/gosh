@@ -276,7 +276,7 @@ func TestTerminalDiff(t *testing.T) {
 	t9.setMode(DECAWM, "?", CSI_MODE_SET)
 	t10 := testTerminalCopy(t9)
 	t10.setMode(DECAWM, "?", CSI_MODE_RESET)
-	t10.setMode(LNM, "?", CSI_MODE_SET)
+	t10.setMode(LNM, "", CSI_MODE_SET)
 	t11 := testTerminalCopy(t10)
 	t11.vertMargin = newMargin(2, 5)
 	t12 := testTerminalCopy(t10)
@@ -320,12 +320,12 @@ func TestTerminalDiff(t *testing.T) {
 		{t4, t7, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_ICON, "myicon", BEL))},
 		{t1, t8, []byte(fmt.Sprintf("%c%c%s;%s%c%c%c%c%c%c%s;%d;%d%c%c%c%c", ESC, OSC, OSC_ICON, "myicon", BEL, ESC, CSI, CSI_SGR, ESC, OSC, OSC_SETSIZE, 10, 6, BEL, ESC, CSI, CSI_CUP))},
 		{t8, t9, []byte(fmt.Sprintf("%c%c?%d%c", ESC, CSI, DECAWM, CSI_MODE_SET))},
-		{t9, t10, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, DECAWM, CSI_MODE_RESET, ESC, CSI, LNM, CSI_MODE_SET))},
+		{t9, t10, []byte(fmt.Sprintf("%c%c?%d%c%c%c%d%c", ESC, CSI, DECAWM, CSI_MODE_RESET, ESC, CSI, LNM, CSI_MODE_SET))},
 		{t10, t11, []byte{}}, // No diff as we don't ship margins
 		{t10, t12, []byte{}}, // No diff as we don't ship margins
-		{t9, t11, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, DECAWM, CSI_MODE_RESET, ESC, CSI, LNM, CSI_MODE_SET))},
-		{t9, t12, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, DECAWM, CSI_MODE_RESET, ESC, CSI, LNM, CSI_MODE_SET))},
-		{t9, t13, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, DECAWM, CSI_MODE_RESET, ESC, CSI, LNM, CSI_MODE_SET))},
+		{t9, t11, []byte(fmt.Sprintf("%c%c?%d%c%c%c%d%c", ESC, CSI, DECAWM, CSI_MODE_RESET, ESC, CSI, LNM, CSI_MODE_SET))},
+		{t9, t12, []byte(fmt.Sprintf("%c%c?%d%c%c%c%d%c", ESC, CSI, DECAWM, CSI_MODE_RESET, ESC, CSI, LNM, CSI_MODE_SET))},
+		{t9, t13, []byte(fmt.Sprintf("%c%c?%d%c%c%c%d%c", ESC, CSI, DECAWM, CSI_MODE_RESET, ESC, CSI, LNM, CSI_MODE_SET))},
 		{t14, t15, []byte(fmt.Sprintf("%c%c%dm%c%c%dm", ESC, CSI, FG_RED, ESC, CSI, UNDERLINE_ON))},
 
 		{t15, t16, []byte(fmt.Sprintf("%c%c%d%c%c%c%dm", ESC, CSI, FG_YELLOW, CSI_SGR, ESC, CSI, INTENSITY_BOLD))},
