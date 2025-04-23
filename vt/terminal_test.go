@@ -273,10 +273,10 @@ func TestTerminalDiff(t *testing.T) {
 	t8 := testTerminalCopy(t7)
 	t8.Resize(10, 6)
 	t9 := testTerminalCopy(t8)
-	t9.setMode(DECAWM, "?", CSI_MODE_SET)
+	t9.setMode(REV_VIDEO, "?", CSI_MODE_SET)
 	t10 := testTerminalCopy(t9)
-	t10.setMode(DECAWM, "?", CSI_MODE_RESET)
-	t10.setMode(LNM, "", CSI_MODE_SET)
+	t10.setMode(REV_VIDEO, "?", CSI_MODE_RESET)
+	t10.setMode(SHOW_CURSOR, "?", CSI_MODE_RESET)
 	t11 := testTerminalCopy(t10)
 	t11.vertMargin = newMargin(2, 5)
 	t12 := testTerminalCopy(t10)
@@ -290,12 +290,8 @@ func TestTerminalDiff(t *testing.T) {
 	t16 := testTerminalCopy(t15)
 	t16.curF = format{fg: newColor(FG_YELLOW), attrs: BOLD | UNDERLINE}
 	t17 := testTerminalCopy(t1)
-	t17.setMode(BRACKET_PASTE, "?", CSI_MODE_SET)
-	t17.setMode(IRM, "", CSI_MODE_SET)
-	t18 := testTerminalCopy(t17)
-	t18.setMode(BRACKET_PASTE, "?", CSI_MODE_RESET)
-	t18.setMode(DECCKM, "?", CSI_MODE_SET)
-	t18.setMode(IRM, "", CSI_MODE_RESET)
+	t17.setMode(BRACKET_PASTE, "?", CSI_MODE_SET) // no transport, no diff
+	t17.setMode(IRM, "", CSI_MODE_SET)            // no transport, no diff
 	t19, _ := NewTerminal()
 	t19.Resize(10, 10)
 	t19.fb.setCell(0, 0, newCell('A', defFmt))
@@ -319,18 +315,17 @@ func TestTerminalDiff(t *testing.T) {
 		{t4, t6, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_ICON_TITLE, "mytitle", BEL))},
 		{t4, t7, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_ICON, "myicon", BEL))},
 		{t1, t8, []byte(fmt.Sprintf("%c%c%s;%s%c%c%c%c%c%c%s;%d;%d%c%c%c%c", ESC, OSC, OSC_ICON, "myicon", BEL, ESC, CSI, CSI_SGR, ESC, OSC, OSC_SETSIZE, 10, 6, BEL, ESC, CSI, CSI_CUP))},
-		{t8, t9, []byte(fmt.Sprintf("%c%c?%d%c", ESC, CSI, DECAWM, CSI_MODE_SET))},
-		{t9, t10, []byte(fmt.Sprintf("%c%c?%d%c%c%c%d%c", ESC, CSI, DECAWM, CSI_MODE_RESET, ESC, CSI, LNM, CSI_MODE_SET))},
+		{t8, t9, []byte(fmt.Sprintf("%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_SET))},
+		{t9, t10, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_RESET, ESC, CSI, SHOW_CURSOR, CSI_MODE_RESET))},
 		{t10, t11, []byte{}}, // No diff as we don't ship margins
 		{t10, t12, []byte{}}, // No diff as we don't ship margins
-		{t9, t11, []byte(fmt.Sprintf("%c%c?%d%c%c%c%d%c", ESC, CSI, DECAWM, CSI_MODE_RESET, ESC, CSI, LNM, CSI_MODE_SET))},
-		{t9, t12, []byte(fmt.Sprintf("%c%c?%d%c%c%c%d%c", ESC, CSI, DECAWM, CSI_MODE_RESET, ESC, CSI, LNM, CSI_MODE_SET))},
-		{t9, t13, []byte(fmt.Sprintf("%c%c?%d%c%c%c%d%c", ESC, CSI, DECAWM, CSI_MODE_RESET, ESC, CSI, LNM, CSI_MODE_SET))},
+		{t9, t11, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_RESET, ESC, CSI, SHOW_CURSOR, CSI_MODE_RESET))},
+		{t9, t12, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_RESET, ESC, CSI, SHOW_CURSOR, CSI_MODE_RESET))},
+		{t9, t13, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_RESET, ESC, CSI, SHOW_CURSOR, CSI_MODE_RESET))},
 		{t14, t15, []byte(fmt.Sprintf("%c%c%dm%c%c%dm", ESC, CSI, FG_RED, ESC, CSI, UNDERLINE_ON))},
 
 		{t15, t16, []byte(fmt.Sprintf("%c%c%d%c%c%c%dm", ESC, CSI, FG_YELLOW, CSI_SGR, ESC, CSI, INTENSITY_BOLD))},
-		{t1, t17, []byte(fmt.Sprintf("%c%c?%d%c%c%c%d%c", ESC, CSI, BRACKET_PASTE, CSI_MODE_SET, ESC, CSI, IRM, CSI_MODE_SET))},
-		{t17, t18, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c%c%c%d%c", ESC, CSI, BRACKET_PASTE, CSI_MODE_RESET, ESC, CSI, DECCKM, CSI_MODE_SET, ESC, CSI, IRM, CSI_MODE_RESET))},
+		{t1, t17, []byte("")}, // should tranpsort is false for BRACKET_PASTE
 		{t19, t20, []byte(fmt.Sprintf("%c%c%c%c%c;2%c*%c%c%c", ESC, CSI, CSI_SGR, ESC, CSI, CSI_CUP, ESC, CSI, CSI_CUP))},
 		{t21, t22, []byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, 11, 11, CSI_CUP))},
 	}

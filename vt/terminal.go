@@ -171,16 +171,22 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 		}
 	}
 
-	modeNames := make([]string, len(modeNameToID), len(modeNameToID))
+	transportModes := make([]string, len(modeNameToID), len(modeNameToID))
 	var i int
-	for n := range modeNameToID {
-		modeNames[i] = n
-		i += 1
+	for n, id := range modeNameToID {
+		if src.modes[id].shouldTransport() {
+			transportModes[i] = n
+			i += 1
+		}
 	}
-	slices.Sort(modeNames)
+	slices.Sort(transportModes)
 
-	for _, name := range modeNames {
-		id := modeNameToID[name]
+	for _, name := range transportModes {
+		id, ok := modeNameToID[name]
+		if !ok {
+			slog.Debug("invalid modeNameToID", "id", id)
+			continue
+		}
 		if !src.modes[id].equal(dest.modes[id]) {
 			sb.WriteString(dest.modes[id].ansiString())
 		}
