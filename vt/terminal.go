@@ -364,7 +364,7 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	case NEL:
 		t.ctrlNEL()
 	case 'F':
-		t.cursorMoveAbs(t.rows()-1, t.boundedMarginLeft())
+		t.cursorMoveAbs(t.boundedMarginBottom(), t.boundedMarginLeft())
 	case HTS: // set tab stop. note that in some vt dialects this
 		// would actually be part of character set handling
 		// (swedish on vt220).
@@ -523,10 +523,10 @@ func (t *Terminal) print(r rune) {
 
 		switch {
 		case col == 0 && t.isModeSet(privIDToName[DECAWM]): // we wrapped
-			col = t.cols() - 1
+			col = t.boundedMarginRight()
 			row -= 1
-		case col >= t.cols(): // we're at the end of a row but didn't wrap
-			col = t.cols() - 1
+		case col > t.boundedMarginRight(): // we're at the end of a row but didn't wrap
+			col = t.boundedMarginRight()
 		default:
 			col -= 1
 		}
