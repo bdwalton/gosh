@@ -166,23 +166,23 @@ func (t *Terminal) cursorBack(n int) {
 }
 
 func (t *Terminal) cursorMoveAbs(row, col int) {
-	t.cur.col = col
-	t.cur.row = row
+	nr, nc := t.rows(), t.cols()
 
-	nc := t.cols()
 	switch {
-	case t.cur.col < 0:
-		t.cur.col = 0
-	case t.cur.col >= nc:
-		t.cur.col = nc - 1
+	case col < 0:
+		t.setCol(0)
+	case col >= nc:
+		t.setCol(nc - 1)
+	default:
+		t.setCol(col)
 	}
 
-	nr := t.rows()
-	// TODO: Fix this
 	switch {
-	case t.cur.row < 0:
-		t.cur.row = 0
-	case t.cur.row >= nr:
-		t.cur.row = nr - 1
+	case row < 0:
+		t.setRow(0)
+	case row >= nr:
+		t.setRow(nr - 1)
+	default:
+		t.setRow(row)
 	}
 }
