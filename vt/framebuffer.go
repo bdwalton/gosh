@@ -310,7 +310,7 @@ func (f *framebuffer) resetRows(from, to int) bool {
 func (f *framebuffer) setCells(rowFrom, rowTo, colFrom, colTo int, c cell) {
 	fr, err := f.subRegion(rowFrom, rowTo, colFrom, colTo)
 	if err != nil {
-		slog.Error("couldn't get region to set cells", "err", err)
+		slog.Debug("couldn't get region to set cells", "err", err)
 		return
 	}
 
