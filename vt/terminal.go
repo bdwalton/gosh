@@ -376,18 +376,18 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	case HTS: // set tab stop. note that in some vt dialects this
 		// would actually be part of character set handling
 		// (swedish on vt220).
-		t.tabs[t.cur.col] = true
+		t.tabs[t.col()] = true
 	case IND: // move cursor one line down, scrolling if needed
 		if row, max := t.row(), t.bottomMargin(); row == max {
 			t.scrollRegion(1)
 		} else {
-			t.cursorMoveAbs(row+1, t.cur.col)
+			t.cursorMoveAbs(row+1, t.col())
 		}
 	case RI: // move cursor one line up, scrolling if needed
 		if row, min := t.row(), t.topMargin(); row == min {
 			t.scrollRegion(-1)
 		} else {
-			t.cursorMoveAbs(row-1, t.cur.col)
+			t.cursorMoveAbs(row-1, t.col())
 		}
 	case DECSC: // save cursor
 		t.savedCur = t.cur.Copy()
@@ -683,7 +683,8 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		if lastCol := t.cols() - 1; last > lastCol {
 			last = lastCol
 		}
-		t.fb.setCells(t.cur.row, t.cur.row, t.cur.col, last, newCell(' ', t.curF))
+		row := t.row()
+		t.fb.setCells(row, row, t.col(), last, newCell(' ', t.curF))
 	case CSI_MODE_SET, CSI_MODE_RESET:
 		t.setMode(params.item(0, 0), string(data), last)
 	case CSI_DECSTBM:
@@ -830,7 +831,7 @@ func (t *Terminal) handleDSR(params *parameters, data []rune) {
 		switch params.item(0, 0) {
 		case 6: // Provide cursor location (CSI ? r ; c R)
 
-			t.Write([]byte(fmt.Sprintf("%c%c?%d;%dR", ESC, CSI, t.cur.row+1, t.cur.col+1)))
+			t.Write([]byte(fmt.Sprintf("%c%c?%d;%dR", ESC, CSI, t.row()+1, t.col()+1)))
 		case 15: // report printer status; always "not ready" (CSI ? 1 1 n)
 			t.Write([]byte(fmt.Sprintf("%c%c?11%c", ESC, CSI, CSI_DSR)))
 		default:
@@ -946,8 +947,8 @@ func maxInt(i1, i2 int) int {
 func (t *Terminal) cursorInScrollingRegion() bool {
 	return t.horizMargin.isSet() &&
 		t.vertMargin.isSet() &&
-		t.horizMargin.contains(t.cur.row) &&
-		t.vertMargin.contains(t.cur.col)
+		t.horizMargin.contains(t.row()) &&
+		t.vertMargin.contains(t.col())
 }
 
 func makeTabs(cols int) []bool {
@@ -973,7 +974,7 @@ func (t *Terminal) resizeTabs(cols int) {
 func (t *Terminal) stepTabs(steps int) {
 	// column under consideration, step increment for next column,
 	// count increment to know when we've tabbed enough.
-	col, step, inc := t.cur.col+1, 1, -1
+	col, step, inc := t.col()+1, 1, -1
 
 	switch {
 	case steps == 0:
@@ -982,7 +983,7 @@ func (t *Terminal) stepTabs(steps int) {
 		return
 	case steps < 0:
 		// we're moving backward through the line, not forward
-		col = t.cur.col - 1
+		col = t.col() - 1
 		step = -1
 		inc = 1
 	}
@@ -991,16 +992,17 @@ func (t *Terminal) stepTabs(steps int) {
 	for {
 		switch {
 		case col <= 0:
-			t.cur.col = 0
+			// TODO: Make this region aware?
+			t.cursorMoveAbs(t.row(), 0)
 			return
 		case col >= max:
-			t.cur.col = max
+			t.cursorMoveAbs(t.row(), max)
 			return
 		default:
 			if t.tabs[col] {
 				steps += inc
 				if steps == 0 {
-					t.cur.col = col
+					t.cursorMoveAbs(t.row(), col)
 					return
 				}
 			}
@@ -1012,8 +1014,9 @@ func (t *Terminal) stepTabs(steps int) {
 func (t *Terminal) deleteLines(params *parameters) {
 	m := params.item(0, 1)
 	cols := t.cols()
+	row := t.row()
 
-	for i := t.cur.row; i < t.cur.row+m && t.vertMargin.contains(i); i++ {
+	for i := row; i < row+m && t.vertMargin.contains(i); i++ {
 		t.fb.data[i] = newRow(cols)
 	}
 }
@@ -1091,34 +1094,34 @@ func (t *Terminal) eraseLine(params *parameters) {
 	dc := defaultCell()
 	dc.f = t.curF
 
+	row, col := t.row(), t.col()
 	nc := t.cols() - 1
 	switch params.item(0, 0) {
 	case 0: // to end of line
-		t.fb.setCells(t.cur.row, t.cur.row, t.cur.col, nc, dc)
-		slog.Debug("erase in line, pos to end", "row", t.cur.row, "col", t.cur.col)
+		t.fb.setCells(row, row, col, nc, dc)
+		slog.Debug("erase in line, pos to end", "row", row, "col", col)
 	case 1: // to start of line
-		t.fb.setCells(t.cur.row, t.cur.row, 0, t.cur.col, dc)
-		slog.Debug("erase in line, start of line to pos", "row", t.cur.row, "col", t.cur.col)
+		t.fb.setCells(row, row, 0, col, dc)
+		slog.Debug("erase in line, start of line to pos", "row", row, "col", col)
 	case 2: // entire line
-		t.fb.setCells(t.cur.row, t.cur.row, 0, nc, dc)
-		slog.Debug("erase in line, entire line", "row", t.cur.row, "col", t.cur.col)
+		t.fb.setCells(row, row, 0, nc, dc)
+		slog.Debug("erase in line, entire line", "row", row, "col", col)
 	}
 }
 
 func (t *Terminal) eraseInDisplay(params *parameters) {
 	// TODO: Handle BCE properly
-	nr := t.rows()
 	switch params.item(0, 0) {
 	case 0: // active position to end of screen, inclusive
-		t.fb.resetRows(t.cur.row+1, nr-1)
+		t.fb.resetRows(t.row()+1, t.rows()-1)
 		t.eraseLine(params)
 		slog.Debug("CSI erase in display, pos to end of screen")
 	case 1: // start of screen to active position, inclusive
-		t.fb.resetRows(0, t.cur.row-1)
+		t.fb.resetRows(0, t.row()-1)
 		t.eraseLine(params)
 		slog.Debug("CSI erase in display, beginning of screen to pos")
 	case 2: // entire screen
-		t.fb.resetRows(0, nr-1)
+		t.fb.resetRows(0, t.rows()-1)
 		slog.Debug("CSI erase in display, entire screen")
 	}
 }
