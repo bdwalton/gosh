@@ -1,9 +1,5 @@
 package vt
 
-import (
-	"log/slog"
-)
-
 func (t *Terminal) rows() int {
 	return t.fb.rows()
 }
@@ -69,13 +65,11 @@ func (t *Terminal) cursorMove(params *parameters, moveType rune) {
 // Move to an absolute column. Param n is assumed to be normalized to
 // our 0 indexing by the caller.
 func (t *Terminal) cursorCHAorHPA(col int) {
-	slog.Debug("horizontal position absolute / horizontal attribute", "col", col)
 	if t.isModeSet("DECOM") {
 		col += t.leftMargin()
 		if r := t.rightMargin(); col > r {
 			col = r
 		}
-		slog.Debug("adjusting column for ORIGIN MODE", "col", col)
 	}
 
 	t.cursorMoveAbs(t.row(), col)
@@ -85,7 +79,6 @@ func (t *Terminal) cursorCHAorHPA(col int) {
 // normalized to our 0 indexing by the caller.
 func (t *Terminal) cursorCUPorHVP(row, col int) {
 	// TODO: What does "format effector" mean for HVP
-	slog.Debug("horizontal vertical position/cursor position", "row", row, "col", col)
 	if t.isModeSet("DECOM") && t.inScrollingRegion() {
 		col += t.leftMargin()
 		if r := t.rightMargin(); col > r {
@@ -96,7 +89,6 @@ func (t *Terminal) cursorCUPorHVP(row, col int) {
 		if b := t.bottomMargin(); row > b {
 			row = b
 		}
-		slog.Debug("adjusting for ORIGIN MODE", "row", row, "col", col)
 	}
 
 	t.cursorMoveAbs(row, col)
@@ -104,32 +96,27 @@ func (t *Terminal) cursorCUPorHVP(row, col int) {
 
 func (t *Terminal) cursorHPR(n int) {
 	col := t.col() + n // we don't need to be 0 based for this
-	slog.Debug("horizontal position relative", "col", col)
 	t.cursorMoveAbs(t.row(), col)
 }
 
 // Move to an absolute row. Param n is assumed to be normalized to our
 // 0 indexing by the caller.
 func (t *Terminal) cursorVPA(row int) {
-	slog.Debug("vertical position absolute", "row", row)
 	t.cursorMoveAbs(row, t.col())
 }
 
 func (t *Terminal) cursorVPR(n int) {
 	row := t.row() + n // we don't need to be 0 based for this
-	slog.Debug("vertical position relative", "row", row)
 	t.cursorMoveAbs(row, t.col())
 }
 
 func (t *Terminal) cursorCNL(n int) {
 	row := t.row() + n
-	slog.Debug("next line", "row", row)
 	t.cursorMoveAbs(row, 0)
 }
 
 func (t *Terminal) cursorCPL(n int) {
 	row := t.row() - n
-	slog.Debug("previous line", "row", row)
 	t.cursorMoveAbs(row, 0)
 }
 
