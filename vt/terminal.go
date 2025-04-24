@@ -508,108 +508,75 @@ func (t *Terminal) print(r rune) {
 
 	switch rw {
 	case 0: // combining
-		if col == 0 && !t.isModeSet("DECAWM") {
-			// can't do anything with this. if we're in
-			// the first position but hadn't wrapped, we
-			// don't have something to combine with, so
-			// just punt.
-			slog.Debug("Punting on 0 width rune", "r", r)
-			return
-		}
-
-		switch {
-		case col == 0 && t.isModeSet("DECAWM"): // we wrapped
-			col = t.boundedMarginRight()
-			row -= 1
-		case col > t.boundedMarginRight(): // we're at the end of a row but didn't wrap
-			col = t.boundedMarginRight()
-		default:
-			col -= 1
-		}
-		c, err := t.fb.cell(row, col)
-		if err != nil {
-			slog.Debug("couldn't fetch cell", "row", row, "col", col)
-			return
+		combR, combC := row, col
+		if t.isModeSet("IRM") {
+			combC = col
 		} else {
-			n := norm.NFC.String(string(c.r) + string(r))
-			c.r = []rune(n)[0]
-			// TODO: Update format here too? Possible that
-			// an escape sequence updated the pen between
-			// the combining characters...if a bit daft.
+			if col != 0 {
+				combC = col - 1
+			} else {
+				if t.isModeSet("DECAWM") {
+					if row != t.boundedMarginTop() {
+						combR = row - 1
+						combC = t.boundedMarginRight()
+					} else {
+						slog.Debug("can't find row/col to combine char with", "row", row, "col", col)
+						return
+					}
+				}
+			}
 		}
 
-		t.fb.setCell(row, col, c)
-	default: // default (1 column), wide (2 columns)
-		if col <= t.cols()-rw {
-			t.clearFrags(row, col)
-			nc := newCell(r, t.curF)
-
-			ins := t.isModeSet("IRM")
-			if ins {
-				right := t.cols()
-				if t.inScrollingRegion() {
-					right = t.rightMargin()
-				}
-				r, c := t.row(), t.col()
-				cells, err := t.fb.subRegion(r, r, c, right)
-				if err != nil {
-					slog.Debug("invalid framebuffer region", "r", r, "c", c, "right", right, "err", err)
-					return
-				}
-				last := cells.cols() - 1
-				if last > rw {
-					for i := last; i >= rw; i-- {
-						c, err := cells.cell(0, i-rw)
-						if err != nil {
-							slog.Debug("invalid cell in region", "row", 0, "col", i-1, "err", err)
-							return
-						}
-						cells.setCell(0, i, c)
-					}
-				} else {
-					cells.fill(newCell(' ', t.curF))
-				}
-			}
-
-			if rw > 1 {
-				// Clear adjacent cells and note fragments
-				t.fb.setCell(row, col+1, fragCell(0, t.curF, FRAG_SECONDARY))
-				nc.frag = FRAG_PRIMARY
-			}
-
-			t.fb.setCell(row, col, nc)
-
-			if !ins {
-				t.cur.col += rw
-			}
-
+		c, err := t.fb.cell(combR, combC)
+		if err != nil {
+			slog.Debug("couldn't retrieve cell to combine character with", "row", combR, "col", combC, "err", err)
 			return
 		}
 
-		if t.isModeSet("DECAWM") {
-			if t.inScrollingRegion() {
-				col = t.leftMargin()
+		n := norm.NFC.String(string(c.r) + string(r))
+		c.r = []rune(n)[0]
+		t.fb.setCell(combR, combC, c)
+	default: // default (1 column), wide (2 columns)
+		if col > t.cols()-rw { // rune will not fit on row
+			if t.isModeSet("DECAWM") { // autowrap is on
+				// if we're at bottom of region,
+				// scroll it by one row to free new
+				// room in all cases, col becomes the
+				// left most column - either 0 or left
+				// margin
 				if row == t.bottomMargin() {
 					t.scrollRegion(1)
 				} else {
 					row += 1
 				}
+				col = t.boundedMarginLeft()
 			} else {
-				col = 0
-				if row == t.rows() {
-					t.scrollRegion(1)
-				} else {
-					row += 1
-				}
+				col = t.cols() - rw // overwrite end of row
 			}
-		} else {
-			// overwrite chars at the end
-			col = t.cols() - rw
+		}
+
+		if t.isModeSet("IRM") {
+			right := t.boundedMarginRight()
+
+			cells, err := t.fb.subRegion(row, row, col, right)
+			if err != nil {
+				slog.Debug("invalid framebuffer region", "row", row, "col", col, "right", right, "err", err)
+				return
+			}
+
+			// Shuffle everything forward by rw columns
+			for i := cells.cols() - 1; i >= rw; i-- {
+				c, err := cells.cell(0, i-rw)
+				if err != nil {
+					slog.Debug("invalid cell in region", "row", 0, "col", i-1, "err", err)
+					return
+				}
+				cells.setCell(0, i, c)
+			}
 		}
 
 		t.clearFrags(row, col)
 		nc := newCell(r, t.curF)
-
 		if rw > 1 {
 			// Clear adjacent cells and note fragments
 			t.fb.setCell(row, col+1, fragCell(0, t.curF, FRAG_SECONDARY))
@@ -617,11 +584,13 @@ func (t *Terminal) print(r rune) {
 		}
 
 		t.fb.setCell(row, col, nc)
-		t.setRow(row)
-		t.setCol(col + rw)
 
-		// punt, otherwise
-		return
+		if !t.isModeSet("IRM") {
+			col += rw
+		}
+
+		t.setRow(row)
+		t.setCol(col)
 	}
 }
 

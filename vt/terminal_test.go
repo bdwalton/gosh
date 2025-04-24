@@ -111,6 +111,9 @@ func TestPrint(t *testing.T) {
 
 	wfb1 := newFramebuffer(10, 10)
 	wfb1.setCell(0, 0, newCell('a', defFmt))
+	wfb1_irm := newFramebuffer(10, 10)
+	wfb1_irm.setCell(0, 0, newCell('b', defFmt))
+	wfb1_irm.setCell(0, 1, newCell('a', defFmt))
 
 	wfb2 := newFramebuffer(10, 10)
 	wfb2.setCell(0, 0, newCell('a', defFmt))
@@ -118,6 +121,9 @@ func TestPrint(t *testing.T) {
 
 	wfb3 := newFramebuffer(10, 10)
 	wfb3.setCell(0, 0, newCell('ü', defFmt))
+	wfb3_irm := newFramebuffer(10, 10)
+	wfb3_irm.setCell(0, 0, newCell('x', defFmt))
+	wfb3_irm.setCell(0, 1, newCell('ü', defFmt))
 
 	wfb4 := newFramebuffer(10, 10)
 	wfb4.setCell(0, 9, newCell('ü', defFmt))
@@ -181,13 +187,13 @@ func TestPrint(t *testing.T) {
 	wfb13 := dfb()
 	wfb13.setCell(5, 5, newCell('a', defFmt))
 
-	dterm := func(c cursor, fb *framebuffer, wrap bool) *Terminal {
+	// wrap == CSI_MODE_{RE,}SET
+	dterm := func(c cursor, fb *framebuffer, wrap, irm rune) *Terminal {
 		t, _ := NewTerminal()
 		t.fb = fb
 		t.cur = c
-		if wrap {
-			t.setMode(DECAWM, "?", CSI_MODE_SET)
-		}
+		t.setMode(DECAWM, "?", wrap)
+		t.setMode(IRM, "", irm)
 		return t
 	}
 
@@ -197,21 +203,24 @@ func TestPrint(t *testing.T) {
 		wantCur cursor
 		wantFb  *framebuffer
 	}{
-		{dterm(cursor{0, 0}, dfb(), false), []rune("a"), cursor{0, 1}, wfb1},
-		{dterm(cursor{0, 0}, dfb(), false), []rune("ab"), cursor{0, 2}, wfb2},
-		{dterm(cursor{0, 0}, dfb(), false), []rune("u\u0308"), cursor{0, 1}, wfb3},
-		{dterm(cursor{0, 9}, dfb(), false), []rune("u\u0308"), cursor{0, 10}, wfb4},
-		{dterm(cursor{0, 9}, dfb(), true), []rune("u\u0308"), cursor{0, 10}, wfb4},
-		{dterm(cursor{0, 10}, dfb(), false), []rune("z"), cursor{0, 10}, wfb5},
-		{dterm(cursor{0, 10}, dfb(), true), []rune("z"), cursor{1, 1}, wfb6},
-		{dterm(cursor{0, 10}, dfb(), false), []rune("世"), cursor{0, 10}, wfb7},
-		{dterm(cursor{0, 10}, dfb(), true), []rune("世"), cursor{1, 2}, wfb8},
-		{dterm(cursor{0, 5}, dfb(), true), []rune("世"), cursor{0, 7}, wfb9},
-		{dterm(cursor{5, 6}, ffb, false), []rune("u\u0308"), cursor{5, 7}, wffb},
-		{dterm(cursor{5, 6}, ffb2, false), []rune("u\u0308"), cursor{5, 7}, wffb2},
-		{dterm(cursor{9, 10}, sfb, true), []rune("u\u0308"), cursor{9, 1}, wsfb},
-		{dterm(cursor{9, 10}, dfb(), false), []rune("u\u0308"), cursor{9, 10}, wfb10},
-		{dterm(cursor{5, 5}, fb13, false), []rune("a"), cursor{5, 6}, wfb13},
+		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("a"), cursor{0, 1}, wfb1},
+		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_SET), []rune("ab"), cursor{0, 0}, wfb1_irm},
+		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("ab"), cursor{0, 2}, wfb2},
+		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("u\u0308"), cursor{0, 1}, wfb3},
+		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_SET), []rune("u\u0308x"), cursor{0, 0}, wfb3_irm},
+
+		{dterm(cursor{0, 9}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("u\u0308"), cursor{0, 10}, wfb4},
+		{dterm(cursor{0, 9}, dfb(), CSI_MODE_SET, CSI_MODE_RESET), []rune("u\u0308"), cursor{0, 10}, wfb4},
+		{dterm(cursor{0, 10}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("z"), cursor{0, 10}, wfb5},
+		{dterm(cursor{0, 10}, dfb(), CSI_MODE_SET, CSI_MODE_RESET), []rune("z"), cursor{1, 1}, wfb6},
+		{dterm(cursor{0, 10}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("世"), cursor{0, 10}, wfb7},
+		{dterm(cursor{0, 10}, dfb(), CSI_MODE_SET, CSI_MODE_RESET), []rune("世"), cursor{1, 2}, wfb8},
+		{dterm(cursor{0, 5}, dfb(), CSI_MODE_SET, CSI_MODE_RESET), []rune("世"), cursor{0, 7}, wfb9},
+		{dterm(cursor{5, 6}, ffb, CSI_MODE_RESET, CSI_MODE_RESET), []rune("u\u0308"), cursor{5, 7}, wffb},
+		{dterm(cursor{5, 6}, ffb2, CSI_MODE_RESET, CSI_MODE_RESET), []rune("u\u0308"), cursor{5, 7}, wffb2},
+		{dterm(cursor{9, 10}, sfb, CSI_MODE_SET, CSI_MODE_RESET), []rune("u\u0308"), cursor{9, 1}, wsfb},
+		{dterm(cursor{9, 10}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("u\u0308"), cursor{9, 10}, wfb10},
+		{dterm(cursor{5, 5}, fb13, CSI_MODE_RESET, CSI_MODE_RESET), []rune("a"), cursor{5, 6}, wfb13},
 	}
 
 	for i, c := range cases {
@@ -608,16 +617,17 @@ func TestIRM(t *testing.T) {
 	want2.print('*')
 
 	t3, _ := NewTerminal()
+	t3.setMode(DECAWM, "?", CSI_MODE_RESET)
 	want3 := t3.Copy()
 	want3.lastChg = time.Now()
-	t3.cursorMoveAbs(0, 79)
-	t3.print('x')
-	t3.cursorMoveAbs(0, 79)
 	t3.setMode(IRM, "", CSI_MODE_SET)
+	t3.cursorMoveAbs(0, 78)
+	t3.print('x')
 	t3.print('世')
 	t3.setMode(IRM, "", CSI_MODE_RESET)
 	want3.cursorMoveAbs(0, 79)
 	want3.print('世')
+	want3.cursorMoveAbs(0, 78) // because t3 has insert on
 
 	t4, _ := NewTerminal()
 	want4 := t4.Copy()
