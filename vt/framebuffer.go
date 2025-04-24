@@ -241,10 +241,9 @@ func (f *framebuffer) scrollRows(n int) {
 	} else {
 		for i := 0; i < nr-n; i++ {
 			x := i + n
-			switch x < nr {
-			case true:
+			if x < nr {
 				copy(f.data[i], f.row(x))
-			default:
+			} else {
 				copy(f.data[i], newRow(nc))
 			}
 		}
