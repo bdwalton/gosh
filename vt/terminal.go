@@ -239,13 +239,13 @@ func (t *Terminal) Run() {
 			case VTPARSE_ACTION_EXECUTE:
 				t.handleExecute(a.r)
 			case VTPARSE_ACTION_CSI_DISPATCH:
-				t.handleCSI(a.params, a.data, a.r)
+				t.handleCSI(a.params, string(a.data), a.r)
 			case VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
 				t.handleOSC(a.act, a.r)
 			case VTPARSE_ACTION_PRINT:
 				t.print(a.r)
 			case VTPARSE_ACTION_ESC_DISPATCH:
-				t.handleESC(a.params, a.data, a.r)
+				t.handleESC(a.params, string(a.data), a.r)
 			default:
 				slog.Debug("unhandled action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.r)
 			}
@@ -346,11 +346,10 @@ func (t *Terminal) ctrlNEL() {
 	t.carriageReturn()
 }
 
-func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
-	dstr := string(data)
+func (t *Terminal) handleESC(params *parameters, data string, r rune) {
 	switch r {
 	case 'A', 'B', 'C', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
-		slog.Debug("swallowing ESC character set command", "params", params, "data", string(data), "cmd", string(r))
+		slog.Debug("swallowing ESC character set command", "params", params, "data", data, "cmd", string(r))
 	case NEL:
 		t.ctrlNEL()
 	case 'F':
@@ -376,7 +375,7 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 		t.savedF = t.curF
 		slog.Debug("saved cursor and format", "save", t.savedCur)
 	case DECRC: // restore cursor or decaln screen test
-		switch dstr {
+		switch data {
 		case "":
 			slog.Debug("restoring cursor and format", "was", t.cur, "now", t.savedCur)
 			t.cur = t.savedCur.Copy()
@@ -387,7 +386,7 @@ func (t *Terminal) handleESC(params *parameters, data []rune, r rune) {
 	case RIS:
 		t.reset()
 	default:
-		slog.Debug("ignoring ESC", "r", string(r), "params", params, "data", string(data))
+		slog.Debug("ignoring ESC", "r", string(r), "params", params, "data", data)
 	}
 
 }
@@ -416,8 +415,9 @@ func (t *Terminal) handleOSC(act pAction, last rune) {
 		// prefer to ship it back via "diff" which will be in
 		// the form of ANSI code using this capability.)
 		if len(t.oscTemp) > 0 {
-			slog.Debug("Handling OSC data", "data", string(t.oscTemp))
-			parts := strings.SplitN(string(t.oscTemp), ";", 2)
+			data := string(t.oscTemp)
+			slog.Debug("Handling OSC data", "data", data)
+			parts := strings.SplitN(data, ";", 2)
 			switch parts[0] {
 			case OSC_ICON_TITLE:
 				t.title = parts[1]
@@ -444,7 +444,7 @@ func (t *Terminal) handleOSC(act pAction, last rune) {
 
 				}
 			default:
-				slog.Error("Unknown OSC entity", "data", string(t.oscTemp))
+				slog.Error("Unknown OSC entity", "data", data)
 			}
 			t.oscTemp = t.oscTemp[:0]
 		}
@@ -606,7 +606,7 @@ func (t *Terminal) handleExecute(last rune) {
 	}
 }
 
-func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
+func (t *Terminal) handleCSI(params *parameters, data string, last rune) {
 	switch last {
 	case CSI_DSR:
 		t.handleDSR(params, data)
@@ -617,8 +617,8 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_XTWINOPS:
 		t.xtwinops(params)
 	case CSI_DCH:
-		if len(data) != 0 {
-			slog.Debug("skipping CSI DCH with unexpected data", "params", params, "data", string(data))
+		if data != "" {
+			slog.Debug("skipping CSI DCH with unexpected data", "params", params, "data", data)
 			return
 		}
 		t.deleteChars(params.itemDefaultOneIfZero(0, 1))
@@ -633,7 +633,7 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 		row := t.row()
 		t.fb.setCells(row, row, t.col(), last, newCell(' ', t.curF))
 	case CSI_MODE_SET, CSI_MODE_RESET:
-		t.setMode(params.item(0, 0), string(data), last)
+		t.setMode(params.item(0, 0), data, last)
 	case CSI_DECSTBM:
 		t.setTopBottom(params)
 	case CSI_DECSLRM:
@@ -651,9 +651,8 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_VPA, CSI_VPR, CSI_HPA, CSI_HPR, CSI_CUP, CSI_CUU, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
 		t.cursorMove(params, last)
 	case CSI_SGR:
-		if string(data) != "" {
-			slog.Debug("swallowing xterm specific key modifier set/reset or query", "params", params, "data", string(data))
-
+		if data != "" {
+			slog.Debug("swallowing xterm specific key modifier set/reset or query", "params", params, "data", data)
 		} else {
 			t.curF = formatFromParams(t.curF, params)
 		}
@@ -666,13 +665,13 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_TBC:
 		t.clearTabs(params)
 	default:
-		slog.Debug("unimplemented CSI code", "last", string(last), "params", params, "data", string(data))
+		slog.Debug("unimplemented CSI code", "last", string(last), "params", params, "data", data)
 	}
 }
 
-func (t *Terminal) resetTabs(params *parameters, data []rune) {
-	if len(data) != 1 || data[0] != '?' || params.item(0, 0) != 5 {
-		slog.Debug("resetTabs called without ? 5 as data and parameter", "data", string(data), "params", params)
+func (t *Terminal) resetTabs(params *parameters, data string) {
+	if data != "?" || params.item(0, 0) != 5 {
+		slog.Debug("resetTabs called without ? 5 as data and parameter", "data", data, "params", params)
 	}
 	cols := t.cols()
 	tabs := make([]bool, cols, cols)
@@ -741,24 +740,24 @@ func (t *Terminal) xtwinops(params *parameters) {
 	}
 }
 
-func (t *Terminal) csiQ(params *parameters, data []rune) {
-	switch string(data) {
+func (t *Terminal) csiQ(params *parameters, data string) {
+	switch data {
 	case ">":
 		if params.item(0, 0) != 0 {
-			slog.Debug("invalid xterm_version query", "params", params, "data", string(data))
+			slog.Debug("invalid xterm_version query", "params", params, "data", data)
 			return
 		}
 		r := fmt.Sprintf("%c%c>|gosh(%s)%c%c", ESC, DCS, GOSH_VT_VER, ESC, ST)
 		t.Write([]byte(r))
 		slog.Debug("identifying as gosh version", "ver", GOSH_VT_VER)
 	default:
-		slog.Debug("unhandled CSI q", "params", params, "data", string(data))
+		slog.Debug("unhandled CSI q", "params", params, "data", data)
 	}
 }
 
-func (t *Terminal) handleDSR(params *parameters, data []rune) {
-	slog.Debug("handling DSR request", "params", params, "data", string(data))
-	switch string(data) {
+func (t *Terminal) handleDSR(params *parameters, data string) {
+	slog.Debug("handling DSR request", "params", params, "data", data)
+	switch data {
 	case "": // General device status report
 		switch params.item(0, 0) {
 		case 5: // We always report OK (CSI 0 n)
@@ -772,7 +771,7 @@ func (t *Terminal) handleDSR(params *parameters, data []rune) {
 			slog.Debug("reporting cursor position", "row", row, "col", col)
 			t.Write([]byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, row+1, col+1, CSI_POS)))
 		default:
-			slog.Debug("unhandled CSI DSR request", "params", params, "data", string(data))
+			slog.Debug("unhandled CSI DSR request", "params", params, "data", data)
 		}
 	case "?": // DEC specific device status report
 		switch params.item(0, 0) {
@@ -783,10 +782,10 @@ func (t *Terminal) handleDSR(params *parameters, data []rune) {
 		case 25: // UDK (universal disk kit); always "unlocked" (CSI ? 2 0 n)
 			t.Write([]byte(fmt.Sprintf("%c%c?%d%c", ESC, CSI, 20, CSI_DSR)))
 		default:
-			slog.Debug("unhandled CSI ? DSR request", "params", params, "data", string(data))
+			slog.Debug("unhandled CSI ? DSR request", "params", params, "data", data)
 		}
 	case ">":
-		slog.Debug("swallowing xterm disable key modifiers", "params", params, "data", string(data))
+		slog.Debug("swallowing xterm disable key modifiers", "params", params, "data", data)
 	default:
 		slog.Debug("unknown CSI DSR modifier string", "params", params, "data", data)
 	}
@@ -801,8 +800,8 @@ func (t *Terminal) doDECALN() {
 	t.fb.fill(newCell('E', t.curF))
 }
 
-func (t *Terminal) replyDeviceAttributes(data []rune) {
-	switch string(data) {
+func (t *Terminal) replyDeviceAttributes(data string) {
+	switch data {
 	case "=": // teritatary attributes
 		slog.Debug("ignoring request for tertiary device attributes")
 	case ">": // secondary attributes
