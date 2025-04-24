@@ -36,12 +36,12 @@ var modeDefaults = map[string]*mode{
 var modeNameToID = map[string]string{
 	"IRM":                  "4",
 	"LNM":                  "20",
-	"DECCKM":               "?1",
-	"DECCOLM":              "?3",
+	"DECCKM":               "?1", // Application cursor keys
+	"DECCOLM":              "?3", // 132 vs 80 column toggle
 	"SMOOTH_SCROLL":        "?4",
 	"REV_VIDEO":            "?5",
-	"DECOM":                "?6",
-	"DECAWM":               "?7",
+	"DECOM":                "?6", // DEC origin mode
+	"DECAWM":               "?7", // Auto wrap mode
 	"AUTO_REPEAT":          "?8",
 	"BLINK_CURSOR":         "?12",
 	"SHOW_CURSOR":          "?25",

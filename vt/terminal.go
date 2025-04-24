@@ -867,11 +867,16 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 	m.setState(state)
 	slog.Debug("set CSI mode", "id", mid, "name", m.name, "state", string(state))
 
-	switch mid {
-	case "?3": // DECCOLM
+	// Don't use code here because codes are duplicated between
+	// ansi and DEC private modes.
+	switch m.name {
+	case "DECCOLM":
+		// this mode is mostly ignored, but it does trigger a
+		// screen clear and homing of the cursor. we don't do
+		// anything with available columsn per row though.
 		t.eraseInDisplay(ERASE_ALL)
 		t.homeCursor()
-	case "?6": // DECOM
+	case "DECOM":
 		t.homeCursor()
 	}
 }
