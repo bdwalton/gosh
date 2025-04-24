@@ -17,7 +17,7 @@ var modeDefaults = map[string]*mode{
 	"?4":    newMode("SMOOTH_SCROLL", SMOOTH_SCROLL, false, CSI_MODE_RESET, false),
 	"?5":    newMode("REV_VIDEO", REV_VIDEO, false, CSI_MODE_RESET, true),
 	"?6":    newMode("DECOM", DECOM, false, CSI_MODE_RESET, false),
-	"?7":    newMode("DECAWM", DECAWM, false, CSI_MODE_RESET, false),
+	"?7":    newMode("DECAWM", DECAWM, false, CSI_MODE_SET, false),
 	"?8":    newMode("AUTO_REPEAT", AUTO_REPEAT, false, CSI_MODE_RESET, false),
 	"?12":   newMode("BLINK_CURSOR", BLINK_CURSOR, false, CSI_MODE_RESET, true),
 	"?25":   newMode("SHOW_CURSOR", SHOW_CURSOR, false, CSI_MODE_SET, true),
