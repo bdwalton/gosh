@@ -615,7 +615,7 @@ func (t *Terminal) handleCSI(params *parameters, data string, last rune) {
 	case CSI_Q_MULTI:
 		t.csiQ(params, data)
 	case CSI_XTWINOPS:
-		t.xtwinops(params)
+		t.xtwinops(params.item(0, 0))
 	case CSI_DCH:
 		if data != "" {
 			slog.Debug("skipping CSI DCH with unexpected data", "params", params, "data", data)
@@ -726,17 +726,16 @@ func (t *Terminal) scrollRegion(n int) {
 	fb.scrollRows(n)
 }
 
-func (t *Terminal) xtwinops(params *parameters) {
-	slog.Debug("handling xtwinops", "params", params)
-	switch params.item(0, 0) {
-	case 0:
-		slog.Debug("invalid xtwinops command (0)")
-	case 22: // save title and icon
+func (t *Terminal) xtwinops(n int) {
+	switch n {
+	case XTWINOPS_SAVE: // save title and icon
 		t.savedTitle = t.title
 		t.savedIcon = t.icon
-	case 23: // restore title and icon
+	case XTWINOPS_RESTORE: // restore title and icon
 		t.title = t.savedTitle
 		t.icon = t.savedIcon
+	default:
+		slog.Debug("invalid xtwinops command", "n", n)
 	}
 }
 

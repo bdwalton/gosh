@@ -186,8 +186,14 @@ const (
 	TBC_ALL = 3 // clear all tab stops
 )
 
+// For erase in display and erase line
 const (
 	ERASE_FROM_CUR = 0 // from cursor to end of line/screen (includes cursor pos)
 	ERASE_TO_CUR   = 1 // from start of line/screen to cursor (includes cursor pos)
 	ERASE_ALL      = 2 // entire line/screen
+)
+
+const (
+	XTWINOPS_SAVE    = 22
+	XTWINOPS_RESTORE = 23
 )
