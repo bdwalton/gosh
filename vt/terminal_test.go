@@ -359,43 +359,43 @@ func TestEraseInDisplay(t *testing.T) {
 
 	cases := []struct {
 		cur    cursor
-		params *parameters
+		ep     int // erase param 0, 1 or 2
 		fb     *framebuffer
 		wantFb *framebuffer
 	}{
 		{
 			cursor{0, 0},
-			&parameters{1, []int{0}}, // pos to end of screen
+			ERASE_FROM_CUR,
 			emptyFb.copy(),
 			emptyFb.copy(),
 		},
 		{
 			cursor{4, 4},
-			&parameters{1, []int{0}}, // pos to end of screen
+			ERASE_FROM_CUR,
 			fb2.copy(),
 			fb2erase1,
 		},
 		{
 			cursor{9, 4},
-			&parameters{1, []int{0}}, // pos to end of screen
+			ERASE_FROM_CUR,
 			fb2.copy(),
 			fb2erase2,
 		},
 		{
 			cursor{4, 4},
-			&parameters{1, []int{1}}, // pos to beginning of screen
+			ERASE_TO_CUR,
 			fb2.copy(),
 			fb2erase3,
 		},
 		{
 			cursor{4, 4},
-			&parameters{1, []int{2}}, // whole screen
+			ERASE_ALL,
 			fb2.copy(),
 			emptyFb,
 		},
 		{
 			cursor{9, 9},
-			&parameters{1, []int{2}}, // whole screen
+			ERASE_ALL,
 			fb2.copy(),
 			emptyFb,
 		},
@@ -405,7 +405,7 @@ func TestEraseInDisplay(t *testing.T) {
 		term, _ := NewTerminal()
 		term.fb = c.fb
 		term.cur = c.cur
-		term.eraseInDisplay(c.params)
+		term.eraseInDisplay(c.ep)
 
 		if !c.wantFb.equal(term.fb) {
 			t.Errorf("%d: Got\n%v wanted\n%v", i, term.fb, c.wantFb)

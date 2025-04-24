@@ -681,13 +681,13 @@ func (t *Terminal) handleCSI(params *parameters, data []rune, last rune) {
 	case CSI_DL:
 		t.deleteLines(params)
 	case CSI_EL:
-		t.eraseLine(params)
+		t.eraseLine(params.item(0, 0))
 	case CSI_SU:
 		t.scrollRegion(-params.item(0, 1))
 	case CSI_SD:
 		t.scrollRegion(params.item(0, 1))
 	case CSI_ED:
-		t.eraseInDisplay(params)
+		t.eraseInDisplay(params.item(0, 0))
 	case CSI_VPA, CSI_VPR, CSI_HPA, CSI_HPR, CSI_CUP, CSI_CUU, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
 		t.cursorMove(params, last)
 	case CSI_SGR:
@@ -869,7 +869,7 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 
 	switch mid {
 	case "?3": // DECCOLM
-		t.fb.fill(newCell(' ', t.curF))
+		t.eraseInDisplay(ERASE_ALL)
 		t.homeCursor()
 	case "?6": // DECOM
 		t.homeCursor()
@@ -1065,38 +1065,38 @@ func (t *Terminal) insertChars(r rune, n int) {
 	}
 }
 
-func (t *Terminal) eraseLine(params *parameters) {
+func (t *Terminal) eraseLine(n int) {
 	// TODO: Handle BCE properly
 	dc := defaultCell()
 	dc.f = t.curF
 
 	row, col := t.row(), t.col()
 	nc := t.cols() - 1
-	switch params.item(0, 0) {
-	case 0: // to end of line
+	switch n {
+	case ERASE_FROM_CUR: // to end of line
 		t.fb.setCells(row, row, col, nc, dc)
 		slog.Debug("erase in line, pos to end", "row", row, "col", col)
-	case 1: // to start of line
+	case ERASE_TO_CUR: // to start of line
 		t.fb.setCells(row, row, 0, col, dc)
 		slog.Debug("erase in line, start of line to pos", "row", row, "col", col)
-	case 2: // entire line
+	case ERASE_ALL: // entire line
 		t.fb.setCells(row, row, 0, nc, dc)
 		slog.Debug("erase in line, entire line", "row", row, "col", col)
 	}
 }
 
-func (t *Terminal) eraseInDisplay(params *parameters) {
+func (t *Terminal) eraseInDisplay(n int) {
 	// TODO: Handle BCE properly
-	switch params.item(0, 0) {
-	case 0: // active position to end of screen, inclusive
+	switch n {
+	case ERASE_FROM_CUR: // active position to end of screen, inclusive
 		t.fb.resetRows(t.row()+1, t.rows()-1)
-		t.eraseLine(params)
+		t.eraseLine(n)
 		slog.Debug("CSI erase in display, pos to end of screen")
-	case 1: // start of screen to active position, inclusive
+	case ERASE_TO_CUR: // start of screen to active position, inclusive
 		t.fb.resetRows(0, t.row()-1)
-		t.eraseLine(params)
+		t.eraseLine(n)
 		slog.Debug("CSI erase in display, beginning of screen to pos")
-	case 2: // entire screen
+	case ERASE_ALL: // entire screen
 		t.fb.resetRows(0, t.rows()-1)
 		slog.Debug("CSI erase in display, entire screen")
 	}

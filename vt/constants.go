@@ -185,3 +185,9 @@ const (
 	TBC_CUR = 0 // clear current tab stop
 	TBC_ALL = 3 // clear all tab stops
 )
+
+const (
+	ERASE_FROM_CUR = 0 // from cursor to end of line/screen (includes cursor pos)
+	ERASE_TO_CUR   = 1 // from start of line/screen to cursor (includes cursor pos)
+	ERASE_ALL      = 2 // entire line/screen
+)
