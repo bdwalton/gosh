@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -170,14 +169,6 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 			}
 		}
 	}
-
-	transportModes := make([]string, 0, len(modeNameToID))
-	for n, id := range modeNameToID {
-		if src.modes[id].shouldTransport() {
-			transportModes = append(transportModes, n)
-		}
-	}
-	slices.Sort(transportModes)
 
 	for _, name := range transportModes {
 		id, ok := modeNameToID[name]
