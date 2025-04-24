@@ -64,6 +64,7 @@ var modeNameToID = map[string]string{
 // output order for their validation in some cases.
 var transportModes = []string{
 	"BLINK_CURSOR",
+	"DECCKM",
 	"REV_VIDEO",
 	"SHOW_CURSOR",
 	"XTERM_80_132",
