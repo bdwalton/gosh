@@ -865,7 +865,7 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 	}
 
 	m.setState(state)
-	slog.Debug("set CSI mode", "id", mid, "state", state)
+	slog.Debug("set CSI mode", "id", mid, "name", m.name, "state", string(state))
 
 	switch mid {
 	case "?3": // DECCOLM
