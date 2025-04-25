@@ -238,6 +238,16 @@ func (t *Terminal) Run() {
 				continue
 			}
 
+			// Note that this is really gross and we
+			// should handle 8bit inputs more cleanly. It
+			// works because we've coerced all of the
+			// 8-bit bytes into runes in the lookup
+			// table. This means that there exists a small
+			// subset of valid 2-byte runes that we won't
+			// see as printable characters.
+			//
+			// TODO: Fix parsing to cleanly handle 8-bit
+			// input.
 			r = rune(b)
 		}
 
