@@ -2,6 +2,7 @@ package vt
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -116,7 +117,12 @@ func (t *Terminal) Stop() {
 }
 
 func (t *Terminal) Write(p []byte) (int, error) {
-	return t.ptyW.Write(p)
+	inp := p
+	if t.isModeSet("LNM") {
+		inp = bytes.ReplaceAll(p, []byte("\r"), []byte("\r\n"))
+	}
+
+	return t.ptyW.Write(inp)
 }
 
 func (t *Terminal) Copy() *Terminal {
@@ -598,12 +604,14 @@ func (t *Terminal) handleExecute(last rune) {
 		t.cursorBack(1)
 	case CR:
 		t.carriageReturn()
-	case LF, FF: // libvte treats lf and ff the same, so we do too
+	case LF, FF, VT: // libvte treats lf and ff the same, so we do too
 		t.lineFeed()
+		if t.isModeSet("LNM") {
+			slog.Debug("LNM set, so also sending CR with LF")
+			t.carriageReturn()
+		}
 	case TAB:
 		t.stepTabs(1)
-	case VT:
-		t.cursorDown(1)
 	case SO, SI:
 		slog.Debug("swallowing charset switching command", "cmd", string(last))
 	default:
