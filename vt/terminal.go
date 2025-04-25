@@ -499,17 +499,24 @@ func (t *Terminal) print(r rune) {
 
 	switch rw {
 	case 0: // combining
+		// if we're in insert mode, we should always use the
+		// same cell, so we don't adjust that below.
 		combR, combC := row, col
-		if t.isModeSet("IRM") {
-			combC = col
-		} else {
+		if !t.isModeSet("IRM") {
 			if col != 0 {
 				combC = col - 1
 			} else {
 				if t.isModeSet("DECAWM") {
 					if row != t.boundedMarginTop() {
 						combR = row - 1
-						combC = t.boundedMarginRight()
+						for i := t.boundedMarginRight(); i >= 0; i-- {
+							if c, err := t.fb.cell(combR, i); err == nil {
+								if c.set {
+									combC = i
+									break
+								}
+							}
+						}
 					} else {
 						slog.Debug("can't find row/col to combine char with", "row", row, "col", col)
 						return
@@ -517,15 +524,13 @@ func (t *Terminal) print(r rune) {
 				}
 			}
 		}
-
 		c, err := t.fb.cell(combR, combC)
 		if err != nil {
 			slog.Debug("couldn't retrieve cell to combine character with", "row", combR, "col", combC, "err", err)
 			return
 		}
 
-		n := norm.NFC.String(string(c.r) + string(r))
-		c.r = []rune(n)[0]
+		c.r = []rune(norm.NFC.String(string(c.r) + string(r)))[0]
 		t.fb.setCell(combR, combC, c)
 	default: // default (1 column), wide (2 columns)
 		if col > t.cols()-rw { // rune will not fit on row

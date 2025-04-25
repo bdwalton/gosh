@@ -100,7 +100,6 @@ func TestLineFeed(t *testing.T) {
 		if !c.t.cur.equal(c.wantCur) {
 			t.Errorf("%d: Got %s, wanted %s", i, c.t.cur, c.wantCur)
 		}
-
 	}
 }
 
@@ -187,6 +186,13 @@ func TestPrint(t *testing.T) {
 	wfb13 := dfb()
 	wfb13.setCell(5, 5, newCell('a', defFmt))
 
+	combFb := dfb()
+	combFb.setCell(1, 0, newCell('a', defFmt))
+	combFb.setCell(1, 1, newCell('b', defFmt))
+	combFb.setCell(1, 2, newCell('u', defFmt))
+	wfb_comb := combFb.copy()
+	wfb_comb.setCell(1, 2, newCell('ü', defFmt))
+
 	// wrap == CSI_MODE_{RE,}SET
 	dterm := func(c cursor, fb *framebuffer, wrap, irm rune) *Terminal {
 		t, _ := NewTerminal()
@@ -199,32 +205,33 @@ func TestPrint(t *testing.T) {
 
 	cases := []struct {
 		t       *Terminal
-		r       []rune
+		input   string
 		wantCur cursor
 		wantFb  *framebuffer
 	}{
-		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("a"), cursor{0, 1}, wfb1},
-		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_SET), []rune("ab"), cursor{0, 0}, wfb1_irm},
-		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("ab"), cursor{0, 2}, wfb2},
-		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("u\u0308"), cursor{0, 1}, wfb3},
-		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_SET), []rune("u\u0308x"), cursor{0, 0}, wfb3_irm},
+		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), "a", cursor{0, 1}, wfb1},
+		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_SET), "ab", cursor{0, 0}, wfb1_irm},
+		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), "ab", cursor{0, 2}, wfb2},
+		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), "u\u0308", cursor{0, 1}, wfb3},
+		{dterm(cursor{0, 0}, dfb(), CSI_MODE_RESET, CSI_MODE_SET), "u\u0308x", cursor{0, 0}, wfb3_irm},
 
-		{dterm(cursor{0, 9}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("u\u0308"), cursor{0, 10}, wfb4},
-		{dterm(cursor{0, 9}, dfb(), CSI_MODE_SET, CSI_MODE_RESET), []rune("u\u0308"), cursor{0, 10}, wfb4},
-		{dterm(cursor{0, 10}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("z"), cursor{0, 10}, wfb5},
-		{dterm(cursor{0, 10}, dfb(), CSI_MODE_SET, CSI_MODE_RESET), []rune("z"), cursor{1, 1}, wfb6},
-		{dterm(cursor{0, 10}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("世"), cursor{0, 10}, wfb7},
-		{dterm(cursor{0, 10}, dfb(), CSI_MODE_SET, CSI_MODE_RESET), []rune("世"), cursor{1, 2}, wfb8},
-		{dterm(cursor{0, 5}, dfb(), CSI_MODE_SET, CSI_MODE_RESET), []rune("世"), cursor{0, 7}, wfb9},
-		{dterm(cursor{5, 6}, ffb, CSI_MODE_RESET, CSI_MODE_RESET), []rune("u\u0308"), cursor{5, 7}, wffb},
-		{dterm(cursor{5, 6}, ffb2, CSI_MODE_RESET, CSI_MODE_RESET), []rune("u\u0308"), cursor{5, 7}, wffb2},
-		{dterm(cursor{9, 10}, sfb, CSI_MODE_SET, CSI_MODE_RESET), []rune("u\u0308"), cursor{9, 1}, wsfb},
-		{dterm(cursor{9, 10}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), []rune("u\u0308"), cursor{9, 10}, wfb10},
-		{dterm(cursor{5, 5}, fb13, CSI_MODE_RESET, CSI_MODE_RESET), []rune("a"), cursor{5, 6}, wfb13},
+		{dterm(cursor{0, 9}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), "u\u0308", cursor{0, 10}, wfb4},
+		{dterm(cursor{0, 9}, dfb(), CSI_MODE_SET, CSI_MODE_RESET), "u\u0308", cursor{0, 10}, wfb4},
+		{dterm(cursor{0, 10}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), "z", cursor{0, 10}, wfb5},
+		{dterm(cursor{0, 10}, dfb(), CSI_MODE_SET, CSI_MODE_RESET), "z", cursor{1, 1}, wfb6},
+		{dterm(cursor{0, 10}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), "世", cursor{0, 10}, wfb7},
+		{dterm(cursor{0, 10}, dfb(), CSI_MODE_SET, CSI_MODE_RESET), "世", cursor{1, 2}, wfb8},
+		{dterm(cursor{0, 5}, dfb(), CSI_MODE_SET, CSI_MODE_RESET), "世", cursor{0, 7}, wfb9},
+		{dterm(cursor{5, 6}, ffb, CSI_MODE_RESET, CSI_MODE_RESET), "u\u0308", cursor{5, 7}, wffb},
+		{dterm(cursor{5, 6}, ffb2, CSI_MODE_RESET, CSI_MODE_RESET), "u\u0308", cursor{5, 7}, wffb2},
+		{dterm(cursor{9, 10}, sfb, CSI_MODE_SET, CSI_MODE_RESET), "u\u0308", cursor{9, 1}, wsfb},
+		{dterm(cursor{9, 10}, dfb(), CSI_MODE_RESET, CSI_MODE_RESET), "u\u0308", cursor{9, 10}, wfb10},
+		{dterm(cursor{5, 5}, fb13, CSI_MODE_RESET, CSI_MODE_RESET), "a", cursor{5, 6}, wfb13},
+		{dterm(cursor{2, 0}, combFb, CSI_MODE_SET, CSI_MODE_RESET), "\u0308", cursor{2, 0}, wfb_comb},
 	}
 
 	for i, c := range cases {
-		for _, r := range c.r {
+		for _, r := range c.input {
 			c.t.print(r)
 		}
 
