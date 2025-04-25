@@ -648,9 +648,9 @@ func (t *Terminal) handleCSI(params *parameters, data string, last rune) {
 	case CSI_EL:
 		t.eraseLine(params.item(0, 0))
 	case CSI_SU:
-		t.scrollRegion(-params.item(0, 1))
-	case CSI_SD:
 		t.scrollRegion(params.item(0, 1))
+	case CSI_SD:
+		t.scrollRegion(-params.item(0, 1))
 	case CSI_ED:
 		t.eraseInDisplay(params.item(0, 0))
 	case CSI_VPA, CSI_VPR, CSI_HPA, CSI_HPR, CSI_CUP, CSI_CUU, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
