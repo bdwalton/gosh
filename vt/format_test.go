@@ -82,6 +82,31 @@ func TestFormatApplication(t *testing.T) {
 			paramsFromInts([]int{INTENSITY_BOLD, SET_FG, 2, 212, 219, 123, STRIKEOUT_ON, STRIKEOUT_OFF}),
 			format{fg: newRGBColor([]int{212, 219, 123}), bg: newColor(BG_BLUE), attrs: BOLD},
 		},
+		{
+			format{bg: newColor(BG_BLUE), attrs: BOLD | UNDERLINE},
+			paramsFromInts([]int{INTENSITY_FAINT}),
+			format{bg: newColor(BG_BLUE), attrs: BOLD_FAINT | UNDERLINE},
+		},
+		{
+			format{bg: newColor(BG_BLUE), attrs: FAINT | UNDERLINE},
+			paramsFromInts([]int{INTENSITY_BOLD}),
+			format{bg: newColor(BG_BLUE), attrs: BOLD_FAINT | UNDERLINE},
+		},
+		{
+			format{bg: newColor(BG_BLUE), attrs: BOLD_FAINT | UNDERLINE},
+			paramsFromInts([]int{INTENSITY_NORMAL}),
+			format{bg: newColor(BG_BLUE), attrs: UNDERLINE},
+		},
+		{
+			format{bg: newColor(BG_BLUE), attrs: BOLD | UNDERLINE},
+			paramsFromInts([]int{INTENSITY_NORMAL}),
+			format{bg: newColor(BG_BLUE), attrs: UNDERLINE},
+		},
+		{
+			format{bg: newColor(BG_BLUE), attrs: FAINT | UNDERLINE},
+			paramsFromInts([]int{INTENSITY_NORMAL}),
+			format{bg: newColor(BG_BLUE), attrs: UNDERLINE},
+		},
 	}
 
 	for i, c := range cases {
@@ -142,6 +167,21 @@ func TestFormatDiff(t *testing.T) {
 			defFmt,
 			format{attrs: UNDERLINE},
 			[]byte(fmt.Sprintf("%c%c%d%c", ESC, CSI, UNDERLINE_ON, CSI_SGR)),
+		},
+		{
+			defFmt,
+			format{attrs: BOLD_FAINT},
+			[]byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, INTENSITY_BOLD, INTENSITY_FAINT, CSI_SGR)),
+		},
+		{
+			format{attrs: BOLD_FAINT},
+			format{attrs: BOLD},
+			[]byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, INTENSITY_NORMAL, INTENSITY_BOLD, CSI_SGR)),
+		},
+		{
+			format{attrs: BOLD_FAINT},
+			format{attrs: FAINT},
+			[]byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, INTENSITY_NORMAL, INTENSITY_FAINT, CSI_SGR)),
 		},
 	}
 

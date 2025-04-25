@@ -88,6 +88,7 @@ const (
 const (
 	RESET            = 0
 	INTENSITY_BOLD   = 1
+	INTENSITY_FAINT  = 2
 	UNDERLINE_ON     = 4
 	BLINK_ON         = 5
 	RAPID_BLINK_ON   = 6

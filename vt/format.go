@@ -11,22 +11,26 @@ var defFmt = format{}
 const FMT_RESET = "\x1b[m"
 
 const (
-	BOLD      = 1
-	UNDERLINE = 1 << 1
-	BLINK     = 1 << 2
-	REVERSED  = 1 << 3
-	INVISIBLE = 1 << 4
-	STRIKEOUT = 1 << 5
+	BOLD       = 1 << 0
+	FAINT      = 1 << 1
+	BOLD_FAINT = 1 << 2 // it is valid to set both, we handle is specially
+	UNDERLINE  = 1 << 3
+	BLINK      = 1 << 4
+	REVERSED   = 1 << 5
+	INVISIBLE  = 1 << 6
+	STRIKEOUT  = 1 << 7
 )
 
-var attrs = []uint8{BOLD, UNDERLINE, BLINK, REVERSED, INVISIBLE, STRIKEOUT}
-var attrToggle = map[uint8]map[bool]uint8{
-	BOLD:      map[bool]uint8{true: INTENSITY_BOLD, false: INTENSITY_NORMAL},
-	UNDERLINE: map[bool]uint8{true: UNDERLINE_ON, false: UNDERLINE_OFF},
-	BLINK:     map[bool]uint8{true: BLINK_ON, false: BLINK_OFF},
-	REVERSED:  map[bool]uint8{true: REVERSED_ON, false: REVERSED_OFF},
-	INVISIBLE: map[bool]uint8{true: INVISIBLE_ON, false: INVISIBLE_OFF},
-	STRIKEOUT: map[bool]uint8{true: STRIKEOUT_ON, false: STRIKEOUT_OFF},
+var attrs = []uint8{BOLD_FAINT, BOLD, FAINT, UNDERLINE, BLINK, REVERSED, INVISIBLE, STRIKEOUT}
+var attrToggle = map[uint8]map[bool]string{
+	BOLD:       map[bool]string{true: fmt.Sprintf("%d", INTENSITY_BOLD), false: fmt.Sprintf("%d", INTENSITY_NORMAL)},
+	FAINT:      map[bool]string{true: fmt.Sprintf("%d", INTENSITY_FAINT), false: fmt.Sprintf("%d", INTENSITY_NORMAL)},
+	BOLD_FAINT: map[bool]string{true: fmt.Sprintf("%d;%d", INTENSITY_BOLD, INTENSITY_FAINT), false: fmt.Sprintf("%d", INTENSITY_NORMAL)},
+	UNDERLINE:  map[bool]string{true: fmt.Sprintf("%d", UNDERLINE_ON), false: fmt.Sprintf("%d", UNDERLINE_OFF)},
+	BLINK:      map[bool]string{true: fmt.Sprintf("%d", BLINK_ON), false: fmt.Sprintf("%d", BLINK_OFF)},
+	REVERSED:   map[bool]string{true: fmt.Sprintf("%d", REVERSED_ON), false: fmt.Sprintf("%d", REVERSED_OFF)},
+	INVISIBLE:  map[bool]string{true: fmt.Sprintf("%d", INVISIBLE_ON), false: fmt.Sprintf("%d", INVISIBLE_OFF)},
+	STRIKEOUT:  map[bool]string{true: fmt.Sprintf("%d", STRIKEOUT_ON), false: fmt.Sprintf("%d", STRIKEOUT_OFF)},
 }
 
 type format struct {
@@ -66,7 +70,7 @@ func (src format) diff(dest format) []byte {
 			if ts.Len() > 0 {
 				ts.WriteByte(';')
 			}
-			ts.WriteString(fmt.Sprintf("%d", attrToggle[attr][da]))
+			ts.WriteString(attrToggle[attr][da])
 		}
 	}
 
@@ -116,8 +120,30 @@ func formatFromParams(curF format, params *parameters) format {
 		switch {
 		case item == RESET:
 			f = format{}
-		case item == INTENSITY_BOLD || item == INTENSITY_NORMAL:
-			f.attrs = setAttr(f.attrs, BOLD, (item < 10))
+		case item == INTENSITY_BOLD:
+			if f.attrIsSet(BOLD_FAINT) {
+				// already handled
+			} else {
+				if f.attrIsSet(FAINT) {
+					f.attrs = setAttr(f.attrs, FAINT, false)
+					f.attrs = setAttr(f.attrs, BOLD_FAINT, true)
+				} else {
+					f.attrs = setAttr(f.attrs, BOLD, true)
+				}
+			}
+		case item == INTENSITY_FAINT:
+			if f.attrIsSet(BOLD_FAINT) {
+				// already handled
+			} else {
+				if f.attrIsSet(BOLD) {
+					f.attrs = setAttr(f.attrs, BOLD, false)
+					f.attrs = setAttr(f.attrs, BOLD_FAINT, true)
+				} else {
+					f.attrs = setAttr(f.attrs, FAINT, true)
+				}
+			}
+		case item == INTENSITY_NORMAL:
+			f.attrs = setAttr(f.attrs, BOLD|FAINT|BOLD_FAINT, false)
 		case item == UNDERLINE_ON || item == UNDERLINE_OFF:
 			f.attrs = setAttr(f.attrs, UNDERLINE, (item < 10))
 		case item == BLINK_ON || item == BLINK_OFF:
