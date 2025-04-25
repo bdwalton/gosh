@@ -110,7 +110,7 @@ func (p *parser) parse(r rune) []*action {
 		case VTPARSE_STATE_OSC_STRING:
 			return []*action{p.action(VTPARSE_ACTION_OSC_PUT, r)}
 		default:
-			slog.Debug("Unhandled state for failed rune lookup", "state", STATE_NAME[p.state], "r", r)
+			slog.Debug("unhandled state for failed rune lookup", "state", STATE_NAME[p.state], "r", r)
 		}
 
 	}

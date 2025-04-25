@@ -89,7 +89,7 @@ func (m *mode) copy() *mode {
 // r should be either CSI_MODE_SET or CSI_MODE_RESET
 func (m *mode) setState(state rune) {
 	if state != CSI_MODE_RESET && state != CSI_MODE_SET {
-		slog.Debug("mode setstate called with invalid state", "state", state)
+		slog.Debug("mode setState called with invalid state", "state", state)
 		return
 	}
 	m.state = state

@@ -175,7 +175,6 @@ func (s *stmObj) handleWinCh() {
 
 	for {
 		if s.shutdown {
-			slog.Debug("exiting SIGWINCH watcher")
 			return
 		}
 
@@ -219,12 +218,11 @@ func (s *stmObj) handleInput() {
 		n, err := os.Stdin.Read(char)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				slog.Debug("os.stdin eof, shutting down and exiting input handler")
 				s.Shutdown()
 				return
 			}
 
-			slog.Debug("stdin Read() error", "err", err)
+			slog.Error("stdin Read() error", "err", err)
 			continue
 		}
 
@@ -284,7 +282,6 @@ func (s *stmObj) consumePayload(id uint32) {
 		s.Shutdown()
 	case goshpb.PayloadType_CLIENT_INPUT:
 		keys := msg.GetData()
-		slog.Debug("remote keys", "keys", string(keys))
 		if n, err := s.term.Write(keys); err != nil || n != len(keys) {
 			slog.Error("couldn't write to terminal", "n", n, "len(keys)", len(keys), "err", err)
 		}
@@ -300,7 +297,6 @@ func (s *stmObj) consumePayload(id uint32) {
 			break
 		}
 		os.Stdout.Write(o)
-		slog.Debug("received output", "diff", string(o))
 	}
 }
 

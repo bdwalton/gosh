@@ -104,9 +104,7 @@ func (f format) equal(other format) bool {
 }
 
 func formatFromParams(curF format, params *parameters) format {
-	slog.Debug("consuming SGR formatting parameters", "params", params)
 	f := curF
-	// CSI m
 	if params.numItems() == 0 {
 		return format{}
 	}

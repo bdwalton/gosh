@@ -179,7 +179,11 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 	for _, name := range transportModes {
 		id, ok := modeNameToID[name]
 		if !ok {
-			slog.Debug("invalid modeNameToID", "name", name)
+			// should never happen, so we'll elevate to an
+			// error as it won't pollute logs and should
+			// be made easily visible if something goes
+			// wrong.
+			slog.Error("invalid modeNameToID when writing modes", "name", name)
 			continue
 		}
 		if !src.modes[id].equal(dest.modes[id]) {
@@ -237,7 +241,6 @@ func (t *Terminal) Run() {
 			r = rune(b)
 		}
 
-		slog.Debug("parsing rune", "r", string(r), "cur", t.cur)
 		for _, a := range t.p.parse(r) {
 			t.mux.Lock()
 			t.lastChg = time.Now()
@@ -253,7 +256,7 @@ func (t *Terminal) Run() {
 			case VTPARSE_ACTION_ESC_DISPATCH:
 				t.handleESC(a.params, string(a.data), a.r)
 			default:
-				slog.Debug("unhandled action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.r)
+				slog.Debug("unhandled parser action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.r)
 			}
 			t.mux.Unlock()
 		}
@@ -285,8 +288,6 @@ func (t *Terminal) Resize(rows, cols int) {
 	t.resizeTabs(cols)
 	t.lastChg = time.Now()
 	defer t.mux.Unlock()
-
-	slog.Debug("changed window size", "rows", rows, "cols", rows)
 }
 
 func (t *Terminal) boundedMarginLeft() int {
@@ -379,11 +380,9 @@ func (t *Terminal) handleESC(params *parameters, data string, r rune) {
 	case DECSC: // save cursor
 		t.savedCur = t.cur.Copy()
 		t.savedF = t.curF
-		slog.Debug("saved cursor and format", "save", t.savedCur)
 	case DECRC: // restore cursor or decaln screen test
 		switch data {
 		case "":
-			slog.Debug("restoring cursor and format", "was", t.cur, "now", t.savedCur)
 			t.cur = t.savedCur.Copy()
 			t.curF = t.savedF
 		case "#": // DECALN vt100 screen test
@@ -392,7 +391,7 @@ func (t *Terminal) handleESC(params *parameters, data string, r rune) {
 	case RIS:
 		t.reset()
 	default:
-		slog.Debug("ignoring ESC", "r", string(r), "params", params, "data", data)
+		slog.Debug("unhandled or ignored ESC command", "r", string(r), "params", params, "data", data)
 	}
 
 }
@@ -422,7 +421,6 @@ func (t *Terminal) handleOSC(act pAction, last rune) {
 		// the form of ANSI code using this capability.)
 		if len(t.oscTemp) > 0 {
 			data := string(t.oscTemp)
-			slog.Debug("Handling OSC data", "data", data)
 			parts := strings.SplitN(data, ";", 2)
 			switch parts[0] {
 			case OSC_ICON_TITLE:
@@ -450,7 +448,7 @@ func (t *Terminal) handleOSC(act pAction, last rune) {
 
 				}
 			default:
-				slog.Error("Unknown OSC entity", "data", data)
+				slog.Debug("unknown OSC command", "data", data)
 			}
 			t.oscTemp = t.oscTemp[:0]
 		}
@@ -493,7 +491,7 @@ func (t *Terminal) reset() {
 func (t *Terminal) isModeSet(name string) bool {
 	m, ok := t.modes[modeNameToID[name]]
 	if !ok {
-		slog.Debug("asked if unknown mode was set", "mode", name)
+		slog.Debug("unknown mode queried", "mode", name)
 		return false
 	}
 	return m.enabled()
@@ -607,15 +605,14 @@ func (t *Terminal) handleExecute(last rune) {
 	case LF, FF, VT: // libvte treats lf and ff the same, so we do too
 		t.lineFeed()
 		if t.isModeSet("LNM") {
-			slog.Debug("LNM set, so also sending CR with LF")
 			t.carriageReturn()
 		}
 	case TAB:
 		t.stepTabs(1)
-	case SO, SI:
+	case SO, SI: // shift out/in
 		slog.Debug("swallowing charset switching command", "cmd", string(last))
 	default:
-		slog.Debug("handleExecute: UNHANDLED Command", "last", string(last))
+		slog.Debug("unknown command to execute", "last", string(last))
 	}
 }
 
@@ -631,7 +628,6 @@ func (t *Terminal) handleCSI(params *parameters, data string, last rune) {
 		t.xtwinops(params.item(0, 0))
 	case CSI_DCH:
 		if data != "" {
-			slog.Debug("skipping CSI DCH with unexpected data", "params", params, "data", data)
 			return
 		}
 		t.deleteChars(params.itemDefaultOneIfZero(0, 1))
@@ -759,16 +755,13 @@ func (t *Terminal) csiQ(params *parameters, data string) {
 			slog.Debug("invalid xterm_version query", "params", params, "data", data)
 			return
 		}
-		r := fmt.Sprintf("%c%c>|gosh(%s)%c%c", ESC, DCS, GOSH_VT_VER, ESC, ST)
-		t.Write([]byte(r))
-		slog.Debug("identifying as gosh version", "ver", GOSH_VT_VER)
+		t.Write([]byte(fmt.Sprintf("%c%c>|gosh(%s)%c%c", ESC, DCS, GOSH_VT_VER, ESC, ST)))
 	default:
 		slog.Debug("unhandled CSI q", "params", params, "data", data)
 	}
 }
 
 func (t *Terminal) handleDSR(params *parameters, data string) {
-	slog.Debug("handling DSR request", "params", params, "data", data)
 	switch data {
 	case "": // General device status report
 		switch params.item(0, 0) {
@@ -780,7 +773,6 @@ func (t *Terminal) handleDSR(params *parameters, data string) {
 				row -= t.topMargin()
 				col -= t.leftMargin()
 			}
-			slog.Debug("reporting cursor position", "row", row, "col", col)
 			t.Write([]byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, row+1, col+1, CSI_POS)))
 		default:
 			slog.Debug("unhandled CSI DSR request", "params", params, "data", data)
@@ -804,7 +796,6 @@ func (t *Terminal) handleDSR(params *parameters, data string) {
 }
 
 func (t *Terminal) doDECALN() {
-	slog.Debug("DECALN screen test triggered")
 	t.curF = defFmt
 	t.horizMargin = margin{}
 	t.vertMargin = margin{}
@@ -818,12 +809,10 @@ func (t *Terminal) replyDeviceAttributes(data string) {
 		slog.Debug("ignoring request for tertiary device attributes")
 	case ">": // secondary attributes
 		t.Write([]byte("\033[>1;10;0c")) // vt220
-		slog.Debug("identifying secondary attributes as a vt220")
 	case "": // primary attributes
 		t.Write([]byte("\033[?62c")) // vt220
-		slog.Debug("identifying primary attributes as a vt220")
 	default:
-		slog.Debug("Unexpected CSI device attributes request")
+		slog.Debug("unexpected CSI device attributes request")
 	}
 }
 
@@ -831,12 +820,11 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 	mid := fmt.Sprintf("%s%d", data, mode)
 	m, ok := t.modes[mid]
 	if !ok {
-		slog.Debug("unknown CSI mode", "id", mid)
+		slog.Debug("unknown mode set request", "id", mid)
 		return
 	}
 
 	m.setState(state)
-	slog.Debug("set CSI mode", "id", mid, "name", m.name, "state", string(state))
 
 	// Don't use code here because codes are duplicated between
 	// ansi and DEC private modes.
@@ -863,7 +851,6 @@ func (t *Terminal) setTopBottom(params *parameters) {
 	// https://vt100.net/docs/vt510-rm/DECSTBM.html
 	// STBM sets the cursor to 1,1 (0,0)
 	t.vertMargin = newMargin(top-1, bottom-1)
-	slog.Debug("set top/bottom margin", "margin", t.vertMargin)
 	t.homeCursor()
 }
 
@@ -878,7 +865,6 @@ func (t *Terminal) setLeftRight(params *parameters) {
 	// https://vt100.net/docs/vt510-rm/DECSLRM.html
 	// STBM sets the cursor to 1,1 (0,0)
 	t.horizMargin = newMargin(left-1, right-1)
-	slog.Debug("set left/right margin", "margin", t.horizMargin)
 	t.homeCursor()
 }
 
@@ -1030,7 +1016,6 @@ func (t *Terminal) deleteChars(n int) {
 
 // insertChars  will insert r, n times
 func (t *Terminal) insertChars(r rune, n int) {
-	slog.Debug("insertChars", "r", string(r), "n", n)
 	om := t.isModeSet("IRM")
 	t.setMode(IRM, "", CSI_MODE_SET)
 	for i := 0; i < n; i++ {
@@ -1051,13 +1036,12 @@ func (t *Terminal) eraseLine(n int) {
 	switch n {
 	case ERASE_FROM_CUR: // to end of line
 		t.fb.setCells(row, row, col, nc, dc)
-		slog.Debug("erase in line, pos to end", "row", row, "col", col)
 	case ERASE_TO_CUR: // to start of line
 		t.fb.setCells(row, row, 0, col, dc)
-		slog.Debug("erase in line, start of line to pos", "row", row, "col", col)
 	case ERASE_ALL: // entire line
 		t.fb.setCells(row, row, 0, nc, dc)
-		slog.Debug("erase in line, entire line", "row", row, "col", col)
+	default:
+		slog.Error("unknown command for erase in line", "cmd", n)
 	}
 }
 
@@ -1067,13 +1051,12 @@ func (t *Terminal) eraseInDisplay(n int) {
 	case ERASE_FROM_CUR: // active position to end of screen, inclusive
 		t.fb.resetRows(t.row()+1, t.rows()-1)
 		t.eraseLine(n)
-		slog.Debug("CSI erase in display, pos to end of screen")
 	case ERASE_TO_CUR: // start of screen to active position, inclusive
 		t.fb.resetRows(0, t.row()-1)
 		t.eraseLine(n)
-		slog.Debug("CSI erase in display, beginning of screen to pos")
 	case ERASE_ALL: // entire screen
 		t.fb.resetRows(0, t.rows()-1)
-		slog.Debug("CSI erase in display, entire screen")
+	default:
+		slog.Error("unknown command for erase in display", "cmd", n)
 	}
 }
