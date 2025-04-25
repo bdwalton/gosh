@@ -354,46 +354,50 @@ func (t *Terminal) ctrlNEL() {
 }
 
 func (t *Terminal) handleESC(params *parameters, data string, r rune) {
-	switch r {
-	case 'A', 'B', 'C', 'K', 'Q', 'R', 'Y', 'Z', '2', '4', '6', '>', '=', '`':
+	switch data {
+	case "(", ")":
 		slog.Debug("swallowing ESC character set command", "params", params, "data", data, "cmd", string(r))
-	case NEL:
-		t.ctrlNEL()
-	case 'F':
-		t.cursorMoveAbs(t.boundedMarginBottom(), t.boundedMarginLeft())
-	case HTS: // set tab stop. note that in some vt dialects this
-		// would actually be part of character set handling
-		// (swedish on vt220).
-		t.tabs[t.col()] = true
-	case IND: // move cursor one line down, scrolling if needed
-		if row, max := t.row(), t.bottomMargin(); row == max {
-			t.scrollRegion(1)
-		} else {
-			t.cursorMoveAbs(row+1, t.col())
+	case "":
+		switch r {
+		case NEL:
+			t.ctrlNEL()
+		case 'F':
+			t.cursorMoveAbs(t.boundedMarginBottom(), t.boundedMarginLeft())
+		case HTS: // set tab stop. note that in some vt dialects this
+			// would actually be part of character set handling
+			// (swedish on vt220).
+			t.tabs[t.col()] = true
+		case IND: // move cursor one line down, scrolling if needed
+			if row, max := t.row(), t.bottomMargin(); row == max {
+				t.scrollRegion(1)
+			} else {
+				t.cursorMoveAbs(row+1, t.col())
+			}
+		case RI: // move cursor one line up, scrolling if needed
+			if row, min := t.row(), t.topMargin(); row == min {
+				t.scrollRegion(-1)
+			} else {
+				t.cursorMoveAbs(row-1, t.col())
+			}
+		case DECSC: // save cursor
+			t.savedCur = t.cur.Copy()
+			t.savedF = t.curF
+		case DECRC: // restore cursor or decaln screen test
+			switch data {
+			case "":
+				t.cur = t.savedCur.Copy()
+				t.curF = t.savedF
+			case "#": // DECALN vt100 screen test
+				t.doDECALN()
+			}
+		case RIS:
+			t.reset()
+		default:
+			slog.Debug("unhandled ESC command", "r", string(r), "params", params, "data", data)
 		}
-	case RI: // move cursor one line up, scrolling if needed
-		if row, min := t.row(), t.topMargin(); row == min {
-			t.scrollRegion(-1)
-		} else {
-			t.cursorMoveAbs(row-1, t.col())
-		}
-	case DECSC: // save cursor
-		t.savedCur = t.cur.Copy()
-		t.savedF = t.curF
-	case DECRC: // restore cursor or decaln screen test
-		switch data {
-		case "":
-			t.cur = t.savedCur.Copy()
-			t.curF = t.savedF
-		case "#": // DECALN vt100 screen test
-			t.doDECALN()
-		}
-	case RIS:
-		t.reset()
 	default:
-		slog.Debug("unhandled or ignored ESC command", "r", string(r), "params", params, "data", data)
+		slog.Debug("unimplemented ESC command selctor", "r", string(r), "params", params, "data", data)
 	}
-
 }
 
 func (t *Terminal) handleOSC(act pAction, last rune) {
