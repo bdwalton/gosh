@@ -140,7 +140,7 @@ func (s *stmObj) Run() {
 			s.wg.Done()
 		}()
 
-		tick := time.NewTicker(100 * time.Millisecond)
+		tick := time.NewTicker(50 * time.Millisecond)
 		for {
 			if s.shutdown {
 				break
