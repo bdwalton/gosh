@@ -33,6 +33,12 @@ func newParams() *parameters {
 	return &parameters{items: make([]int, 0, MAX_EXPECTED_PARAMS)}
 }
 
+func (p *parameters) copy() *parameters {
+	ni := make([]int, len(p.items))
+	copy(ni, p.items)
+	return &parameters{num: p.num, items: ni}
+}
+
 func (p *parameters) String() string {
 	return fmt.Sprintf("n=%d %v", p.num, p.items)
 }
@@ -98,6 +104,16 @@ func newParser() *parser {
 		state:        VTPARSE_STATE_GROUND,
 		params:       newParams(),
 		intermediate: make([]rune, 0, MAX_EXPECTED_INTERMEDIATE),
+	}
+}
+
+func (p *parser) copy() *parser {
+	in := make([]rune, len(p.intermediate))
+	copy(in, p.intermediate)
+	return &parser{
+		state:        p.state,
+		params:       p.params.copy(),
+		intermediate: in,
 	}
 }
 
