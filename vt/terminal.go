@@ -503,7 +503,11 @@ func (t *Terminal) handleOSC(act pAction, last rune) {
 							break
 						}
 
-						t.Resize(rows, cols)
+						// Can't use t.Resize
+						// here as it takes
+						// the same lock.
+						t.fb.resize(rows, cols)
+
 						break
 					}
 
