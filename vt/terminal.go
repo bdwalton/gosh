@@ -508,9 +508,14 @@ func (t *Terminal) handleOSC(act pAction, last rune) {
 						// the same lock.
 						t.fb.resize(rows, cols)
 
+						// we only use the for loop so
+						// that we can break and clean
+						// up osctemp no matter what.
 						break
 					}
 
+				} else {
+					slog.Debug("expected 2 inputs to X;rows;cols osc setsize", "len", len(parts), "osctemp", t.oscTemp)
 				}
 			default:
 				slog.Debug("unknown OSC command", "data", data)
