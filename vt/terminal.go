@@ -333,7 +333,7 @@ func (t *Terminal) boundedMarginRight() int {
 	if t.horizMargin.isSet() && t.horizMargin.max() >= t.col() {
 		return t.horizMargin.max()
 	}
-	return t.cols() - 1
+	return t.Cols() - 1
 }
 
 func (t *Terminal) boundedMarginTop() int {
@@ -347,7 +347,7 @@ func (t *Terminal) boundedMarginBottom() int {
 	if t.vertMargin.isSet() && t.vertMargin.max() >= t.row() {
 		return t.vertMargin.max()
 	}
-	return t.rows() - 1
+	return t.Rows() - 1
 }
 
 func (t *Terminal) leftMargin() int {
@@ -361,7 +361,7 @@ func (t *Terminal) rightMargin() int {
 	if t.horizMargin.isSet() {
 		return t.horizMargin.max()
 	}
-	return t.cols() - 1
+	return t.Cols() - 1
 }
 
 func (t *Terminal) topMargin() int {
@@ -375,7 +375,7 @@ func (t *Terminal) bottomMargin() int {
 	if t.vertMargin.isSet() {
 		return t.vertMargin.max()
 	}
-	return t.rows() - 1
+	return t.Rows() - 1
 }
 
 // Move to first position on next line. If we're at the bottom margin,
@@ -508,8 +508,8 @@ func (t *Terminal) clearFrags(row, col int) {
 }
 
 func (t *Terminal) reset() {
-	cols := t.cols()
-	t.fb = newFramebuffer(t.rows(), cols)
+	cols := t.Cols()
+	t.fb = newFramebuffer(t.Rows(), cols)
 	t.title = ""
 	t.icon = ""
 	modes := make(map[string]*mode)
@@ -573,7 +573,7 @@ func (t *Terminal) print(r rune) {
 		c.r = []rune(norm.NFC.String(string(c.r) + string(r)))[0]
 		t.fb.setCell(combR, combC, c)
 	default: // default (1 column), wide (2 columns)
-		if col > t.cols()-rw { // rune will not fit on row
+		if col > t.Cols()-rw { // rune will not fit on row
 			if t.isModeSet("DECAWM") { // autowrap is on
 				// if we're at bottom of region,
 				// scroll it by one row to free new
@@ -587,7 +587,7 @@ func (t *Terminal) print(r rune) {
 				}
 				col = t.boundedMarginLeft()
 			} else {
-				col = t.cols() - rw // overwrite end of row
+				col = t.Cols() - rw // overwrite end of row
 			}
 		}
 
@@ -672,7 +672,7 @@ func (t *Terminal) handleCSI(params *parameters, data string, last rune) {
 	case CSI_ECH:
 		// Insert n blank characters where n is the provided parameter
 		last := t.cur.col + params.item(0, 1)
-		if lastCol := t.cols() - 1; last > lastCol {
+		if lastCol := t.Cols() - 1; last > lastCol {
 			last = lastCol
 		}
 		row := t.row()
@@ -718,7 +718,7 @@ func (t *Terminal) resetTabs(params *parameters, data string) {
 	if data != "?" || params.item(0, 0) != 5 {
 		slog.Debug("resetTabs called without ? 5 as data and parameter", "data", data, "params", params)
 	}
-	cols := t.cols()
+	cols := t.Cols()
 	tabs := make([]bool, cols, cols)
 	for i := 0; i < cols; i += 8 {
 		tabs[i] = true
@@ -877,7 +877,7 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 }
 
 func (t *Terminal) setTopBottom(params *parameters) {
-	nr := t.rows()
+	nr := t.Rows()
 	top := params.item(0, 1)
 	bottom := params.item(1, nr)
 	if bottom <= top || top > nr || (top == 0 && bottom == 1) {
@@ -891,7 +891,7 @@ func (t *Terminal) setTopBottom(params *parameters) {
 }
 
 func (t *Terminal) setLeftRight(params *parameters) {
-	nc := t.cols()
+	nc := t.Cols()
 	left := params.item(0, 1)
 	right := params.item(1, nc)
 	if right <= left || left >= nc || (left == 0 && right == 1) {
@@ -962,7 +962,7 @@ func (t *Terminal) stepTabs(steps int) {
 		inc = 1
 	}
 
-	max := t.cols() - 1
+	max := t.Cols() - 1
 	for {
 		switch {
 		case col <= 0:
@@ -987,7 +987,7 @@ func (t *Terminal) stepTabs(steps int) {
 
 func (t *Terminal) deleteLines(params *parameters) {
 	m := params.item(0, 1)
-	cols := t.cols()
+	cols := t.Cols()
 	row := t.row()
 
 	for i := row; i < row+m && t.vertMargin.contains(i); i++ {
@@ -998,7 +998,7 @@ func (t *Terminal) deleteLines(params *parameters) {
 func (t *Terminal) deleteChars(n int) {
 
 	row, col := t.row(), t.col()
-	right := t.cols()
+	right := t.Cols()
 	if t.inScrollingRegion() {
 		right = t.rightMargin()
 	}
@@ -1068,7 +1068,7 @@ func (t *Terminal) eraseLine(n int) {
 	dc.f = t.curF
 
 	row, col := t.row(), t.col()
-	nc := t.cols() - 1
+	nc := t.Cols() - 1
 	switch n {
 	case ERASE_FROM_CUR: // to end of line
 		t.fb.setCells(row, row, col, nc, dc)
@@ -1085,13 +1085,13 @@ func (t *Terminal) eraseInDisplay(n int) {
 	// TODO: Handle BCE properly
 	switch n {
 	case ERASE_FROM_CUR: // active position to end of screen, inclusive
-		t.fb.resetRows(t.row()+1, t.rows()-1)
+		t.fb.resetRows(t.row()+1, t.Rows()-1)
 		t.eraseLine(n)
 	case ERASE_TO_CUR: // start of screen to active position, inclusive
 		t.fb.resetRows(0, t.row()-1)
 		t.eraseLine(n)
 	case ERASE_ALL: // entire screen
-		t.fb.resetRows(0, t.rows()-1)
+		t.fb.resetRows(0, t.Rows()-1)
 	default:
 		slog.Error("unknown command for erase in display", "cmd", n)
 	}

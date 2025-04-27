@@ -87,7 +87,7 @@ func TestLineFeed(t *testing.T) {
 	for i, c := range cases {
 		c.t.cur = c.cur
 		c.t.lineFeed()
-		if c.cur.row == c.wantCur.row && c.cur.row != c.t.rows()-1 { // we hit bottom so scrolled
+		if c.cur.row == c.wantCur.row && c.cur.row != c.t.Rows()-1 { // we hit bottom so scrolled
 			gc, _ := c.t.fb.cell(c.cur.row-1, c.cur.col)
 			if !gc.equal(xc) {
 				t.Errorf("%d: Invalid linefeed scroll (old line). Got %v, wanted %v", i, gc, xc)

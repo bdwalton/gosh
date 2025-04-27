@@ -1,6 +1,6 @@
 package vt
 
-func (t *Terminal) rows() int {
+func (t *Terminal) Rows() int {
 	return t.fb.rows()
 }
 
@@ -12,7 +12,7 @@ func (t *Terminal) setRow(r int) {
 	t.cur.row = r
 }
 
-func (t *Terminal) cols() int {
+func (t *Terminal) Cols() int {
 	return t.fb.cols()
 }
 
@@ -153,7 +153,7 @@ func (t *Terminal) cursorBack(n int) {
 }
 
 func (t *Terminal) cursorMoveAbs(row, col int) {
-	nr, nc := t.rows(), t.cols()
+	nr, nc := t.Rows(), t.Cols()
 
 	switch {
 	case col < 0:

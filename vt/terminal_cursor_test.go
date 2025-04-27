@@ -272,9 +272,9 @@ func TestCursorForward(t *testing.T) {
 		// CUF - cursor forward
 		{tNoMargin, cursor{15, 0}, 1, 15, 1},
 		{tNoMargin, cursor{15, 0}, 10, 15, 10},
-		{tNoMargin, cursor{15, tNoMargin.cols() - 1}, 0, 15, tNoMargin.cols() - 1},
-		{tNoMargin, cursor{15, tNoMargin.cols() - 1}, 1, 15, tNoMargin.cols() - 1},
-		{tNoMargin, cursor{15, tNoMargin.cols() - 1}, 10, 15, tNoMargin.cols() - 1},
+		{tNoMargin, cursor{15, tNoMargin.Cols() - 1}, 0, 15, tNoMargin.Cols() - 1},
+		{tNoMargin, cursor{15, tNoMargin.Cols() - 1}, 1, 15, tNoMargin.Cols() - 1},
+		{tNoMargin, cursor{15, tNoMargin.Cols() - 1}, 10, 15, tNoMargin.Cols() - 1},
 		{tHorizMargin, cursor{15, 0}, 2, 15, 2},
 		{tHorizMargin, cursor{15, 5}, 2, 15, 7},
 		{tHorizMargin, cursor{10, 10}, 6, 10, 15},
