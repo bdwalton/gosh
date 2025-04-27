@@ -49,12 +49,24 @@ type stmObj struct {
 }
 
 func new(remote io.ReadWriter, t *vt.Terminal, st uint8) *stmObj {
-	return &stmObj{
+	s := &stmObj{
 		remote: remote,
 		st:     st,
 		term:   t,
 		frag:   fragmenter.New(MAX_PACKET_SIZE),
+		states: make(map[time.Time]*vt.Terminal),
 	}
+
+	// snag a copy of the newly initialized Terminal. The last
+	// change time should be the zero value every time, so that
+	// gives us a coordinated time for the client and server to
+	// base everything from.
+	baseT := s.term.Copy()
+	tm := baseT.LastChange()
+	s.states[tm] = baseT
+	s.remState = tm
+
+	return s
 }
 
 func NewClient(remote io.ReadWriter, t *vt.Terminal) *stmObj {
@@ -119,8 +131,6 @@ func (s *stmObj) Run() {
 		// non-blocking is very cpu intensive.
 		go s.handleInput()
 	case SERVER:
-		lastT := s.term.Copy()
-
 		s.wg.Add(1)
 		go func() {
 			// If the process in the pty dies, we need to
@@ -138,15 +148,37 @@ func (s *stmObj) Run() {
 
 			select {
 			case <-tick.C:
+				// We always source from the most
+				// recent known remote state for now.
+				// We can get into p-retransmission
+				// later.
+				//
+				// https://github.com/mobile-shell/mosh/issues/1087#issuecomment-641801909
 				nowT := s.term.Copy()
-				diff := lastT.Diff(nowT)
-				if len(diff) > 0 {
-					msg := s.buildPayload(goshpb.PayloadType_SERVER_OUTPUT.Enum())
-					msg.SetData(diff)
-					s.sendPayload(msg)
-					lastT = nowT
-					slog.Debug("sending diff", "diff", string(diff))
+				ntm := nowT.LastChange()
+				s.smux.Lock()
+				if s.remState.Before(ntm) {
+					// If the timestamp in the
+					// latest snapshot is newer,
+					// we assume there will be a
+					// non-zero diff.
+					prevT, ok := s.states[s.remState]
+					if !ok {
+						slog.Error("couldn't retrieve expected state", "remState", s.remState)
+					} else {
+						diff := prevT.Diff(nowT)
+						msg := s.buildPayload(goshpb.PayloadType_SERVER_OUTPUT.Enum())
+
+						msg.SetSource(tspb.New(s.remState))
+						msg.SetTarget(tspb.New(ntm))
+						msg.SetRetire(tspb.New(s.remState))
+						msg.SetData(diff)
+						s.sendPayload(msg)
+						s.states[ntm] = nowT
+						slog.Debug("sending diff", "diff", string(diff), "source", s.remState, "target", ntm)
+					}
 				}
+				s.smux.Unlock()
 			}
 		}
 	}
@@ -297,13 +329,65 @@ func (s *stmObj) consumePayload(id uint32) {
 		rows, cols := sz.GetRows(), sz.GetCols()
 		s.term.Resize(int(rows), int(cols))
 	case goshpb.PayloadType_SERVER_OUTPUT:
-		o := msg.GetData()
-		n, err := s.term.Write(o)
-		if err != nil || n != len(o) {
-			slog.Error("couldn't write to terminal", "err", err)
-			break
+		s.applyState(&msg)
+	}
+}
+
+func (s *stmObj) applyState(msg *goshpb.Payload) {
+	src := msg.GetSource().AsTime()
+	targ := msg.GetTarget().AsTime()
+
+	if targ.Before(s.localState) {
+		slog.Debug("received an older state; ignoreing", "lastAck", s.localState, "target", targ, "source", src)
+		return
+	}
+
+	srcT, ok := s.states[src]
+	if !ok {
+		slog.Debug("unknown source state", "src", src)
+		return
+	}
+
+	diff := msg.GetData()
+	slog.Debug("received diff", "src", src, "targ", targ, "diff", string(diff))
+	// We never want to mutate a stored state because we
+	// might need to use it in the future if we recieve
+	// additional diffs that build on this one. This can
+	// happen because of a dropped ACK or because the
+	// server decides to make a diff to an older state
+	// instead of a more recent one, etc.
+	targT := srcT.Copy()
+	n, err := targT.Write(diff)
+	if err != nil || n != len(diff) {
+		slog.Error("error applying diff", "err", err, "n", n)
+		return
+	}
+
+	// In case we are applying the server side diff to a
+	// state we consider older than our current state, to
+	// bring it up to the current server side, we need to
+	// diff current with target and write that to stdout
+	// for the final display.
+	if s.localState.After(src) {
+		stdDiff := s.term.Diff(targT)
+		slog.Debug("writing additional relative diff to stdout", "stdDiff", string(stdDiff))
+		os.Stdout.Write(stdDiff)
+	} else {
+		os.Stdout.Write(diff)
+	}
+
+	s.states[targ] = targT
+	s.term.Replace(targT)
+	s.ack(targ)
+
+	// we may turn this into a goroutine in the future, so there
+	// is a standing periodic cleanup. for now, we just do it
+	// inline every time we ack a message.
+	for k := range s.states {
+		if k.Before(msg.GetRetire().AsTime()) {
+			slog.Debug("dropping old state", "k", k)
+			delete(s.states, k)
 		}
-		os.Stdout.Write(o)
 	}
 
 }
