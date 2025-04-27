@@ -152,6 +152,23 @@ func (t *Terminal) Copy() *Terminal {
 	}
 }
 
+func (t *Terminal) Replace(other *Terminal) {
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
+	t.fb = other.fb.copy()
+	t.title = other.title
+	t.icon = other.icon
+	t.curF = other.curF
+	t.cur = other.cur
+	t.p = other.p
+	t.modes = other.modes
+}
+
+func (t *Terminal) LastChange() time.Time {
+	return t.lastChg
+}
+
 // Diff will generate a sequence of bytes that, when applied, would
 // move src to dest. This is at a visual level only as the server will
 // ship these diffs to the client which is stateless and only used to
