@@ -2,7 +2,6 @@ package vt
 
 import (
 	"fmt"
-	"slices"
 	"testing"
 )
 
@@ -119,75 +118,75 @@ func TestFormatApplication(t *testing.T) {
 func TestFormatDiff(t *testing.T) {
 	cases := []struct {
 		srcF, destF format
-		want        []byte
+		want        string
 	}{
 		{
 			format{fg: newColor(FG_WHITE), attrs: UNDERLINE},
 			format{fg: newColor(FG_WHITE), attrs: UNDERLINE},
-			[]byte{},
+			"",
 		},
 		{
 			// Any diff against "dest == default" should just reset the pen
 			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
 			defFmt,
-			[]byte(FMT_RESET),
+			FMT_RESET,
 		},
 		{
 			format{fg: newRGBColor([]int{10, 20, 30})},
 			format{bg: newColor(BG_YELLOW)},
-			[]byte(fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, CSI, FG_DEF, CSI_SGR, ESC, CSI, BG_YELLOW, CSI_SGR)),
+			fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, CSI, FG_DEF, CSI_SGR, ESC, CSI, BG_YELLOW, CSI_SGR),
 		},
 		{
 			defFmt,
 			format{fg: newColor(FG_WHITE), attrs: BOLD},
-			[]byte(fmt.Sprintf("%c%c%dm%c%c%d%c", ESC, CSI, FG_WHITE, ESC, CSI, INTENSITY_BOLD, CSI_SGR)),
+			fmt.Sprintf("%c%c%dm%c%c%d%c", ESC, CSI, FG_WHITE, ESC, CSI, INTENSITY_BOLD, CSI_SGR),
 		},
 		{
 			format{fg: newColor(FG_WHITE), attrs: STRIKEOUT},
 			format{bg: newAnsiColor(243), attrs: REVERSED},
-			[]byte(fmt.Sprintf("%c%c%d%c%c%c%d;5;%d%c%c%c%d;%d%c", ESC, CSI, FG_DEF, CSI_SGR, ESC, CSI, SET_BG, 243, CSI_SGR, ESC, CSI, REVERSED_ON, STRIKEOUT_OFF, CSI_SGR)),
+			fmt.Sprintf("%c%c%d%c%c%c%d;5;%d%c%c%c%d;%d%c", ESC, CSI, FG_DEF, CSI_SGR, ESC, CSI, SET_BG, 243, CSI_SGR, ESC, CSI, REVERSED_ON, STRIKEOUT_OFF, CSI_SGR),
 		},
 		{
 			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
 			format{fg: newRGBColor([]int{30, 20, 10}), bg: newRGBColor([]int{10, 20, 30})},
-			[]byte(fmt.Sprintf("%c%c%d;2;%d;%d;%d%c%c%c%d;2;%d;%d;%d%c", ESC, CSI, SET_FG, 30, 20, 10, CSI_SGR, ESC, CSI, SET_BG, 10, 20, 30, CSI_SGR)),
+			fmt.Sprintf("%c%c%d;2;%d;%d;%d%c%c%c%d;2;%d;%d;%d%c", ESC, CSI, SET_FG, 30, 20, 10, CSI_SGR, ESC, CSI, SET_BG, 10, 20, 30, CSI_SGR),
 		},
 		{
 			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
 			format{fg: newColor(FG_BLUE), bg: newAnsiColor(124)},
-			[]byte(fmt.Sprintf("%c%c%d%c%c%c%d;5;%d%c", ESC, CSI, FG_BLUE, CSI_SGR, ESC, CSI, SET_BG, 124, CSI_SGR)),
+			fmt.Sprintf("%c%c%d%c%c%c%d;5;%d%c", ESC, CSI, FG_BLUE, CSI_SGR, ESC, CSI, SET_BG, 124, CSI_SGR),
 		},
 
 		{
 			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
 			format{fg: newRGBColor([]int{10, 20, 30}), bg: newAnsiColor(124)},
-			[]byte(fmt.Sprintf("%c%c%d;5;%d%c", ESC, CSI, SET_BG, 124, CSI_SGR)),
+			fmt.Sprintf("%c%c%d;5;%d%c", ESC, CSI, SET_BG, 124, CSI_SGR),
 		},
 		{
 			defFmt,
 			format{attrs: UNDERLINE},
-			[]byte(fmt.Sprintf("%c%c%d%c", ESC, CSI, UNDERLINE_ON, CSI_SGR)),
+			fmt.Sprintf("%c%c%d%c", ESC, CSI, UNDERLINE_ON, CSI_SGR),
 		},
 		{
 			defFmt,
 			format{attrs: BOLD_FAINT},
-			[]byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, INTENSITY_BOLD, INTENSITY_FAINT, CSI_SGR)),
+			fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, INTENSITY_BOLD, INTENSITY_FAINT, CSI_SGR),
 		},
 		{
 			format{attrs: BOLD_FAINT},
 			format{attrs: BOLD},
-			[]byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, INTENSITY_NORMAL, INTENSITY_BOLD, CSI_SGR)),
+			fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, INTENSITY_NORMAL, INTENSITY_BOLD, CSI_SGR),
 		},
 		{
 			format{attrs: BOLD_FAINT},
 			format{attrs: FAINT},
-			[]byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, INTENSITY_NORMAL, INTENSITY_FAINT, CSI_SGR)),
+			fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, INTENSITY_NORMAL, INTENSITY_FAINT, CSI_SGR),
 		},
 	}
 
 	for i, c := range cases {
-		if got := c.srcF.diff(c.destF); !slices.Equal(got, c.want) {
-			t.Errorf("%d: Got\n\t%q, wanted\n\t%q\n\t%v\n\t%v", i, string(got), string(c.want), c.srcF, c.destF)
+		if got := string(c.srcF.diff(c.destF)); got != c.want {
+			t.Errorf("%d: Got\n\t%q, wanted\n\t%q\n\t%v\n\t%v", i, got, c.want, c.srcF, c.destF)
 		}
 	}
 }
