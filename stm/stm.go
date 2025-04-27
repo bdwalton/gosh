@@ -42,6 +42,10 @@ type stmObj struct {
 	st       uint8 // stm type (client or server)
 	shutdown bool
 	wg       sync.WaitGroup
+
+	smux                 sync.Mutex
+	remState, localState time.Time
+	states               map[time.Time]*vt.Terminal
 }
 
 func new(remote io.ReadWriter, t *vt.Terminal, st uint8) *stmObj {
@@ -88,10 +92,6 @@ func (s *stmObj) sendPayload(msg *goshpb.Payload) {
 
 }
 
-func (s *stmObj) ping() {
-	s.sendPayload(s.buildPayload(goshpb.PayloadType_PING.Enum()))
-}
-
 func (s *stmObj) Run() {
 	s.wg.Add(1)
 	go func() {
@@ -107,7 +107,7 @@ func (s *stmObj) Run() {
 
 	switch s.st {
 	case CLIENT:
-		s.ping()
+		s.ack(s.localState) // Force first contact with the zero time state
 		s.wg.Add(1)
 		go func() {
 			s.handleWinCh()
@@ -255,9 +255,6 @@ func (s *stmObj) handleInput() {
 func (s *stmObj) buildPayload(t *goshpb.PayloadType) *goshpb.Payload {
 	// TODO: Make id and ack fields useful
 	return goshpb.Payload_builder{
-		Sent: tspb.New(time.Now()),
-		Id:   proto.Int32(1),
-		Ack:  proto.Int32(1),
 		Type: t,
 	}.Build()
 }
@@ -276,8 +273,18 @@ func (s *stmObj) consumePayload(id uint32) {
 	}
 
 	switch msg.GetType() {
-	case goshpb.PayloadType_PING:
-		// TODO: Update a last seen timestamp here
+	case goshpb.PayloadType_ACK:
+		at := msg.GetAck().AsTime()
+		slog.Debug("received ack", "time", at)
+		s.smux.Lock()
+		s.remState = at
+		for k := range s.states {
+			if k.Before(at) {
+				delete(s.states, k)
+				slog.Debug("removing state", "k", k)
+			}
+		}
+		s.smux.Unlock()
 	case goshpb.PayloadType_SHUTDOWN:
 		s.Shutdown()
 	case goshpb.PayloadType_CLIENT_INPUT:
@@ -298,6 +305,15 @@ func (s *stmObj) consumePayload(id uint32) {
 		}
 		os.Stdout.Write(o)
 	}
+
+}
+
+func (s *stmObj) ack(t time.Time) {
+	s.localState = t
+	msg := s.buildPayload(goshpb.PayloadType_ACK.Enum())
+	msg.SetAck(tspb.New(t))
+	s.sendPayload(msg)
+	slog.Debug("sent ack", "time", t)
 }
 
 func (s *stmObj) handleRemote() {

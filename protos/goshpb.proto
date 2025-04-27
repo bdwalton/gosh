@@ -15,23 +15,23 @@ message Fragment {
 
 enum PayloadType {
   UNKNOWN = 0;
-  PING = 1; // no other data
-  SHUTDOWN = 2; // no other data
-  CLIENT_INPUT = 3;
-  SERVER_OUTPUT = 4;
-  WINDOW_RESIZE = 5;
-
+  SHUTDOWN = 1; // no other data
+  ACK = 2;
+  WINDOW_RESIZE = 3;
+  CLIENT_INPUT = 4;
+  SERVER_OUTPUT = 5;
 }
 
 message Payload {
-  google.protobuf.Timestamp sent = 1;
-  int32 id = 2;
-  int32 ack = 3;
+  google.protobuf.Timestamp source = 1;
+  google.protobuf.Timestamp target = 2;
+  google.protobuf.Timestamp retire = 3;
+  google.protobuf.Timestamp ack = 4;
 
-  PayloadType type = 4;
+  PayloadType type = 5;
 
-  bytes data = 5;
-  Resize size = 6;
+  bytes data = 6;
+  Resize size = 7;
 }
 
 message Resize {
