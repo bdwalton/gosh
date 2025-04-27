@@ -273,25 +273,29 @@ func (t *Terminal) Run() {
 			r = rune(b)
 		}
 
-		for _, a := range t.p.parse(r) {
-			t.mux.Lock()
-			t.lastChg = time.Now().UTC()
-			switch a.act {
-			case VTPARSE_ACTION_EXECUTE:
-				t.handleExecute(a.r)
-			case VTPARSE_ACTION_CSI_DISPATCH:
-				t.handleCSI(a.params, string(a.data), a.r)
-			case VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
-				t.handleOSC(a.act, a.r)
-			case VTPARSE_ACTION_PRINT:
-				t.print(a.r)
-			case VTPARSE_ACTION_ESC_DISPATCH:
-				t.handleESC(a.params, string(a.data), a.r)
-			default:
-				slog.Debug("unhandled parser action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.r)
-			}
-			t.mux.Unlock()
+		t.doParse(r)
+	}
+}
+
+func (t *Terminal) doParse(r rune) {
+	for _, a := range t.p.parse(r) {
+		t.mux.Lock()
+		t.lastChg = time.Now().UTC()
+		switch a.act {
+		case VTPARSE_ACTION_EXECUTE:
+			t.handleExecute(a.r)
+		case VTPARSE_ACTION_CSI_DISPATCH:
+			t.handleCSI(a.params, string(a.data), a.r)
+		case VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
+			t.handleOSC(a.act, a.r)
+		case VTPARSE_ACTION_PRINT:
+			t.print(a.r)
+		case VTPARSE_ACTION_ESC_DISPATCH:
+			t.handleESC(a.params, string(a.data), a.r)
+		default:
+			slog.Debug("unhandled parser action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.r)
 		}
+		t.mux.Unlock()
 	}
 }
 
