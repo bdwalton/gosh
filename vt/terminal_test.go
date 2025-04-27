@@ -807,3 +807,30 @@ func TestOSCResize(t *testing.T) {
 		}
 	}
 }
+
+func TestMakeOverlay(t *testing.T) {
+	nt := func(rows, cols int) *Terminal {
+		x, _ := NewTerminal()
+		x.fb.resize(rows, cols)
+		return x
+	}
+
+	prefix := "\x1b7\x1b[H\x1b[93;41;1m\x1b[2K"
+	suffix := "\x1b8"
+
+	cases := []struct {
+		term *Terminal
+		text string
+		want string
+	}{
+		{nt(10, 10), "foo", fmt.Sprintf("%s%c%c;%d%c%s%s", prefix, ESC, CSI, 4, CSI_CUP, "foo", suffix)},
+		{nt(10, 12), "foo", fmt.Sprintf("%s%c%c;%d%c%s%s", prefix, ESC, CSI, 5, CSI_CUP, "foo", suffix)},
+		{nt(24, 80), "testing", fmt.Sprintf("%s%c%c;%d%c%s%s", prefix, ESC, CSI, 37, CSI_CUP, "testing", suffix)},
+	}
+
+	for i, c := range cases {
+		if got := string(c.term.MakeOverlay(c.text)); got != c.want {
+			t.Errorf("%d: Got %q, wanted %q", i, got, c.want)
+		}
+	}
+}

@@ -116,6 +116,27 @@ func (t *Terminal) Stop() {
 	t.ptyR.Close() // ensure Run() stops
 }
 
+func (t *Terminal) MakeOverlay(text string) []byte {
+	var sb strings.Builder
+
+	// save cursor, format
+	sb.WriteString("\x1b7")
+	// home cursor
+	sb.WriteString("\x1b[H")
+	// set pen
+	sb.WriteString(fmt.Sprintf("%c%c%d;%d;%d%c", ESC, CSI, FG_BRIGHT_YELLOW, BG_RED, BOLD, CSI_SGR))
+	// clear line
+	sb.WriteString("\x1b[2K")
+	// move pen for centered message
+	slog.Debug("overlay cols", "cols", t.Cols())
+	sb.WriteString(cursor{0, (t.Cols() - len(text) - 1) / 2}.ansiString())
+	sb.WriteString(text)
+	// restore cursor, format
+	sb.WriteString("\x1b8")
+
+	return []byte(sb.String())
+}
+
 func (t *Terminal) Write(p []byte) (int, error) {
 	inp := p
 	if t.isModeSet("LNM") {
