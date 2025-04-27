@@ -460,12 +460,12 @@ func (t *Terminal) handleOSC(act pAction, last rune) {
 			parts := strings.SplitN(data, ";", 2)
 			switch parts[0] {
 			case OSC_ICON_TITLE:
-				t.title = parts[1]
+				t.title = "[gosh] " + parts[1]
 				t.icon = parts[1]
 			case OSC_ICON:
 				t.icon = parts[1]
 			case OSC_TITLE:
-				t.title = parts[1]
+				t.title = "[gosh] " + parts[1]
 			case OSC_SETSIZE: // a Gosh convention
 				if len(parts) == 3 {
 					for {
