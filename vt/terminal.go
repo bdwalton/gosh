@@ -146,6 +146,9 @@ func (t *Terminal) Copy() *Terminal {
 		curF:    t.curF,
 		modes:   modes,
 		lastChg: t.lastChg,
+		p:       t.p.copy(),
+		ptyR:    t.ptyR,
+		ptyW:    t.ptyW,
 	}
 }
 
