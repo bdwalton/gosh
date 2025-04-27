@@ -457,7 +457,7 @@ func (t *Terminal) handleOSC(act pAction, last rune) {
 		// the form of ANSI code using this capability.)
 		if len(t.oscTemp) > 0 {
 			data := string(t.oscTemp)
-			parts := strings.SplitN(data, ";", 2)
+			parts := strings.SplitN(data, ";", 3)
 			switch parts[0] {
 			case OSC_ICON_TITLE:
 				t.title = "[gosh] " + parts[1]

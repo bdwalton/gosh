@@ -771,3 +771,39 @@ func TestDeleteChars(t *testing.T) {
 		}
 	}
 }
+
+func TestOSCResize(t *testing.T) {
+	nt := func() *Terminal {
+		x, _ := NewTerminal()
+		return x
+	}
+	cases := []struct {
+		term        *Terminal
+		rows, cols  int
+		wantSuccess bool
+	}{
+		{nt(), 60, 201, true},
+		{nt(), 24, 81, true},
+		{nt(), 25, 80, true},
+		{nt(), 10, 10, true},
+		{nt(), -1, 201, false},
+		{nt(), 60, -1, false},
+		{nt(), MAX_ROWS + 1, 80, false},
+		{nt(), MAX_ROWS + 1, MAX_COLS + 1, false},
+	}
+
+	for i, c := range cases {
+		c.term.oscTemp = []rune(fmt.Sprintf("%s;%d;%d", OSC_SETSIZE, c.rows, c.cols))
+		c.term.handleOSC(VTPARSE_ACTION_OSC_END, BEL)
+		switch c.wantSuccess {
+		case true:
+			if rows, cols := c.term.Rows(), c.term.Cols(); rows != c.rows || cols != c.cols {
+				t.Errorf("%d: Wanted r:%d, c: %d; got r:%d, c:%d", i, c.rows, c.cols, rows, cols)
+			}
+		case false:
+			if rows, cols := c.term.Rows(), c.term.Cols(); rows != 24 || cols != 80 {
+				t.Errorf("%d: Wanted r:%d, c: %d; got r:%d, c:%d", i, c.rows, c.cols, rows, cols)
+			}
+		}
+	}
+}
