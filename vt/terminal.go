@@ -253,7 +253,7 @@ func (t *Terminal) Run() {
 
 		for _, a := range t.p.parse(r) {
 			t.mux.Lock()
-			t.lastChg = time.Now()
+			t.lastChg = time.Now().UTC()
 			switch a.act {
 			case VTPARSE_ACTION_EXECUTE:
 				t.handleExecute(a.r)
@@ -296,8 +296,8 @@ func (t *Terminal) Resize(rows, cols int) {
 	t.mux.Lock()
 	t.fb.resize(rows, cols)
 	t.resizeTabs(cols)
-	t.lastChg = time.Now()
-	defer t.mux.Unlock()
+	t.lastChg = time.Now().UTC()
+	t.mux.Unlock()
 }
 
 func (t *Terminal) boundedMarginLeft() int {
