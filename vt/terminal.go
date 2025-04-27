@@ -160,7 +160,9 @@ func (t *Terminal) Replace(other *Terminal) {
 	t.title = other.title
 	t.icon = other.icon
 	t.curF = other.curF
+	t.savedF = other.savedF
 	t.cur = other.cur
+	t.savedCur = other.savedCur
 	t.p = other.p
 	t.modes = other.modes
 }
