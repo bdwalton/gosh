@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
 	"os"
 	"os/exec"
@@ -30,7 +29,7 @@ type Terminal struct {
 	p  *parser
 	fb *framebuffer
 
-	ptyR, ptyW *os.File
+	ptyF *os.File
 
 	wait, stop manageFunc
 
@@ -55,7 +54,7 @@ type Terminal struct {
 	mux sync.Mutex
 }
 
-func newBasicTerminal(r, w *os.File) *Terminal {
+func newBasicTerminal(f *os.File) *Terminal {
 	modes := make(map[string]*mode)
 	for id, md := range modeDefaults {
 		modes[id] = md.copy()
@@ -67,8 +66,7 @@ func newBasicTerminal(r, w *os.File) *Terminal {
 		tabs:    makeTabs(DEF_COLS),
 		modes:   modes,
 		p:       newParser(),
-		ptyR:    r,
-		ptyW:    w,
+		ptyF:    f,
 		wait:    func() {},
 		stop:    func() {},
 	}
@@ -88,7 +86,7 @@ func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc) (*Terminal, er
 		return nil, fmt.Errorf("couldn't set ptmx non-blocking: %v", err)
 	}
 
-	t := newBasicTerminal(ptmx, ptmx)
+	t := newBasicTerminal(ptmx)
 	t.wait = func() { cmd.Wait() }
 	t.stop = func() { cancel() }
 
@@ -96,15 +94,10 @@ func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc) (*Terminal, er
 }
 
 func NewTerminal() (*Terminal, error) {
-	// On the client end, we will read from the network and ship
-	// the diff into the locally running terminal. To do that,
-	// we'll ensure we have a local pipe to work through.
-	pr, pw, err := os.Pipe()
-	if err != nil {
-		return nil, fmt.Errorf("couldn't open a pipe: %v", err)
-	}
-
-	return newBasicTerminal(pr, pw), nil
+	// On the client end, we don't need a file as we back Write()
+	// with direct parser input instead of routing it via the pty
+	// to the program we're running.
+	return newBasicTerminal(nil), nil
 }
 
 func (t *Terminal) Wait() {
@@ -113,7 +106,7 @@ func (t *Terminal) Wait() {
 
 func (t *Terminal) Stop() {
 	t.stop()
-	t.ptyR.Close() // ensure Run() stops
+	t.ptyF.Close() // ensure Run() stops
 }
 
 func (t *Terminal) MakeOverlay(text string) []byte {
@@ -137,13 +130,38 @@ func (t *Terminal) MakeOverlay(text string) []byte {
 	return []byte(sb.String())
 }
 
+// FirstRow will return the byte sequence to generate the first row of the vt
+func (t *Terminal) FirstRow() ([]byte, error) {
+	fb, err := t.fb.subRegion(0, 0, 0, t.Cols()-1)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't retrieve first row subregion: %v", err)
+	}
+	fbe := fb.copy()
+	fbe.fill(newCell(' ', defFmt))
+	return fbe.diff(fb), nil
+}
+
 func (t *Terminal) Write(p []byte) (int, error) {
+	// The client doesn't have an actual file, so we can
+	// differentiate that way. For the client, we just feed the
+	// parser directly. We also don't need to handle LNM as we do
+	// below for the server because that doesn't affect what we
+	// need to do on the client as it's already represented in the
+	// bytes shipped from the server.
+	if t.ptyF == nil {
+		slog.Debug("client write")
+		if err := t.doParse(bufio.NewReader(bytes.NewReader(p))); err != nil {
+			return 0, err
+		}
+		return len(p), nil
+	}
+
 	inp := p
 	if t.isModeSet("LNM") {
 		inp = bytes.ReplaceAll(p, []byte("\r"), []byte("\r\n"))
 	}
 
-	return t.ptyW.Write(inp)
+	return t.ptyF.Write(inp)
 }
 
 func (t *Terminal) Copy() *Terminal {
@@ -168,8 +186,7 @@ func (t *Terminal) Copy() *Terminal {
 		modes:   modes,
 		lastChg: t.lastChg,
 		p:       t.p.copy(),
-		ptyR:    t.ptyR,
-		ptyW:    t.ptyW,
+		ptyF:    t.ptyF,
 	}
 }
 
@@ -257,28 +274,29 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 }
 
 func (t *Terminal) Run() {
-	rr := bufio.NewReader(t.ptyR)
+	rr := bufio.NewReader(t.ptyF)
 
+	if err := t.doParse(rr); err != nil {
+		slog.Error("doParse error", "err", err)
+	}
+}
+
+func (t *Terminal) doParse(rr *bufio.Reader) error {
 	for {
-		var r rune
 		r, sz, err := rr.ReadRune()
 		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
 			if !errors.Is(err, os.ErrDeadlineExceeded) {
 				slog.Error("pty ReadRune", "r", r, "sz", sz, "err", err)
-				break
+				return nil
 			}
-			continue
+			return err
 		}
 
 		if r == utf8.RuneError && sz == 1 {
 			rr.UnreadRune()
 			b, err := rr.ReadByte()
 			if err != nil {
-				slog.Error("pty ReadByte", "b", b, "err", err)
-				continue
+				return err
 			}
 
 			// Note that this is really gross and we
@@ -294,30 +312,28 @@ func (t *Terminal) Run() {
 			r = rune(b)
 		}
 
-		t.doParse(r)
-	}
-}
-
-func (t *Terminal) doParse(r rune) {
-	for _, a := range t.p.parse(r) {
-		t.mux.Lock()
-		t.lastChg = time.Now().UTC()
-		switch a.act {
-		case VTPARSE_ACTION_EXECUTE:
-			t.handleExecute(a.r)
-		case VTPARSE_ACTION_CSI_DISPATCH:
-			t.handleCSI(a.params, string(a.data), a.r)
-		case VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
-			t.handleOSC(a.act, a.r)
-		case VTPARSE_ACTION_PRINT:
-			t.print(a.r)
-		case VTPARSE_ACTION_ESC_DISPATCH:
-			t.handleESC(a.params, string(a.data), a.r)
-		default:
-			slog.Debug("unhandled parser action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.r)
+		for _, a := range t.p.parse(r) {
+			t.mux.Lock()
+			t.lastChg = time.Now().UTC()
+			switch a.act {
+			case VTPARSE_ACTION_EXECUTE:
+				t.handleExecute(a.r)
+			case VTPARSE_ACTION_CSI_DISPATCH:
+				t.handleCSI(a.params, string(a.data), a.r)
+			case VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
+				t.handleOSC(a.act, a.r)
+			case VTPARSE_ACTION_PRINT:
+				t.print(a.r)
+			case VTPARSE_ACTION_ESC_DISPATCH:
+				t.handleESC(a.params, string(a.data), a.r)
+			default:
+				slog.Debug("unhandled parser action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.r)
+			}
+			t.mux.Unlock()
 		}
-		t.mux.Unlock()
 	}
+
+	return nil
 }
 
 func (t *Terminal) Resize(rows, cols int) {
@@ -326,14 +342,14 @@ func (t *Terminal) Resize(rows, cols int) {
 		Cols: uint16(cols),
 	}
 
-	if term.IsTerminal(int(t.ptyW.Fd())) {
-		if err := pty.Setsize(t.ptyW, pts); err != nil {
+	if term.IsTerminal(int(t.ptyF.Fd())) {
+		if err := pty.Setsize(t.ptyF, pts); err != nil {
 			slog.Error("couldn't set size on pty", "err", err)
 		}
 		// Any use of Fd(), including in the InheritSize call above,
 		// will set the descriptor non-blocking, so we need to change
 		// that here.
-		pfd := int(t.ptyW.Fd())
+		pfd := int(t.ptyF.Fd())
 		if err := syscall.SetNonblock(pfd, true); err != nil {
 			slog.Error("couldn't set pty to nonblocking", "err", err)
 			return

@@ -111,12 +111,6 @@ func (s *stmObj) Run() {
 		s.wg.Done()
 	}()
 
-	s.wg.Add(1)
-	go func() {
-		s.term.Run()
-		s.wg.Done()
-	}()
-
 	switch s.st {
 	case CLIENT:
 		s.ack(s.localState) // Force first contact with the zero time state
@@ -131,7 +125,12 @@ func (s *stmObj) Run() {
 		// non-blocking is very cpu intensive.
 		go s.handleInput()
 	case SERVER:
-		s.wg.Add(1)
+		s.wg.Add(2)
+		go func() {
+			s.term.Run()
+			s.wg.Done()
+		}()
+
 		go func() {
 			// If the process in the pty dies, we need to
 			// shut down.
