@@ -104,7 +104,27 @@ func (s *stmObj) sendPayload(msg *goshpb.Payload) {
 
 }
 
+func (s *stmObj) fragCleaner() {
+	tick := time.NewTicker(1 * time.Second)
+	for {
+		if s.shutdown {
+			break
+		}
+
+		select {
+		case <-tick.C:
+			s.frag.Clean()
+		}
+	}
+}
+
 func (s *stmObj) Run() {
+	s.wg.Add(1)
+	go func() {
+		s.fragCleaner()
+		s.wg.Done()
+	}()
+
 	s.wg.Add(1)
 	go func() {
 		s.handleRemote()
@@ -388,7 +408,6 @@ func (s *stmObj) applyState(msg *goshpb.Payload) {
 			delete(s.states, k)
 		}
 	}
-
 }
 
 func (s *stmObj) ack(t time.Time) {
