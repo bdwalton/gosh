@@ -48,11 +48,12 @@ func (f *fragSet) complete() bool {
 }
 
 type Fragger struct {
-	id    uint32 // Increment for each new batch
-	size  int    // How much data we can include in each fragment
-	idMux sync.Mutex
+	id           uint32 // Increment for each new batch
+	size         int    // How much data we can include in each fragment
+	idMux, asMux sync.Mutex
 
 	asmbl map[uint32]*fragSet
+	last  map[uint32]time.Time
 }
 
 func (f *Fragger) getUniqueId() uint32 {
@@ -64,7 +65,11 @@ func (f *Fragger) getUniqueId() uint32 {
 }
 
 func New(size int) *Fragger {
-	return &Fragger{size: size, asmbl: make(map[uint32]*fragSet)}
+	return &Fragger{
+		size:  size,
+		asmbl: make(map[uint32]*fragSet),
+		last:  make(map[uint32]time.Time),
+	}
 }
 
 func compress(buf []byte) ([]byte, error) {
@@ -130,11 +135,14 @@ func (f *Fragger) CreateFragments(buf []byte) ([]*goshpb.Fragment, error) {
 func (f *Fragger) Store(frag *goshpb.Fragment) bool {
 	id := frag.GetId()
 
+	f.asMux.Lock()
 	fset, ok := f.asmbl[id]
 	if !ok {
 		fset = newFragSet(frag.GetTotalFrags())
 		f.asmbl[id] = fset
 	}
+	f.last[id] = time.Now()
+	f.asMux.Unlock()
 
 	fset.add(frag)
 
@@ -151,6 +159,10 @@ var incompleteFragSet = errors.New("incomplete fragement set")
 func (f *Fragger) Assemble(id uint32) ([]byte, error) {
 	var err error
 	var ret []byte
+
+	f.asMux.Lock()
+	defer f.asMux.Unlock()
+
 	fset, ok := f.asmbl[id]
 	if !ok {
 		return nil, unknownFragSet
@@ -177,6 +189,22 @@ func (f *Fragger) Assemble(id uint32) ([]byte, error) {
 	}
 
 	delete(f.asmbl, id)
+	delete(f.last, id)
 
 	return ret, nil
+}
+
+func (f *Fragger) Clean() {
+	f.asMux.Lock()
+	defer f.asMux.Unlock()
+
+	for id, t := range f.last {
+		// Look for fragsets older than 1m. If we haven't seen
+		// a full set in that interval, discard the set.
+		if t.Add(1 * time.Minute).Before(time.Now()) {
+			slog.Debug("expiring old fragset", "id", id, "last", t)
+			delete(f.asmbl, id)
+			delete(f.last, id)
+		}
+	}
 }
