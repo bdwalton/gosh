@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 	"syscall"
 )
 
@@ -14,7 +15,7 @@ var (
 	goshClient = flag.String("gosh_client", "gosh-client", "The path to the gosh-client executable on the local system.")
 	goshSrv    = flag.String("gosh_server", "gosh-server", "The path to the gosh-server executable on the remote system.")
 	logfile    = flag.String("logfile", "", "If set, client logs will be written to this file.")
-	host       = flag.String("remote_host", "localhost", "The host to connect to.")
+	dest       = flag.String("dest", "localhost", "The {username@}localhost to connect to.")
 	remLog     = flag.String("remote_logfile", "", "If set, the remote gosh-server will be asked to log to this file.")
 	useSystemd = flag.Bool("use_systemd", true, "If true, execute the remote server under systemd so the detached process outlives the ssh connection.")
 )
@@ -42,7 +43,9 @@ func main() {
 // can't run the remote process or if the remote process doesn't
 // return viable connection data.
 func runServer() (*connectData, error) {
-	args := []string{*host}
+	// dest is {username@}host, with username@ optional. feed this
+	// to ssh as its natural target argument.
+	args := []string{*dest}
 
 	if *useSystemd {
 		systemd := []string{"systemd-run", "--user", "--scope"}
@@ -76,7 +79,7 @@ func runServer() (*connectData, error) {
 // runClient never returns. It execs gosh-client with the right args
 // and environment.
 func runClient(connD *connectData) {
-	args := []string{*goshClient, "--remote_port", connD.port, "--remote_host", *host}
+	args := []string{*goshClient, "--remote_port", connD.port, "--remote_host", hostFromDest(*dest)}
 	if *logfile != "" {
 		args = append(args, "--logfile", *logfile)
 	}
@@ -85,4 +88,11 @@ func runClient(connD *connectData) {
 	}
 	envv := append(os.Environ(), fmt.Sprintf("GOSH_KEY=%s", connD.key))
 	syscall.Exec(*goshClient, args, envv)
+}
+
+func hostFromDest(dest string) string {
+	if strings.Contains(dest, "@") {
+		return strings.SplitN(dest, "@", 2)[1]
+	}
+	return dest
 }
