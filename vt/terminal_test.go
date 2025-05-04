@@ -103,6 +103,49 @@ func TestLineFeed(t *testing.T) {
 	}
 }
 
+func TestPrintCharsets(t *testing.T) {
+	cs1 := &charset{}
+	csg1 := &charset{set: 1}
+	csg0s := &charset{g: [2]uint8{1, 0}}
+	csg1s := &charset{set: 1, g: [2]uint8{0, 1}}
+
+	fb := newFramebuffer(10, 10)
+
+	fb1w := fb.copy()
+	fb1w.setCell(0, 0, newCell('a', defFmt))
+
+	fb2w := fb.copy()
+	fb2w.setCell(0, 0, newCell('a', defFmt))
+
+	fb3w := fb.copy()
+	fb3w.setCell(0, 0, newCell('£', defFmt))
+
+	fb4w := fb.copy()
+	fb4w.setCell(0, 0, newCell('┼', defFmt))
+
+	cases := []struct {
+		fb   *framebuffer
+		cs   *charset
+		r    rune
+		want *framebuffer
+	}{
+		{fb, cs1, 'a', fb1w},
+		{fb, csg1, 'a', fb2w},
+		{fb, csg0s, '}', fb3w},
+		{fb, csg1s, 'n', fb4w},
+	}
+
+	for i, c := range cases {
+		term, _ := NewTerminal()
+		term.fb = c.fb.copy()
+		term.cs = c.cs
+		term.print(c.r)
+		if !term.fb.equal(c.want) {
+			t.Errorf("%d: Got\n%v\nWanted:\n%v\n", i, term.fb.String(), c.want.String())
+		}
+	}
+}
+
 func TestPrint(t *testing.T) {
 	dfb := func() *framebuffer {
 		return newFramebuffer(10, 10)

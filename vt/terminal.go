@@ -597,7 +597,9 @@ func (t *Terminal) isModeSet(name string) bool {
 
 func (t *Terminal) print(r rune) {
 	row, col := t.row(), t.col()
-	rw := runewidth.StringWidth(string(r))
+
+	ar := t.cs.runeFor(r)
+	rw := runewidth.StringWidth(string(ar))
 
 	switch rw {
 	case 0: // combining
@@ -632,7 +634,7 @@ func (t *Terminal) print(r rune) {
 			return
 		}
 
-		c.r = []rune(norm.NFC.String(string(c.r) + string(r)))[0]
+		c.r = []rune(norm.NFC.String(string(c.r) + string(ar)))[0]
 		t.fb.setCell(combR, combC, c)
 	default: // default (1 column), wide (2 columns)
 		if col > t.Cols()-rw { // rune will not fit on row
@@ -674,7 +676,7 @@ func (t *Terminal) print(r rune) {
 		}
 
 		t.clearFrags(row, col)
-		nc := newCell(r, t.curF)
+		nc := newCell(ar, t.curF)
 		if rw > 1 {
 			// Clear adjacent cells and note fragments
 			t.fb.setCell(row, col+1, fragCell(0, t.curF, FRAG_SECONDARY))
