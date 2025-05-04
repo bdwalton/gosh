@@ -72,6 +72,14 @@ var transportModes = []string{
 	"REV_VIDEO",
 	"SHOW_CURSOR",
 	"XTERM_80_132",
+	"MOUSE_XY_PRESS",
+	"MOUSE_XY_PRESS_RELEASE",
+	"MOUSE_MOTION",
+	"MOUSE_ALL",
+	"MOUSE_FOCUS",
+	"MOUSE_UTF8",
+	"MOUSE_SGR",
+	"MOUSE_ALT",
 }
 
 // For convenience in logging state changes
