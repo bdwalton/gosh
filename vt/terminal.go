@@ -432,8 +432,13 @@ func (t *Terminal) ctrlNEL() {
 
 func (t *Terminal) handleESC(params *parameters, data string, r rune) {
 	switch data {
-	case "(", ")":
-		slog.Debug("swallowing ESC character set command", "params", params, "data", data, "cmd", string(r))
+	case "(", ")": // desginate g0 or g1 charset
+		switch r {
+		case '0', 'B':
+			t.cs.setCS(data, r)
+		default:
+			slog.Debug("swallowing ESC character set command", "params", params, "data", data, "cmd", string(r))
+		}
 	case "":
 		switch r {
 		case NEL:
@@ -702,8 +707,10 @@ func (t *Terminal) handleExecute(last rune) {
 		}
 	case TAB:
 		t.stepTabs(1)
-	case SO, SI: // shift out/in
-		slog.Debug("swallowing charset switching command", "cmd", string(last))
+	case SO: // shift out
+		t.cs.shiftOut()
+	case SI: // shift out
+		t.cs.shiftIn()
 	default:
 		slog.Debug("unknown command to execute", "last", string(last))
 	}
