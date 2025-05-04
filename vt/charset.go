@@ -1,9 +1,5 @@
 package vt
 
-import (
-	"log/slog"
-)
-
 type charset struct {
 	set uint8    // index into g. toggled for shift in/out
 	g   [2]uint8 // glyphs (g0, g1) // val = 0 means 'B' (US ASCII), 1 means '0' (DEC Special line drawing)
@@ -23,12 +19,10 @@ func (c *charset) equal(other *charset) bool {
 func (c *charset) runeFor(r rune) rune {
 	if c.g[c.set] == 1 {
 		if rr, ok := acs[r]; ok {
-			slog.Debug("replacing rune", "r", string(r), "or", string(rr))
 			return rr
 		}
 	}
 
-	slog.Debug("not replacing rune", "r", string(r))
 	return r
 }
 
