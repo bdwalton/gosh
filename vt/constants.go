@@ -152,25 +152,25 @@ const (
 
 // CSI private mode parameter codes
 const (
-	DECCKM               = 1    // DEC application cursor keys
-	DECCOLM              = 3    // DEC 80 (l) / 132 (h) mode DECCOLM
-	SMOOTH_SCROLL        = 4    // Smooth scroll DECSCLM
-	REV_VIDEO            = 5    // Reverse video DECSCNM
-	DECOM                = 6    // Origin Mode DECOM
-	DECAWM               = 7    // DEC autowrap mode, default reset
-	AUTO_REPEAT          = 8    // Auto-repeat keys DECARM
-	BLINK_CURSOR         = 12   // Start blinking cursor
-	SHOW_CURSOR          = 25   // Show cursor DECTCEM
-	XTERM_80_132         = 40   // Xterm specific to enable/disable 80/132 col reset
-	REV_WRAP             = 45   // Xterm's reverse-wraparound mode
-	DISABLE_MOUSE_XY     = 1000 // Don't send Mouse X & Y on button press and release
-	DISABLE_MOUSE_HILITE = 1001 // Don't use Hilite Mouse Tracking
-	DISABLE_MOUSE_MOTION = 1002 // Don't use Cell Motion Mouse Tracking
-	DISABLE_MOUSE_ALL    = 1003 // Don't use All Motion Mouse Tracking
-	DISABLE_MOUSE_FOCUS  = 1004 // Don't send FocusIn/FocusOut events
-	DISABLE_MOUSE_UTF8   = 1005 // Disable UTF-8 Mouse Mode
-	DISABLE_MOUSE_SGR    = 1006 // Disable SGR Mouse Mode
-	BRACKET_PASTE        = 2004 // Bracketed paste, ala xterm
+	DECCKM        = 1    // DEC application cursor keys
+	DECCOLM       = 3    // DEC 80 (l) / 132 (h) mode DECCOLM
+	SMOOTH_SCROLL = 4    // Smooth scroll DECSCLM
+	REV_VIDEO     = 5    // Reverse video DECSCNM
+	DECOM         = 6    // Origin Mode DECOM
+	DECAWM        = 7    // DEC autowrap mode, default reset
+	AUTO_REPEAT   = 8    // Auto-repeat keys DECARM
+	BLINK_CURSOR  = 12   // Start blinking cursor
+	SHOW_CURSOR   = 25   // Show cursor DECTCEM
+	XTERM_80_132  = 40   // Xterm specific to enable/disable 80/132 col reset
+	REV_WRAP      = 45   // Xterm's reverse-wraparound mode
+	MOUSE_XY      = 1000 // Mouse X & Y on button press and release
+	MOUSE_HILIGHT = 1001 // Hilight Mouse Tracking
+	MOUSE_MOTION  = 1002 // Cell Motion Mouse Tracking
+	MOUSE_ALL     = 1003 // All Motion Mouse Tracking
+	MOUSE_FOCUS   = 1004 // FocusIn/FocusOut events
+	MOUSE_UTF8    = 1005 // UTF-8 Mouse Mode
+	MOUSE_SGR     = 1006 // SGR Mouse Mode
+	BRACKET_PASTE = 2004 // Bracketed paste, ala xterm
 )
 
 // OSC actions
