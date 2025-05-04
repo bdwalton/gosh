@@ -1,8 +1,11 @@
 package vt
 
 type charset struct {
-	set uint8    // index into g. toggled for shift in/out
-	g   [2]uint8 // glyphs (g0, g1) // val = 0 means 'B' (US ASCII), 1 means '0' (DEC Special line drawing)
+	// index into g. toggled for shift in/out
+	set uint8
+	// glyphs (g0, g1) // false means 'B' (US ASCII; default),
+	// true means '0' (DEC Special line drawing)
+	g [2]bool
 }
 
 func (c *charset) copy() *charset {
@@ -17,7 +20,7 @@ func (c *charset) equal(other *charset) bool {
 }
 
 func (c *charset) runeFor(r rune) rune {
-	if c.g[c.set] == 1 {
+	if c.g[c.set] {
 		if rr, ok := acs[r]; ok {
 			return rr
 		}
@@ -35,15 +38,15 @@ func (c *charset) shiftOut() {
 }
 
 func (c *charset) setCS(s string, r rune) {
-	gset, val := 0, 0 // set g0 to 0 by default
+	gset, val := 0, false // set g0 to 'B' (US ASCII) by default
 	if s == ")" {
 		gset = 1
 	}
 	if r == '0' {
-		val = 1
+		val = true
 	}
 
-	c.g[gset] = uint8(val)
+	c.g[gset] = val
 }
 
 // This maps from the natural character set into the "B" character

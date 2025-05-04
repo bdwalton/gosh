@@ -11,9 +11,9 @@ func TestCharsetEqual(t *testing.T) {
 	}{
 		{&charset{}, &charset{}, true},
 		{&charset{set: 1}, &charset{}, false},
-		{&charset{g: [2]uint8{1, 0}}, &charset{g: [2]uint8{0, 1}}, false},
-		{&charset{g: [2]uint8{1, 0}}, &charset{g: [2]uint8{1, 0}}, true},
-		{&charset{set: 1, g: [2]uint8{1, 0}}, &charset{set: 1, g: [2]uint8{1, 0}}, true},
+		{&charset{g: [2]bool{true, false}}, &charset{g: [2]bool{false, true}}, false},
+		{&charset{g: [2]bool{true, false}}, &charset{g: [2]bool{true, false}}, true},
+		{&charset{set: 1, g: [2]bool{true, false}}, &charset{set: 1, g: [2]bool{true, false}}, true},
 	}
 
 	for i, c := range cases {
@@ -30,12 +30,12 @@ func TestSetCS(t *testing.T) {
 		csv   rune
 		want  *charset
 	}{
-		{&charset{}, ")", '0', &charset{g: [2]uint8{0, 1}}},
-		{&charset{}, "(", '0', &charset{g: [2]uint8{1, 0}}},
-		{&charset{g: [2]uint8{1, 0}}, "(", '0', &charset{g: [2]uint8{1, 0}}},
-		{&charset{g: [2]uint8{1, 0}}, ")", '0', &charset{g: [2]uint8{1, 1}}},
-		{&charset{g: [2]uint8{1, 1}}, "(", 'B', &charset{g: [2]uint8{0, 1}}},
-		{&charset{g: [2]uint8{1, 1}}, ")", 'B', &charset{g: [2]uint8{1, 0}}},
+		{&charset{}, ")", '0', &charset{g: [2]bool{false, true}}},
+		{&charset{}, "(", '0', &charset{g: [2]bool{true, false}}},
+		{&charset{g: [2]bool{true, false}}, "(", '0', &charset{g: [2]bool{true, false}}},
+		{&charset{g: [2]bool{true, false}}, ")", '0', &charset{g: [2]bool{true, true}}},
+		{&charset{g: [2]bool{true, true}}, "(", 'B', &charset{g: [2]bool{false, true}}},
+		{&charset{g: [2]bool{true, true}}, ")", 'B', &charset{g: [2]bool{true, false}}},
 	}
 
 	for i, c := range cases {
@@ -54,10 +54,10 @@ func TestRuneFor(t *testing.T) {
 	}{
 		{'a', &charset{}, 'a'},
 		{'a', &charset{set: 1}, 'a'},
-		{'a', &charset{set: 1, g: [2]uint8{0, 1}}, '▒'},
-		{'+', &charset{set: 1, g: [2]uint8{0, 0}}, '+'},
-		{'+', &charset{g: [2]uint8{1, 0}}, '→'},
-		{'A', &charset{g: [2]uint8{1, 0}}, 'A'},
+		{'a', &charset{set: 1, g: [2]bool{false, true}}, '▒'},
+		{'+', &charset{set: 1, g: [2]bool{}}, '+'},
+		{'+', &charset{g: [2]bool{true, false}}, '→'},
+		{'A', &charset{g: [2]bool{true, false}}, 'A'},
 	}
 
 	for i, c := range cases {
@@ -75,10 +75,10 @@ func TestShiftIn(t *testing.T) {
 		{&charset{}, &charset{set: 0}},
 		{&charset{set: 0}, &charset{set: 0}},
 		{&charset{set: 1}, &charset{set: 0}},
-		{&charset{set: 1, g: [2]uint8{0, 0}}, &charset{set: 0}},
-		{&charset{set: 1, g: [2]uint8{1, 0}}, &charset{set: 0, g: [2]uint8{1, 0}}},
-		{&charset{set: 1, g: [2]uint8{1, 1}}, &charset{set: 0, g: [2]uint8{1, 1}}},
-		{&charset{set: 1, g: [2]uint8{0, 1}}, &charset{set: 0, g: [2]uint8{0, 1}}},
+		{&charset{set: 1, g: [2]bool{}}, &charset{set: 0}},
+		{&charset{set: 1, g: [2]bool{true, false}}, &charset{set: 0, g: [2]bool{true, false}}},
+		{&charset{set: 1, g: [2]bool{true, true}}, &charset{set: 0, g: [2]bool{true, true}}},
+		{&charset{set: 1, g: [2]bool{false, true}}, &charset{set: 0, g: [2]bool{false, true}}},
 	}
 
 	for i, c := range cases {
@@ -97,10 +97,10 @@ func TestShiftOut(t *testing.T) {
 		{&charset{}, &charset{set: 1}},
 		{&charset{set: 0}, &charset{set: 1}},
 		{&charset{set: 1}, &charset{set: 1}},
-		{&charset{set: 0, g: [2]uint8{0, 0}}, &charset{set: 1}},
-		{&charset{set: 0, g: [2]uint8{1, 0}}, &charset{set: 1, g: [2]uint8{1, 0}}},
-		{&charset{set: 0, g: [2]uint8{1, 1}}, &charset{set: 1, g: [2]uint8{1, 1}}},
-		{&charset{set: 0, g: [2]uint8{0, 1}}, &charset{set: 1, g: [2]uint8{0, 1}}},
+		{&charset{set: 0, g: [2]bool{}}, &charset{set: 1}},
+		{&charset{set: 0, g: [2]bool{true, false}}, &charset{set: 1, g: [2]bool{true, false}}},
+		{&charset{set: 0, g: [2]bool{true, true}}, &charset{set: 1, g: [2]bool{true, true}}},
+		{&charset{set: 0, g: [2]bool{false, true}}, &charset{set: 1, g: [2]bool{false, true}}},
 	}
 
 	for i, c := range cases {

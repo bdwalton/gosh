@@ -106,8 +106,8 @@ func TestLineFeed(t *testing.T) {
 func TestPrintCharsets(t *testing.T) {
 	cs1 := &charset{}
 	csg1 := &charset{set: 1}
-	csg0s := &charset{g: [2]uint8{1, 0}}
-	csg1s := &charset{set: 1, g: [2]uint8{0, 1}}
+	csg0s := &charset{g: [2]bool{true, false}}
+	csg1s := &charset{set: 1, g: [2]bool{false, true}}
 
 	fb := newFramebuffer(10, 10)
 
