@@ -18,6 +18,7 @@ import (
 
 var (
 	debug     = flag.Bool("debug", false, "If true, enable DEBUG log level for verbose log output")
+	defTerm   = flag.String("default_terminal", "xterm-256color", "Default TERM value if not set by remote environment")
 	detached  = flag.Bool("detached", false, "For use gosh-server to setup a detached version")
 	portRange = flag.String("port_range", "61000:61999", "Port range")
 	logfile   = flag.String("logfile", "", "If set, logs will be written to this file.")
@@ -84,6 +85,10 @@ func main() {
 }
 
 func runDetached() error {
+	env := os.Environ()
+	if os.Getenv("TERM") == "" {
+		env = append(env, "TERM="+*defTerm)
+	}
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -94,6 +99,7 @@ func runDetached() error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Env = env
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Ctty: 0,
