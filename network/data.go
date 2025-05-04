@@ -60,7 +60,7 @@ func NewClient(addr, key string) (*GConn, error) {
 		return nil, fmt.Errorf("couldn't dial %q: %v", addr, err)
 	}
 
-	dkey, err := base64.StdEncoding.DecodeString(key + "==")
+	dkey, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't base64 decode key: %v", err)
 	}
@@ -128,8 +128,7 @@ func NewServer(prng string) (*GConn, error) {
 }
 
 func (gc *GConn) Base64Key() string {
-	// For compatibility with Mosh, we trim the == here
-	return strings.TrimRight(base64.StdEncoding.EncodeToString(gc.key), "==")
+	return base64.StdEncoding.EncodeToString(gc.key)
 }
 
 func (gc *GConn) LocalPort() int {
