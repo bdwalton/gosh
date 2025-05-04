@@ -45,6 +45,7 @@ type stmObj struct {
 
 	smux                 sync.Mutex
 	remState, localState time.Time
+	lastSeenRem          time.Time
 	states               map[time.Time]*vt.Terminal
 }
 
@@ -118,6 +119,17 @@ func (s *stmObj) fragCleaner() {
 	}
 }
 
+func (s *stmObj) shouldSend() bool {
+	// Only send if we've seen the remote side within the last
+	// minute or we think local state and remote state match or
+	// we've never seen them (zero time) which means we should
+	// send initial state.
+	v := s.lastSeenRem.Add(1*time.Minute).After(time.Now()) || s.lastSeenRem.IsZero()
+	slog.Debug("last seen", "t", s.lastSeenRem, "z?", s.lastSeenRem.IsZero(), "should send", v)
+
+	return v
+}
+
 func (s *stmObj) Run() {
 	s.wg.Add(1)
 	go func() {
@@ -176,7 +188,7 @@ func (s *stmObj) Run() {
 				nowT := s.term.Copy()
 				ntm := nowT.LastChange()
 				s.smux.Lock()
-				if s.remState.Before(ntm) {
+				if s.remState.Before(ntm) && s.shouldSend() {
 					// If the timestamp in the
 					// latest snapshot is newer,
 					// we assume there will be a
@@ -442,6 +454,8 @@ func (s *stmObj) handleRemote() {
 			slog.Error("couldn't unmarshal fragment proto", "err", err)
 			continue
 		}
+
+		s.lastSeenRem = time.Now()
 
 		if s.frag.Store(&frag) {
 			s.consumePayload(frag.GetId())
