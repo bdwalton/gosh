@@ -41,6 +41,8 @@ type Terminal struct {
 	curF, savedF          format
 	tabs                  []bool
 
+	cs, savedCS *charset
+
 	// Temp
 	oscTemp []rune
 
@@ -69,6 +71,7 @@ func newBasicTerminal(f *os.File) *Terminal {
 		ptyF:    f,
 		wait:    func() {},
 		stop:    func() {},
+		cs:      &charset{},
 	}
 }
 
@@ -187,6 +190,7 @@ func (t *Terminal) Copy() *Terminal {
 		lastChg: t.lastChg,
 		p:       t.p.copy(),
 		ptyF:    t.ptyF,
+		cs:      t.cs.copy(),
 	}
 }
 
@@ -455,11 +459,13 @@ func (t *Terminal) handleESC(params *parameters, data string, r rune) {
 		case DECSC: // save cursor
 			t.savedCur = t.cur.Copy()
 			t.savedF = t.curF
+			t.savedCS = t.cs.copy()
 		case DECRC: // restore cursor or decaln screen test
 			switch data {
 			case "":
 				t.cur = t.savedCur.Copy()
 				t.curF = t.savedF
+				t.cs = t.savedCS.copy()
 			case "#": // DECALN vt100 screen test
 				t.doDECALN()
 			}
@@ -572,6 +578,7 @@ func (t *Terminal) reset() {
 	t.homeCursor()
 	t.savedCur = cursor{0, 0}
 	t.tabs = makeTabs(cols)
+	t.cs = &charset{}
 }
 
 func (t *Terminal) isModeSet(name string) bool {
