@@ -12,16 +12,21 @@ const (
 	DEF_COLS = 80
 )
 
+// Single character functions
 const (
-	BEL   = 0x07 // ^G Bell
-	BS    = 0x08 // ^H Backspace
-	TAB   = 0x09 // ^I Tab \t
-	LF    = 0x0a // ^J Line feed \n
-	VT    = 0x0b // ^K Vertical tab \v
-	FF    = 0x0c // ^L Form feed \f
-	CR    = 0x0d // ^M Carriage return \r
-	SO    = 0x0e // ^N Switch to G1/alternate charset as default
-	SI    = 0x0f // ^O Switch to G0 charset as default
+	BEL = 0x07 // ^G Bell
+	BS  = 0x08 // ^H Backspace
+	TAB = 0x09 // ^I Tab \t
+	LF  = 0x0a // ^J Line feed \n
+	VT  = 0x0b // ^K Vertical tab \v
+	FF  = 0x0c // ^L Form feed \f
+	CR  = 0x0d // ^M Carriage return \r
+	SO  = 0x0e // ^N Switch to G1/alternate charset as default
+	SI  = 0x0f // ^O Switch to G0 charset as default
+)
+
+// ESC sequence controls
+const (
 	ESC   = 0x1b
 	DECSC = '7'  // DECSC - save cursor
 	DECRC = '8'  // DECRC - restore cursor
