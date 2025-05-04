@@ -131,11 +131,8 @@ func (s *stmObj) shouldSend() bool {
 }
 
 func (s *stmObj) Run() {
-	s.wg.Add(1)
-	go func() {
-		s.fragCleaner()
-		s.wg.Done()
-	}()
+	// This goroutine is leaked
+	go s.fragCleaner()
 
 	s.wg.Add(1)
 	go func() {
