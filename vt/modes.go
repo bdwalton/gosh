@@ -74,6 +74,12 @@ var transportModes = []string{
 	"XTERM_80_132",
 }
 
+// For convenience in logging state changes
+var modeStateNames = map[rune]string{
+	CSI_MODE_RESET: "RESET",
+	CSI_MODE_SET:   "SET",
+}
+
 type mode struct {
 	state  rune // CSI_MODE_SET/h or CSI_MODE_RESET/l
 	public bool // This is an ansi mode, if true, DEC private if false

@@ -906,9 +906,11 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 	mid := fmt.Sprintf("%s%d", data, mode)
 	m, ok := t.modes[mid]
 	if !ok {
-		slog.Debug("unknown mode set request", "id", mid)
+		slog.Debug("unknown mode change request", "id", mid, "state", modeStateNames[state])
 		return
 	}
+
+	slog.Debug("mode change", "mid", mid, "name", m.name, "state", modeStateNames[state])
 
 	m.setState(state)
 
