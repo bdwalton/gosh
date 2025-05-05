@@ -36,6 +36,8 @@ const (
 	RI    = 'M'  // RI - reverse index
 	DCS   = 'P'  // Device control sequence
 	RIS   = 'c'  // RIS - Full reset
+	PAM   = '='  // DECAPM  - application keypad
+	PNM   = '>'  // DECPNM  - normal keypad
 	CSI   = 0x5b // ]; control sequence introducer
 	OSC   = 0x5d // [; operating system command
 	ST    = '\\' // string terminator

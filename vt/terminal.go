@@ -33,6 +33,9 @@ type Terminal struct {
 
 	wait, stop manageFunc
 
+	// keypad mode to ship to the client
+	keypad rune // should be = (application) or > (normal)
+
 	// State
 	lastChg               time.Time
 	title, icon           string
@@ -67,6 +70,7 @@ func newBasicTerminal(f *os.File) *Terminal {
 		oscTemp: make([]rune, 0),
 		tabs:    makeTabs(DEF_COLS),
 		modes:   modes,
+		keypad:  PNM, // normal
 		p:       newParser(),
 		ptyF:    f,
 		wait:    func() {},
@@ -186,6 +190,7 @@ func (t *Terminal) Copy() *Terminal {
 		icon:    t.icon,
 		cur:     t.cur,
 		curF:    t.curF,
+		keypad:  t.keypad,
 		modes:   modes,
 		lastChg: t.lastChg,
 		p:       t.p.copy(),
@@ -238,6 +243,10 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 				sb.WriteString(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_TITLE, string(dest.title), BEL))
 			}
 		}
+	}
+
+	if src.keypad != dest.keypad {
+		sb.WriteString(fmt.Sprintf("%c%c", ESC, dest.keypad))
 	}
 
 	for _, name := range transportModes {
@@ -470,6 +479,8 @@ func (t *Terminal) handleESC(params *parameters, data string, r rune) {
 			case "#": // DECALN vt100 screen test
 				t.doDECALN()
 			}
+		case PAM, PNM:
+			t.keypad = cmd
 		case RIS:
 			t.reset()
 		default:
@@ -590,6 +601,7 @@ func (t *Terminal) reset() {
 		modes[id] = md.copy()
 	}
 	t.modes = modes
+	t.keypad = PNM
 	t.vertMargin = margin{}
 	t.horizMargin = margin{}
 	t.homeCursor()

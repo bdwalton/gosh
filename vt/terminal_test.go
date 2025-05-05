@@ -361,6 +361,8 @@ func TestTerminalDiff(t *testing.T) {
 	t22 := t21.Copy()
 	t22.lastChg = time.Now()
 	t22.cur = cursor{10, 10}
+	t23 := testTerminalCopy(t22)
+	t23.keypad = PAM
 
 	cases := []struct {
 		src, dest *Terminal
@@ -387,6 +389,7 @@ func TestTerminalDiff(t *testing.T) {
 		{t1, t17, []byte("")}, // should tranpsort is false for DECOM
 		{t19, t20, []byte(fmt.Sprintf("%c%c%c%c%c;2%c*%c%c%c", ESC, CSI, CSI_SGR, ESC, CSI, CSI_CUP, ESC, CSI, CSI_CUP))},
 		{t21, t22, []byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, 11, 11, CSI_CUP))},
+		{t22, t23, []byte(fmt.Sprintf("%c%c", ESC, PAM))},
 	}
 
 	for i, c := range cases {
