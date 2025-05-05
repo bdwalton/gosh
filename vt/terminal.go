@@ -439,17 +439,17 @@ func (t *Terminal) ctrlNEL() {
 	t.carriageReturn()
 }
 
-func (t *Terminal) handleESC(params *parameters, data string, r rune) {
+func (t *Terminal) handleESC(params *parameters, data string, cmd rune) {
 	switch data {
 	case "(", ")": // desginate g0 or g1 charset
-		switch r {
+		switch cmd {
 		case '0', 'B':
-			t.cs.setCS(data, r)
+			t.cs.setCS(data, cmd)
 		default:
-			slog.Debug("swallowing ESC character set command", "params", params, "data", data, "cmd", string(r))
+			slog.Debug("swallowing ESC character set command", "params", params, "data", data, "cmd", string(cmd))
 		}
 	case "":
-		switch r {
+		switch cmd {
 		case NEL:
 			t.ctrlNEL()
 		case 'F':
@@ -484,10 +484,10 @@ func (t *Terminal) handleESC(params *parameters, data string, r rune) {
 		case RIS:
 			t.reset()
 		default:
-			slog.Debug("unhandled ESC command", "r", string(r), "params", params, "data", data)
+			slog.Debug("unhandled ESC command", "cmd", string(cmd), "params", params, "data", data)
 		}
 	default:
-		slog.Debug("unimplemented ESC command selctor", "r", string(r), "params", params, "data", data)
+		slog.Debug("unimplemented ESC command selctor", "cmd", string(cmd), "params", params, "data", data)
 	}
 }
 
