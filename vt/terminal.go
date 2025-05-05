@@ -719,6 +719,7 @@ func (t *Terminal) handleExecute(last rune) {
 }
 
 func (t *Terminal) handleCSI(params *parameters, data string, last rune) {
+	slog.Debug("handling CSI command", "cmd", fmt.Sprintf("%s%s%c", data, params, last))
 	switch last {
 	case CSI_DSR:
 		t.handleDSR(params, data)
