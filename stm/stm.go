@@ -203,6 +203,11 @@ func (s *stmObj) Run() {
 			s.wg.Done()
 		}()
 
+		if s.socketPath != "" {
+			// This will leak, hanging on the accept call
+			go s.handleAuthSock()
+		}
+
 		go func() {
 			// If the process in the pty dies, we need to
 			// shut down.
@@ -278,6 +283,49 @@ func (s *stmObj) Shutdown() {
 	slog.Info("sending shutdown to remote peer")
 
 	s.term.Stop()
+}
+
+func (s stmObj) handleAuthSock() {
+	for {
+		if s.shutdown {
+			break
+		}
+
+		if c, err := s.remoteAgent.Accept(); err == nil {
+			go s.handleAuthConn(c)
+		} else {
+			slog.Debug("error accepting auth sock connection", "err", err)
+		}
+	}
+}
+
+func (s stmObj) handleAuthConn(c net.Conn) {
+	s.authMux.Lock()
+	id := s.nextAuthID
+	s.nextAuthID += 1
+	s.authMux.Unlock()
+	s.agentConns[id] = c
+
+	for {
+		buf := make([]byte, 4096)
+		nr, err := c.Read(buf)
+		if err != nil {
+			slog.Debug("error reading from auth sock connection", "err", err)
+			break
+		}
+
+		pl := s.buildPayload(goshpb.PayloadType_SSH_AGENT_REQUEST.Enum())
+		pl.SetData(buf[0:nr])
+
+		pl.SetAuthid(id)
+		s.sendPayload(pl)
+	}
+
+	s.authMux.Lock()
+	delete(s.agentConns, id)
+	c.Close()
+	s.authMux.Unlock()
+	slog.Debug("client closed connection", "id", id)
 }
 
 func (s *stmObj) handleWinCh() {
@@ -415,6 +463,39 @@ func (s *stmObj) consumePayload(id uint32) {
 		s.term.Resize(int(rows), int(cols))
 	case goshpb.PayloadType_SERVER_OUTPUT:
 		s.applyState(&msg)
+	case goshpb.PayloadType_SSH_AGENT_RESPONSE:
+		id := msg.GetAuthid()
+		c, ok := s.agentConns[id]
+		if !ok {
+			slog.Debug("couldn't lookup auth sock connection", "id", id)
+			return
+		}
+		d := msg.GetData()
+		if _, err := c.Write(d); err != nil {
+			slog.Debug("error writing ssh agent response to socket", "err", err)
+			return
+		} else {
+			slog.Debug("wrote ssh agent response to local client", "id", id)
+		}
+	case goshpb.PayloadType_SSH_AGENT_REQUEST:
+		d := msg.GetData()
+		if _, err := s.localAgent.Write(d); err != nil {
+			slog.Debug("error writing to local auth sock", "err", err)
+			return
+		}
+		buf := make([]byte, 4096)
+		nr, err := s.localAgent.Read(buf)
+		if err != nil {
+			slog.Debug("error reading from local auth socket", "err", err)
+			return
+		}
+
+		pl := s.buildPayload(goshpb.PayloadType_SSH_AGENT_RESPONSE.Enum())
+		pl.SetData(buf[0:nr])
+		id := msg.GetAuthid()
+		pl.SetAuthid(id)
+		s.sendPayload(pl)
+		slog.Debug("sent ssh agent response", "id", id)
 	}
 }
 
