@@ -744,7 +744,9 @@ func (t *Terminal) handleCSI(params *parameters, data string, last rune) {
 		row := t.row()
 		t.fb.setCells(row, row, t.col(), last, newCell(' ', t.curF))
 	case CSI_MODE_SET, CSI_MODE_RESET:
-		t.setMode(params.item(0, 0), data, last)
+		for i := 0; i < params.numItems(); i++ {
+			t.setMode(params.item(i, 0), data, last)
+		}
 	case CSI_DECSTBM:
 		t.setTopBottom(params)
 	case CSI_DECSLRM:
