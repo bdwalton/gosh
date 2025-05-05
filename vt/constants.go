@@ -178,6 +178,7 @@ const (
 	MOUSE_SGR              = 1006 // SGR Mouse Mode
 	MOUSE_ALT              = 1007 // Alternate scroll mode
 	MOUSE_URXVT            = 1015 // urxvt mouse mode
+	XTERM_ALT_BUFFER       = 1047 // xterm switch to alternate screen buffer
 	XTERM_SAVE_RESTORE     = 1048 // xterm save/restore cursor
 	BRACKET_PASTE          = 2004 // Bracketed paste, ala xterm
 )

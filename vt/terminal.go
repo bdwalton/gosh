@@ -26,8 +26,8 @@ type manageFunc func()
 
 type Terminal struct {
 	// Functional members
-	p  *parser
-	fb *framebuffer
+	p         *parser
+	fb, altFb *framebuffer
 
 	ptyF *os.File
 
@@ -960,12 +960,28 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 		t.homeCursor()
 	case "DECOM":
 		t.homeCursor()
+	case "XTERM_ALT_BUFFER":
+		t.swapFramebuffer(state)
 	case "XTERM_SAVE_RESTORE":
 		if state == CSI_MODE_SET {
 			t.cursorSave()
 		} else {
 			t.cursorRestore()
 		}
+
+func (t *Terminal) swapFramebuffer(state rune) {
+	if state == CSI_MODE_SET {
+		t.altFb = t.fb.copy()
+		t.fb = newFramebuffer(t.altFb.rows(), t.altFb.cols())
+	} else {
+		// This could have interesting effects, but we need to
+		// ensure the buffer is the same as that expected, in
+		// case the window was resized while the alt buffer
+		// was visible.
+		if r, c := t.fb.rows(), t.fb.cols(); r != t.altFb.rows() || c != t.altFb.cols() {
+			t.altFb.resize(r, c)
+		}
+		t.fb = t.altFb.copy()
 	}
 }
 
