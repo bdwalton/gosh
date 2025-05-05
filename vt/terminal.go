@@ -960,6 +960,12 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 		t.homeCursor()
 	case "DECOM":
 		t.homeCursor()
+	case "XTERM_SAVE_RESTORE":
+		if state == CSI_MODE_SET {
+			t.cursorSave()
+		} else {
+			t.cursorRestore()
+		}
 	}
 }
 
