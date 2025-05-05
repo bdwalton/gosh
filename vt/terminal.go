@@ -487,7 +487,7 @@ func (t *Terminal) handleESC(params *parameters, data string, cmd rune) {
 			slog.Debug("unhandled ESC command", "cmd", string(cmd), "params", params, "data", data)
 		}
 	default:
-		slog.Debug("unimplemented ESC command selctor", "cmd", string(cmd), "params", params, "data", data)
+		slog.Debug("unimplemented ESC command selector", "cmd", string(cmd), "params", params, "data", data)
 	}
 }
 
