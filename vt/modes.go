@@ -32,6 +32,7 @@ var modeDefaults = map[string]*mode{
 	"?1005": newMode("MOUSE_UTF8", MOUSE_UTF8, false, CSI_MODE_RESET),
 	"?1006": newMode("MOUSE_SGR", MOUSE_SGR, false, CSI_MODE_RESET),
 	"?1007": newMode("MOUSE_ALT", MOUSE_ALT, false, CSI_MODE_RESET),
+	"?1015": newMode("MOUSE_URXVT", MOUSE_URXVT, false, CSI_MODE_RESET),
 	"?2004": newMode("BRACKET_PASTE", BRACKET_PASTE, false, CSI_MODE_RESET),
 }
 
@@ -58,6 +59,7 @@ var modeNameToID = map[string]string{
 	"MOUSE_UTF8":             "?1005",
 	"MOUSE_SGR":              "?1006",
 	"MOUSE_ALT":              "?1007",
+	"MOUSE_URXVT":            "?1015",
 	"BRACKET_PASTE":          "?2004",
 }
 
@@ -81,6 +83,7 @@ var transportModes = []string{
 	"MOUSE_UTF8",
 	"MOUSE_SGR",
 	"MOUSE_ALT",
+	"MOUSE_URXVT",
 }
 
 // For convenience in logging state changes

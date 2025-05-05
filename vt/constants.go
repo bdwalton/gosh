@@ -177,6 +177,7 @@ const (
 	MOUSE_UTF8             = 1005 // UTF-8 Mouse Mode
 	MOUSE_SGR              = 1006 // SGR Mouse Mode
 	MOUSE_ALT              = 1007 // Alternate scroll mode
+	MOUSE_URXVT            = 1015 // urxvt mouse mode
 	BRACKET_PASTE          = 2004 // Bracketed paste, ala xterm
 )
 
