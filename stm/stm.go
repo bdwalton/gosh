@@ -201,7 +201,6 @@ func (s *stmObj) Run() {
 		}()
 
 		if s.socketPath != "" {
-			// This will leak, hanging on the accept call
 			go s.handleAuthSock()
 		}
 
@@ -264,9 +263,8 @@ func (s *stmObj) Shutdown() {
 	if s.socketPath != "" {
 		switch s.st {
 		case SERVER:
-			s.remoteAgent.Close()
-			if err := os.Remove(s.socketPath); err != nil {
-				slog.Debug("error removing auth sock", "path", s.socketPath, "err", err)
+			if err := s.remoteAgent.Close(); err != nil {
+				slog.Debug("error shutting down remote agent socket", "err", err)
 			}
 		case CLIENT:
 			if err := s.localAgent.Close(); err != nil {
@@ -291,6 +289,7 @@ func (s stmObj) handleAuthSock() {
 			go s.handleAuthConn(c)
 		} else {
 			slog.Debug("error accepting auth sock connection", "err", err)
+			break
 		}
 	}
 }
