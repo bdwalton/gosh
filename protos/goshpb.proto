@@ -20,6 +20,8 @@ enum PayloadType {
   WINDOW_RESIZE = 3;
   CLIENT_INPUT = 4;
   SERVER_OUTPUT = 5;
+  SSH_AGENT_REQUEST = 6;
+  SSH_AGENT_RESPONSE = 7;
 }
 
 message Payload {
@@ -31,7 +33,8 @@ message Payload {
   PayloadType type = 5;
 
   bytes data = 6;
-  Resize size = 7;
+  Resize size = 7; // only set for WINDOW_RESIZE
+  uint32 authid = 8; // only set for SSH_AGENT_{REQUEST,RESPONSE}
 }
 
 message Resize {
