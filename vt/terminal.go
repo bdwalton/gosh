@@ -738,12 +738,12 @@ func (t *Terminal) handleCSI(params *parameters, data string, last rune) {
 		t.insertChars(' ', params.itemDefaultOneIfZero(0, 1))
 	case CSI_ECH:
 		// Insert n blank characters where n is the provided parameter
-		last := t.cur.col + params.item(0, 1)
-		if lastCol := t.Cols() - 1; last > lastCol {
-			last = lastCol
+		l := t.cur.col + params.item(0, 1)
+		if lastCol := t.Cols() - 1; l > lastCol {
+			l = lastCol
 		}
 		row := t.row()
-		t.fb.setCells(row, row, t.col(), last, newCell(' ', t.curF))
+		t.fb.setCells(row, row, t.col(), l, newCell(' ', t.curF))
 	case CSI_MODE_SET, CSI_MODE_RESET:
 		for i := 0; i < params.numItems(); i++ {
 			t.setMode(params.item(i, 0), data, last)
