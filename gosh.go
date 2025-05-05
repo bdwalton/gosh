@@ -12,6 +12,7 @@ import (
 
 var (
 	agentForward = flag.Bool("ssh_agent_forwarding", false, "If true, listen on a socket to forward SSH agent requests")
+	bindServer   = flag.String("bind_server", "any", "Can be ssh, any or a specific IP")
 	debug        = flag.Bool("debug", false, "If true, enable DEBUG log level for verbose log output")
 	goshClient   = flag.String("gosh_client", "gosh-client", "The path to the gosh-client executable on the local system.")
 	goshSrv      = flag.String("gosh_server", "gosh-server", "The path to the gosh-server executable on the remote system.")
@@ -65,6 +66,8 @@ func runServer() (*connectData, error) {
 	if *agentForward {
 		args = append(args, "--ssh_agent_forwarding")
 	}
+
+	args = append(args, "--bind_server", *bindServer)
 
 	cmd := exec.Command("ssh", args...)
 	out, err := cmd.CombinedOutput()

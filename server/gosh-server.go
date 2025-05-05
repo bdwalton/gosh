@@ -14,10 +14,12 @@ import (
 	"github.com/bdwalton/gosh/network"
 	"github.com/bdwalton/gosh/stm"
 	"github.com/bdwalton/gosh/vt"
+	"strings"
 )
 
 var (
 	agentForward = flag.Bool("ssh_agent_forwarding", false, "If true, listen on a socket to forward SSH agent requests")
+	bindServer   = flag.String("bind_server", "any", "Can be ssh, any or a specific IP")
 	debug        = flag.Bool("debug", false, "If true, enable DEBUG log level for verbose log output")
 	defTerm      = flag.String("default_terminal", "xterm-256color", "Default TERM value if not set by remote environment")
 	detached     = flag.Bool("detached", false, "For use gosh-server to setup a detached version")
@@ -52,7 +54,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	gc, err := network.NewServer(*portRange)
+	gc, err := network.NewServer(getIP(*bindServer), *portRange)
 	if err != nil {
 		slog.Error("Couldn't setup network connection", "err", err)
 		os.Exit(1)
@@ -129,4 +131,21 @@ func getCmd() (*exec.Cmd, context.CancelFunc) {
 	cmd.Env = os.Environ()
 
 	return cmd, cancel
+}
+
+func getIP(flagv string) string {
+	switch flagv {
+	case "any":
+		return "" // clients will just join this to ":<port>"
+	case "ssh":
+		if sshC := os.Getenv("SSH_CONNECTION"); sshC != "" {
+			parts := strings.SplitN(sshC, " ", 4)
+			return parts[2]
+		} else {
+			slog.Debug("no SSH_CONNECTION environment setting to consume")
+			return ""
+		}
+	default:
+		return flagv
+	}
 }

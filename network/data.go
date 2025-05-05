@@ -84,7 +84,7 @@ func NewClient(addr, key string) (*GConn, error) {
 
 // NewServer takes a port range "n:m" and returns a GConn object
 // listening to a port in that range or an error if it can't listen.
-func NewServer(prng string) (*GConn, error) {
+func NewServer(ip, prng string) (*GConn, error) {
 	var pr [2]uint16
 	for i, ns := range strings.SplitN(prng, ":", 2) {
 		n, err := strconv.ParseUint(ns, 10, 16)
@@ -115,7 +115,7 @@ func NewServer(prng string) (*GConn, error) {
 		nce:   &nonce{},
 	}
 
-	ua := &net.UDPAddr{Port: 0}
+	ua := &net.UDPAddr{Port: 0, IP: net.ParseIP(ip)}
 	for i := pr[0]; i <= pr[1]; i++ {
 		ua.Port = int(i)
 		if c, err := net.ListenUDP("udp", ua); err == nil {
