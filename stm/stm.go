@@ -167,10 +167,7 @@ func (s *stmObj) shouldSend() bool {
 	// minute or we think local state and remote state match or
 	// we've never seen them (zero time) which means we should
 	// send initial state.
-	v := s.lastSeenRem.Add(1*time.Minute).After(time.Now()) || s.lastSeenRem.IsZero()
-	slog.Debug("last seen", "t", s.lastSeenRem, "z?", s.lastSeenRem.IsZero(), "should send", v)
-
-	return v
+	return s.lastSeenRem.Add(1*time.Minute).After(time.Now()) || s.lastSeenRem.IsZero()
 }
 
 func (s *stmObj) Run() {
