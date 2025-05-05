@@ -45,7 +45,7 @@ var modeNameToID = map[string]string{
 	"DECOM":                  "?6", // DEC origin mode
 	"DECAWM":                 "?7", // Auto wrap mode
 	"AUTO_REPEAT":            "?8",
-	"MOUSE_XY_PRESS":         "?9",
+	"MOUSE_XY_PRESS":         "?9", // x10 xterm mouse mode
 	"BLINK_CURSOR":           "?12",
 	"SHOW_CURSOR":            "?25",
 	"XTERM_80_132":           "?40",
@@ -74,6 +74,7 @@ var transportModes = []string{
 	"XTERM_80_132",
 	"MOUSE_XY_PRESS",
 	"MOUSE_XY_PRESS_RELEASE",
+	"MOUSE_HILITE",
 	"MOUSE_MOTION",
 	"MOUSE_ALL",
 	"MOUSE_FOCUS",
