@@ -251,7 +251,6 @@ func (s *stmObj) Run() {
 						msg.SetData(diff)
 						s.sendPayload(msg)
 						s.states[ntm] = nowT
-						slog.Debug("sending diff", "diff", string(diff), "source", s.remState, "target", ntm)
 					}
 				}
 				s.smux.Unlock()
@@ -515,7 +514,6 @@ func (s *stmObj) applyState(msg *goshpb.Payload) {
 	}
 
 	diff := msg.GetData()
-	slog.Debug("received diff", "src", src, "targ", targ, "diff", string(diff))
 	// We never want to mutate a stored state because we
 	// might need to use it in the future if we recieve
 	// additional diffs that build on this one. This can
@@ -536,7 +534,6 @@ func (s *stmObj) applyState(msg *goshpb.Payload) {
 	// for the final display.
 	if s.localState.After(src) {
 		stdDiff := s.term.Diff(targT)
-		slog.Debug("writing additional relative diff to stdout", "stdDiff", string(stdDiff))
 		os.Stdout.Write(stdDiff)
 	} else {
 		os.Stdout.Write(diff)
