@@ -4,8 +4,10 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sync"
 	"syscall"
 	"time"
@@ -43,6 +45,13 @@ type stmObj struct {
 	shutdown bool
 	wg       sync.WaitGroup
 
+	remoteAgent net.Listener
+	localAgent  net.Conn
+	socketPath  string
+	nextAuthID  uint32
+	authMux     sync.Mutex
+	agentConns  map[uint32]net.Conn
+
 	smux                 sync.Mutex
 	remState, localState time.Time
 	lastSeenRem          time.Time
@@ -51,11 +60,45 @@ type stmObj struct {
 
 func new(remote io.ReadWriter, t *vt.Terminal, st uint8, forwardAgent bool) *stmObj {
 	s := &stmObj{
-		remote: remote,
-		st:     st,
-		term:   t,
-		frag:   fragmenter.New(MAX_PACKET_SIZE),
-		states: make(map[time.Time]*vt.Terminal),
+		remote:     remote,
+		st:         st,
+		term:       t,
+		frag:       fragmenter.New(MAX_PACKET_SIZE),
+		states:     make(map[time.Time]*vt.Terminal),
+		agentConns: make(map[uint32]net.Conn),
+	}
+
+	if forwardAgent {
+		switch st {
+		case SERVER:
+			// net.Listen doesn't allow specifying file make for
+			// the socket, so work around that by tightening the
+			// umask. restore it after as we don't want to
+			// interfere with user intent.
+			om := syscall.Umask(0177)
+			sockPath := filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), "ssh-agent-gosh.socket")
+			l, err := net.Listen("unix", sockPath)
+			if err != nil {
+				slog.Debug("couldn't open unix socket", "path", sockPath, "err", err)
+			} else {
+				s.remoteAgent = l
+				s.socketPath = sockPath
+			}
+			syscall.Umask(om)
+		case CLIENT:
+			sockPath := os.Getenv("SSH_AUTH_SOCK")
+			if sockPath == "" {
+				slog.Error("no SSH_AUTH_SOCK set, ignoring agent forwarding")
+			} else {
+				if authSock, err := net.Dial("unix", sockPath); err == nil {
+					s.localAgent = authSock
+					s.socketPath = sockPath
+				} else {
+					slog.Debug("couldn't open auth sock", "socket", sockPath, "err", err)
+				}
+			}
+
+		}
 	}
 
 	// snag a copy of the newly initialized Terminal. The last
@@ -216,6 +259,20 @@ func (s *stmObj) Run() {
 
 func (s *stmObj) Shutdown() {
 	s.shutdown = true
+
+	if s.socketPath != "" {
+		switch s.st {
+		case SERVER:
+			s.remoteAgent.Close()
+			if err := os.Remove(s.socketPath); err != nil {
+				slog.Debug("error removing auth sock", "path", s.socketPath, "err", err)
+			}
+		case CLIENT:
+			if err := s.localAgent.Close(); err != nil {
+				slog.Debug("error shutting down local agent socket connection", "err", err)
+			}
+		}
+	}
 
 	s.sendPayload(s.buildPayload(goshpb.PayloadType_SHUTDOWN.Enum()))
 	slog.Info("sending shutdown to remote peer")
