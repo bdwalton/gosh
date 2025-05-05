@@ -11,13 +11,14 @@ import (
 )
 
 var (
-	debug      = flag.Bool("debug", false, "If true, enable DEBUG log level for verbose log output")
-	goshClient = flag.String("gosh_client", "gosh-client", "The path to the gosh-client executable on the local system.")
-	goshSrv    = flag.String("gosh_server", "gosh-server", "The path to the gosh-server executable on the remote system.")
-	logfile    = flag.String("logfile", "", "If set, client logs will be written to this file.")
-	dest       = flag.String("dest", "localhost", "The {username@}localhost to connect to.")
-	remLog     = flag.String("remote_logfile", "", "If set, the remote gosh-server will be asked to log to this file.")
-	useSystemd = flag.Bool("use_systemd", true, "If true, execute the remote server under systemd so the detached process outlives the ssh connection.")
+	agentForward = flag.Bool("ssh_agent_forwarding", false, "If true, listen on a socket to forward SSH agent requests")
+	debug        = flag.Bool("debug", false, "If true, enable DEBUG log level for verbose log output")
+	goshClient   = flag.String("gosh_client", "gosh-client", "The path to the gosh-client executable on the local system.")
+	goshSrv      = flag.String("gosh_server", "gosh-server", "The path to the gosh-server executable on the remote system.")
+	logfile      = flag.String("logfile", "", "If set, client logs will be written to this file.")
+	dest         = flag.String("dest", "localhost", "The {username@}localhost to connect to.")
+	remLog       = flag.String("remote_logfile", "", "If set, the remote gosh-server will be asked to log to this file.")
+	useSystemd   = flag.Bool("use_systemd", true, "If true, execute the remote server under systemd so the detached process outlives the ssh connection.")
 )
 
 type connectData struct {
@@ -61,6 +62,10 @@ func runServer() (*connectData, error) {
 		args = append(args, "--debug")
 	}
 
+	if *agentForward {
+		args = append(args, "--ssh_agent_forwarding")
+	}
+
 	cmd := exec.Command("ssh", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -83,9 +88,15 @@ func runClient(connD *connectData) {
 	if *logfile != "" {
 		args = append(args, "--logfile", *logfile)
 	}
+
 	if *debug {
 		args = append(args, "--debug")
 	}
+
+	if *agentForward {
+		args = append(args, "--ssh_agent_forwarding")
+	}
+
 	envv := append(os.Environ(), fmt.Sprintf("GOSH_KEY=%s", connD.key))
 	syscall.Exec(*goshClient, args, envv)
 }

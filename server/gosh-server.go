@@ -17,11 +17,12 @@ import (
 )
 
 var (
-	debug     = flag.Bool("debug", false, "If true, enable DEBUG log level for verbose log output")
-	defTerm   = flag.String("default_terminal", "xterm-256color", "Default TERM value if not set by remote environment")
-	detached  = flag.Bool("detached", false, "For use gosh-server to setup a detached version")
-	portRange = flag.String("port_range", "61000:61999", "Port range")
-	logfile   = flag.String("logfile", "", "If set, logs will be written to this file.")
+	agentForward = flag.Bool("ssh_agent_forwarding", false, "If true, listen on a socket to forward SSH agent requests")
+	debug        = flag.Bool("debug", false, "If true, enable DEBUG log level for verbose log output")
+	defTerm      = flag.String("default_terminal", "xterm-256color", "Default TERM value if not set by remote environment")
+	detached     = flag.Bool("detached", false, "For use gosh-server to setup a detached version")
+	portRange    = flag.String("port_range", "61000:61999", "Port range")
+	logfile      = flag.String("logfile", "", "If set, logs will be written to this file.")
 )
 
 func main() {
@@ -69,7 +70,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	s := stm.NewServer(gc, t)
+	s := stm.NewServer(gc, t, *agentForward)
 
 	port, pid := gc.LocalPort(), os.Getpid()
 	slog.Info("Running", "port", port)

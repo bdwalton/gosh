@@ -16,10 +16,11 @@ import (
 )
 
 var (
-	debug      = flag.Bool("debug", false, "If true, enable DEBUG log level for verbose log output")
-	logfile    = flag.String("logfile", "", "If set, logs will be written to this file.")
-	remotePort = flag.String("remote_port", "61000", "Port to dial on remote host")
-	remoteHost = flag.String("remote_host", "", "Remote host to dial")
+	agentForward = flag.Bool("ssh_agent_forwarding", false, "If true, listen on a socket to forward SSH agent requests")
+	debug        = flag.Bool("debug", false, "If true, enable DEBUG log level for verbose log output")
+	logfile      = flag.String("logfile", "", "If set, logs will be written to this file.")
+	remotePort   = flag.String("remote_port", "61000", "Port to dial on remote host")
+	remoteHost   = flag.String("remote_host", "", "Remote host to dial")
 )
 
 func main() {
@@ -66,7 +67,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	c := stm.NewClient(gc, t)
+	c := stm.NewClient(gc, t, *agentForward)
 	c.Run()
 
 	slog.Info("Shutting down")

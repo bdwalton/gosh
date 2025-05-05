@@ -49,7 +49,7 @@ type stmObj struct {
 	states               map[time.Time]*vt.Terminal
 }
 
-func new(remote io.ReadWriter, t *vt.Terminal, st uint8) *stmObj {
+func new(remote io.ReadWriter, t *vt.Terminal, st uint8, forwardAgent bool) *stmObj {
 	s := &stmObj{
 		remote: remote,
 		st:     st,
@@ -70,12 +70,12 @@ func new(remote io.ReadWriter, t *vt.Terminal, st uint8) *stmObj {
 	return s
 }
 
-func NewClient(remote io.ReadWriter, t *vt.Terminal) *stmObj {
-	return new(remote, t, CLIENT)
+func NewClient(remote io.ReadWriter, t *vt.Terminal, forwardAgent bool) *stmObj {
+	return new(remote, t, CLIENT, forwardAgent)
 }
 
-func NewServer(remote io.ReadWriter, t *vt.Terminal) *stmObj {
-	return new(remote, t, SERVER)
+func NewServer(remote io.ReadWriter, t *vt.Terminal, forwardAgent bool) *stmObj {
+	return new(remote, t, SERVER, forwardAgent)
 }
 
 func (s *stmObj) sendPayload(msg *goshpb.Payload) {
