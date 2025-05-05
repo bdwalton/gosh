@@ -201,7 +201,11 @@ func (s *stmObj) Run() {
 		}()
 
 		if s.socketPath != "" {
-			go s.handleAuthSock()
+			s.wg.Add(1)
+			go func() {
+				s.handleAuthSock()
+				s.wg.Done()
+			}()
 		}
 
 		go func() {
