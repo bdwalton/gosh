@@ -212,6 +212,7 @@ func (s *stmObj) Run() {
 			// If the process in the pty dies, we need to
 			// shut down.
 			s.term.Wait()
+			slog.Debug("terminal Wait() succeeded. shutting down")
 			s.Shutdown()
 			s.wg.Done()
 		}()
@@ -262,6 +263,13 @@ func (s *stmObj) Run() {
 }
 
 func (s *stmObj) Shutdown() {
+	// Likely a race, but this is ok anyway, as the worst that
+	// happens is errors trying to close closed objects, etc.
+	if s.shutdown {
+		slog.Debug("shutdown already in progress, ignoring")
+		return
+	}
+
 	s.shutdown = true
 
 	if s.socketPath != "" {
@@ -450,6 +458,7 @@ func (s *stmObj) consumePayload(id uint32) {
 		}
 		s.smux.Unlock()
 	case goshpb.PayloadType_SHUTDOWN:
+		slog.Debug("remote initiated shutdown")
 		s.Shutdown()
 	case goshpb.PayloadType_CLIENT_INPUT:
 		keys := msg.GetData()
