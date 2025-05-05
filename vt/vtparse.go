@@ -148,7 +148,7 @@ type action struct {
 	act    pAction
 	params *parameters
 	data   []rune
-	r      rune
+	cmd    rune
 }
 
 func (p *parser) action(act pAction, r rune) *action {

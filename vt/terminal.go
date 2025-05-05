@@ -321,17 +321,17 @@ func (t *Terminal) doParse(rr *bufio.Reader) error {
 			t.lastChg = time.Now().UTC()
 			switch a.act {
 			case VTPARSE_ACTION_EXECUTE:
-				t.handleExecute(a.r)
+				t.handleExecute(a.cmd)
 			case VTPARSE_ACTION_CSI_DISPATCH:
-				t.handleCSI(a.params, string(a.data), a.r)
+				t.handleCSI(a.params, string(a.data), a.cmd)
 			case VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
-				t.handleOSC(a.act, a.r)
+				t.handleOSC(a.act, a.cmd)
 			case VTPARSE_ACTION_PRINT:
-				t.print(a.r)
+				t.print(a.cmd)
 			case VTPARSE_ACTION_ESC_DISPATCH:
-				t.handleESC(a.params, string(a.data), a.r)
+				t.handleESC(a.params, string(a.data), a.cmd)
 			default:
-				slog.Debug("unhandled parser action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.r)
+				slog.Debug("unhandled parser action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.cmd)
 			}
 			t.mux.Unlock()
 		}
@@ -484,12 +484,12 @@ func (t *Terminal) handleESC(params *parameters, data string, r rune) {
 	}
 }
 
-func (t *Terminal) handleOSC(act pAction, last rune) {
+func (t *Terminal) handleOSC(act pAction, cmd rune) {
 	switch act {
 	case VTPARSE_ACTION_OSC_START:
 		t.oscTemp = make([]rune, 0)
 	case VTPARSE_ACTION_OSC_PUT:
-		t.oscTemp = append(t.oscTemp, last)
+		t.oscTemp = append(t.oscTemp, cmd)
 	case VTPARSE_ACTION_OSC_END:
 		// https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
 		// is a good description of many of the options
@@ -694,8 +694,8 @@ func (t *Terminal) print(r rune) {
 	}
 }
 
-func (t *Terminal) handleExecute(last rune) {
-	switch last {
+func (t *Terminal) handleExecute(cmd rune) {
+	switch cmd {
 	case BEL:
 		// just swallow this for now
 	case BS:
@@ -714,13 +714,17 @@ func (t *Terminal) handleExecute(last rune) {
 	case SI: // shift out
 		t.cs.shiftIn()
 	default:
-		slog.Debug("unknown command to execute", "last", string(last))
+		slog.Debug("unknown command to execute", "cmd", string(cmd))
 	}
 }
 
-func (t *Terminal) handleCSI(params *parameters, data string, last rune) {
-	slog.Debug("handling CSI command", "cmd", fmt.Sprintf("%s%s%c", data, params, last))
-	switch last {
+func makeCommand(params *parameters, data string, cmd rune) string {
+	return fmt.Sprintf("%s%s%c", data, params, cmd)
+}
+
+func (t *Terminal) handleCSI(params *parameters, data string, cmd rune) {
+	slog.Debug("handling CSI command", "cmd", makeCommand(params, data, cmd))
+	switch cmd {
 	case CSI_DSR:
 		t.handleDSR(params, data)
 	case CSI_DA:
@@ -746,7 +750,7 @@ func (t *Terminal) handleCSI(params *parameters, data string, last rune) {
 		t.fb.setCells(row, row, t.col(), l, newCell(' ', t.curF))
 	case CSI_MODE_SET, CSI_MODE_RESET:
 		for i := 0; i < params.numItems(); i++ {
-			t.setMode(params.item(i, 0), data, last)
+			t.setMode(params.item(i, 0), data, cmd)
 		}
 	case CSI_DECSTBM:
 		t.setTopBottom(params)
@@ -763,7 +767,7 @@ func (t *Terminal) handleCSI(params *parameters, data string, last rune) {
 	case CSI_ED:
 		t.eraseInDisplay(params.item(0, 0))
 	case CSI_VPA, CSI_VPR, CSI_HPA, CSI_HPR, CSI_CUP, CSI_CUU, CSI_CUD, CSI_CUB, CSI_CUF, CSI_CNL, CSI_CPL, CSI_CHA, CSI_HVP:
-		t.cursorMove(params, last)
+		t.cursorMove(params, cmd)
 	case CSI_SGR:
 		if data != "" {
 			slog.Debug("swallowing xterm specific key modifier set/reset or query", "params", params, "data", data)
@@ -779,7 +783,7 @@ func (t *Terminal) handleCSI(params *parameters, data string, last rune) {
 	case CSI_TBC:
 		t.clearTabs(params)
 	default:
-		slog.Debug("unimplemented CSI code", "last", string(last), "params", params, "data", data)
+		slog.Debug("unimplemented CSI command", "cmd", makeCommand(params, data, cmd))
 	}
 }
 

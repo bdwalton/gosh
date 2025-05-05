@@ -131,7 +131,7 @@ func TestCSIParsing(t *testing.T) {
 		d := newDummy()
 		for _, r := range c.input {
 			for _, a := range p.parse(r) {
-				d.handle(a.act, a.params, a.data, a.r)
+				d.handle(a.act, a.params, a.data, a.cmd)
 			}
 		}
 
@@ -167,7 +167,7 @@ func TestOSCString(t *testing.T) {
 		p := newParser()
 		for _, r := range c.input {
 			for _, a := range p.parse(r) {
-				d.handle(a.act, a.params, a.data, a.r)
+				d.handle(a.act, a.params, a.data, a.cmd)
 			}
 		}
 		if string(d.oscString) != c.wantOSC {
