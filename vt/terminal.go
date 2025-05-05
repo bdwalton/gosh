@@ -968,6 +968,19 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 		} else {
 			t.cursorRestore()
 		}
+	case "XTERM_SAVE_ALT":
+		t.swapFramebuffer(state)
+		if state == CSI_MODE_SET {
+			t.cursorSave()
+			t.homeCursor()
+			t.curF = defFmt
+			t.cs = &charset{}
+		} else {
+			t.cursorRestore()
+		}
+
+	}
+}
 
 func (t *Terminal) swapFramebuffer(state rune) {
 	if state == CSI_MODE_SET {

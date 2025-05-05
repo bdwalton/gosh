@@ -35,6 +35,7 @@ var modeDefaults = map[string]*mode{
 	"?1015": newMode("MOUSE_URXVT", MOUSE_URXVT, false, CSI_MODE_RESET),
 	"?1047": newMode("XTERM_ALT_BUFFER", XTERM_ALT_BUFFER, false, CSI_MODE_RESET),
 	"?1048": newMode("XTERM_SAVE_RESTORE", XTERM_SAVE_RESTORE, false, CSI_MODE_RESET),
+	"?1049": newMode("XTERM_SAVE_ALT", XTERM_SAVE_ALT, false, CSI_MODE_RESET),
 	"?2004": newMode("BRACKET_PASTE", BRACKET_PASTE, false, CSI_MODE_RESET),
 }
 
@@ -64,6 +65,7 @@ var modeNameToID = map[string]string{
 	"MOUSE_URXVT":            "?1015",
 	"XTERM_ALT_BUFFER":       "?1047",
 	"XTERM_SAVE_RESTORE":     "?1048", // xterm save/restore cursor
+	"XTERM_SAVE_ALT":         "?1049",
 	"BRACKET_PASTE":          "?2004",
 }
 

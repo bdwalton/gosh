@@ -180,6 +180,7 @@ const (
 	MOUSE_URXVT            = 1015 // urxvt mouse mode
 	XTERM_ALT_BUFFER       = 1047 // xterm switch to alternate screen buffer
 	XTERM_SAVE_RESTORE     = 1048 // xterm save/restore cursor
+	XTERM_SAVE_ALT         = 1049 // xterm save/retore cursor and alt buffer
 	BRACKET_PASTE          = 2004 // Bracketed paste, ala xterm
 )
 
