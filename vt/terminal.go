@@ -156,7 +156,6 @@ func (t *Terminal) Write(p []byte) (int, error) {
 	// need to do on the client as it's already represented in the
 	// bytes shipped from the server.
 	if t.ptyF == nil {
-		slog.Debug("client write")
 		if err := t.doParse(bufio.NewReader(bytes.NewReader(p))); err != nil {
 			return 0, err
 		}
