@@ -714,7 +714,7 @@ func (t *Terminal) handleExecute(cmd rune) {
 	case SI: // shift out
 		t.cs.shiftIn()
 	default:
-		slog.Debug("unknown command to execute", "cmd", string(cmd))
+		slog.Error("unknown execution command", "cmd", string(cmd))
 	}
 }
 
