@@ -349,8 +349,8 @@ func TestTerminalDiff(t *testing.T) {
 	t16 := testTerminalCopy(t15)
 	t16.curF = format{fg: newColor(FG_YELLOW), attrs: BOLD | UNDERLINE}
 	t17 := testTerminalCopy(t1)
-	t17.setMode(BRACKET_PASTE, "?", CSI_MODE_SET) // no transport, no diff
-	t17.setMode(IRM, "", CSI_MODE_SET)            // no transport, no diff
+	t17.setMode(DECOM, "?", CSI_MODE_SET) // no transport, no diff
+	t17.setMode(IRM, "", CSI_MODE_SET)    // no transport, no diff
 	t19, _ := NewTerminal()
 	t19.Resize(10, 10)
 	t19.fb.setCell(0, 0, newCell('A', defFmt))
@@ -384,7 +384,7 @@ func TestTerminalDiff(t *testing.T) {
 		{t14, t15, []byte(fmt.Sprintf("%c%c%dm%c%c%dm", ESC, CSI, FG_RED, ESC, CSI, UNDERLINE_ON))},
 
 		{t15, t16, []byte(fmt.Sprintf("%c%c%d%c%c%c%dm", ESC, CSI, FG_YELLOW, CSI_SGR, ESC, CSI, INTENSITY_BOLD))},
-		{t1, t17, []byte("")}, // should tranpsort is false for BRACKET_PASTE
+		{t1, t17, []byte("")}, // should tranpsort is false for DECOM
 		{t19, t20, []byte(fmt.Sprintf("%c%c%c%c%c;2%c*%c%c%c", ESC, CSI, CSI_SGR, ESC, CSI, CSI_CUP, ESC, CSI, CSI_CUP))},
 		{t21, t22, []byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, 11, 11, CSI_CUP))},
 	}

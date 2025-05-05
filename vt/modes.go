@@ -84,6 +84,7 @@ var transportModes = []string{
 	"MOUSE_SGR",
 	"MOUSE_ALT",
 	"MOUSE_URXVT",
+	"BRACKET_PASTE",
 }
 
 // For convenience in logging state changes
