@@ -462,15 +462,11 @@ func (t *Terminal) handleESC(params *parameters, data string, r rune) {
 				t.cursorMoveAbs(row-1, t.col())
 			}
 		case DECSC: // save cursor
-			t.savedCur = t.cur.Copy()
-			t.savedF = t.curF
-			t.savedCS = t.cs.copy()
+			t.cursorSave()
 		case DECRC: // restore cursor or decaln screen test
 			switch data {
 			case "":
-				t.cur = t.savedCur.Copy()
-				t.curF = t.savedF
-				t.cs = t.savedCS.copy()
+				t.cursorRestore()
 			case "#": // DECALN vt100 screen test
 				t.doDECALN()
 			}
@@ -482,6 +478,22 @@ func (t *Terminal) handleESC(params *parameters, data string, r rune) {
 	default:
 		slog.Debug("unimplemented ESC command selctor", "r", string(r), "params", params, "data", data)
 	}
+}
+
+// cursorSave does what it says on the tin, but the tin is
+// misleading. The cursor position, current pen format and character
+// set state are all snapshotted.
+func (t *Terminal) cursorSave() {
+	t.savedCur = t.cur.Copy()
+	t.savedF = t.curF
+	t.savedCS = t.cs.copy()
+}
+
+// Restore the cursor position, pen format and charset state.
+func (t *Terminal) cursorRestore() {
+	t.cur = t.savedCur.Copy()
+	t.curF = t.savedF
+	t.cs = t.savedCS.copy()
 }
 
 func (t *Terminal) handleOSC(act pAction, cmd rune) {
