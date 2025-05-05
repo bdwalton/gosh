@@ -3,6 +3,7 @@ package vt
 import (
 	"fmt"
 	"log/slog"
+	"strings"
 )
 
 const (
@@ -40,7 +41,14 @@ func (p *parameters) copy() *parameters {
 }
 
 func (p *parameters) String() string {
-	return fmt.Sprintf("n=%d %v", p.num, p.items)
+	var sb strings.Builder
+	for i := 0; i < p.numItems(); i++ {
+		if i > 0 {
+			sb.WriteByte(';')
+		}
+		sb.WriteString(fmt.Sprintf("%d", p.item(i, 0)))
+	}
+	return sb.String()
 }
 
 func (p *parameters) addItem(item int) {
