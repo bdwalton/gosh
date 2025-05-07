@@ -749,11 +749,11 @@ func (t *Terminal) handleCSI(params *parameters, data string, cmd rune) {
 	slog.Debug("handling CSI command", "cmd", makeCommand(params, data, cmd))
 	switch cmd {
 	case CSI_DSR:
-		t.handleDSR(params, data)
+		t.handleDSR(params.item(0, 0), data)
 	case CSI_DA:
 		t.replyDeviceAttributes(data)
 	case CSI_Q_MULTI:
-		t.csiQ(params, data)
+		t.csiQ(params.item(0, 0), data)
 	case CSI_XTWINOPS:
 		t.xtwinops(params.item(0, 0))
 	case CSI_DCH:
@@ -882,23 +882,23 @@ func (t *Terminal) xtwinops(n int) {
 	}
 }
 
-func (t *Terminal) csiQ(params *parameters, data string) {
+func (t *Terminal) csiQ(n int, data string) {
 	switch data {
 	case ">":
-		if params.item(0, 0) != 0 {
-			slog.Debug("invalid xterm_version query", "params", params, "data", data)
+		if n != 0 {
+			slog.Debug("invalid xterm_version query", "n", n, "data", data)
 			return
 		}
 		t.Write([]byte(fmt.Sprintf("%c%c>|gosh(%s)%c%c", ESC, DCS, GOSH_VT_VER, ESC, ST)))
 	default:
-		slog.Debug("unhandled CSI q", "params", params, "data", data)
+		slog.Debug("unhandled CSI q", "n", n, "data", data)
 	}
 }
 
-func (t *Terminal) handleDSR(params *parameters, data string) {
+func (t *Terminal) handleDSR(n int, data string) {
 	switch data {
 	case "": // General device status report
-		switch params.item(0, 0) {
+		switch n {
 		case 5: // We always report OK (CSI 0 n)
 			t.Write([]byte(fmt.Sprintf("%c%c%d%c", ESC, CSI, 0, CSI_DSR)))
 		case 6: // Provide cursor location (CSI r ; c R)
@@ -909,10 +909,10 @@ func (t *Terminal) handleDSR(params *parameters, data string) {
 			}
 			t.Write([]byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, row+1, col+1, CSI_POS)))
 		default:
-			slog.Debug("unhandled CSI DSR request", "params", params, "data", data)
+			slog.Debug("unhandled CSI DSR request", "n", n, "data", data)
 		}
 	case "?": // DEC specific device status report
-		switch params.item(0, 0) {
+		switch n {
 		case 6: // Provide cursor location (CSI ? r ; c R)
 			t.Write([]byte(fmt.Sprintf("%c%c?%d;%d%c", ESC, CSI, t.row()+1, t.col()+1, CSI_POS)))
 		case 15: // report printer status; always "not ready" (CSI ? 1 1 n)
@@ -920,12 +920,12 @@ func (t *Terminal) handleDSR(params *parameters, data string) {
 		case 25: // UDK (universal disk kit); always "unlocked" (CSI ? 2 0 n)
 			t.Write([]byte(fmt.Sprintf("%c%c?%d%c", ESC, CSI, 20, CSI_DSR)))
 		default:
-			slog.Debug("unhandled CSI ? DSR request", "params", params, "data", data)
+			slog.Debug("unhandled CSI ? DSR request", "n", n, "data", data)
 		}
 	case ">":
-		slog.Debug("swallowing xterm disable key modifiers", "params", params, "data", data)
+		slog.Debug("swallowing xterm disable key modifiers", "n", n, "data", data)
 	default:
-		slog.Debug("unknown CSI DSR modifier string", "params", params, "data", data)
+		slog.Debug("unknown CSI DSR modifier string", "n", n, "data", data)
 	}
 }
 
