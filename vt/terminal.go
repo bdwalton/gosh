@@ -779,6 +779,8 @@ func (t *Terminal) handleCSI(params *parameters, data string, cmd rune) {
 		t.setTopBottom(params)
 	case CSI_DECSLRM:
 		t.setLeftRight(params)
+	case CSI_IL:
+		t.insertLines(params)
 	case CSI_DL:
 		t.deleteLines(params)
 	case CSI_EL:
@@ -1118,6 +1120,14 @@ func (t *Terminal) stepTabs(steps int) {
 	}
 }
 
+func (t *Terminal) insertLines(params *parameters) {
+	sr, err := t.fb.subRegion(t.row(), t.boundedMarginBottom(), t.boundedMarginLeft(), t.boundedMarginRight())
+	if err != nil {
+		slog.Error("invalid subregion request", "row", t.row(), "bottom", t.boundedMarginBottom(), "err", err)
+		return
+	}
+	sr.scrollRows(-params.item(0, 1))
+}
 
 func (t *Terminal) deleteLines(params *parameters) {
 	sr, err := t.fb.subRegion(t.row(), t.boundedMarginBottom(), t.boundedMarginLeft(), t.boundedMarginRight())

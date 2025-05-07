@@ -66,6 +66,7 @@ const (
 	CSI_CHT        = 'I' // cursor forward tabulation
 	CSI_ED         = 'J' // erase in display
 	CSI_EL         = 'K' // erase in line
+	CSI_IL         = 'L' // insert line(s)
 	CSI_DL         = 'M' // delete line(s)
 	CSI_DCH        = 'P' // delete character(s)
 	CSI_POS        = 'R' // cursor position report
