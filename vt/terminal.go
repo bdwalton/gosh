@@ -780,9 +780,9 @@ func (t *Terminal) handleCSI(params *parameters, data string, cmd rune) {
 	case CSI_DECSLRM:
 		t.setLeftRight(params)
 	case CSI_IL:
-		t.insertLines(params)
+		t.insertLines(params.item(0, 1))
 	case CSI_DL:
-		t.deleteLines(params)
+		t.deleteLines(params.item(0, 1))
 	case CSI_EL:
 		t.eraseLine(params.item(0, 0))
 	case CSI_SU:
@@ -1120,22 +1120,22 @@ func (t *Terminal) stepTabs(steps int) {
 	}
 }
 
-func (t *Terminal) insertLines(params *parameters) {
+func (t *Terminal) insertLines(n int) {
 	sr, err := t.fb.subRegion(t.row(), t.boundedMarginBottom(), t.boundedMarginLeft(), t.boundedMarginRight())
 	if err != nil {
 		slog.Error("invalid subregion request", "row", t.row(), "bottom", t.boundedMarginBottom(), "err", err)
 		return
 	}
-	sr.scrollRows(-params.item(0, 1))
+	sr.scrollRows(-n)
 }
 
-func (t *Terminal) deleteLines(params *parameters) {
+func (t *Terminal) deleteLines(n int) {
 	sr, err := t.fb.subRegion(t.row(), t.boundedMarginBottom(), t.boundedMarginLeft(), t.boundedMarginRight())
 	if err != nil {
 		slog.Error("invalid subregion request", "row", t.row(), "bottom", t.boundedMarginBottom(), "err", err)
 		return
 	}
-	sr.scrollRows(params.item(0, 1))
+	sr.scrollRows(n)
 }
 
 func (t *Terminal) deleteChars(n int) {
