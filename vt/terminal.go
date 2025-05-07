@@ -776,9 +776,9 @@ func (t *Terminal) handleCSI(params *parameters, data string, cmd rune) {
 			t.setMode(params.item(i, 0), data, cmd)
 		}
 	case CSI_DECSTBM:
-		t.setTopBottom(params)
+		t.setTopBottom(params.item(0, 1), params.item(1, t.Rows()-1))
 	case CSI_DECSLRM:
-		t.setLeftRight(params)
+		t.setLeftRight(params.item(0, 1), params.item(1, t.Cols()-1))
 	case CSI_IL:
 		t.insertLines(params.item(0, 1))
 	case CSI_DL:
@@ -1011,25 +1011,18 @@ func (t *Terminal) swapFramebuffer(state rune) {
 	}
 }
 
-func (t *Terminal) setTopBottom(params *parameters) {
-	nr := t.Rows()
-	top := params.item(0, 1)
-	bottom := params.item(1, nr)
-	if bottom <= top || top > nr || (top == 0 && bottom == 1) {
+func (t *Terminal) setTopBottom(top, bottom int) {
+	if bottom <= top || top >= t.Rows() || (top == 0 && bottom == 1) {
 		return // matches xterm
 	}
-
 	// https://vt100.net/docs/vt510-rm/DECSTBM.html
 	// STBM sets the cursor to 1,1 (0,0)
 	t.vertMargin = newMargin(top-1, bottom-1)
 	t.homeCursor()
 }
 
-func (t *Terminal) setLeftRight(params *parameters) {
-	nc := t.Cols()
-	left := params.item(0, 1)
-	right := params.item(1, nc)
-	if right <= left || left >= nc || (left == 0 && right == 1) {
+func (t *Terminal) setLeftRight(left, right int) {
+	if right <= left || left >= t.Cols() || (left == 0 && right == 1) {
 		return // matches xterm
 	}
 
