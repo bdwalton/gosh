@@ -1118,14 +1118,14 @@ func (t *Terminal) stepTabs(steps int) {
 	}
 }
 
-func (t *Terminal) deleteLines(params *parameters) {
-	m := params.item(0, 1)
-	cols := t.Cols()
-	row := t.row()
 
-	for i := row; i < row+m && t.vertMargin.contains(i); i++ {
-		t.fb.data[i] = newRow(cols)
+func (t *Terminal) deleteLines(params *parameters) {
+	sr, err := t.fb.subRegion(t.row(), t.boundedMarginBottom(), t.boundedMarginLeft(), t.boundedMarginRight())
+	if err != nil {
+		slog.Error("invalid subregion request", "row", t.row(), "bottom", t.boundedMarginBottom(), "err", err)
+		return
 	}
+	sr.scrollRows(params.item(0, 1))
 }
 
 func (t *Terminal) deleteChars(n int) {
