@@ -39,6 +39,7 @@ type Terminal struct {
 	// State
 	lastChg               time.Time
 	title, icon           string
+	titlePfx              string
 	savedTitle, savedIcon string
 	cur, savedCur         cursor
 	curF, savedF          format
@@ -96,6 +97,7 @@ func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc) (*Terminal, er
 	t := newBasicTerminal(ptmx)
 	t.wait = func() { cmd.Wait() }
 	t.stop = func() { cancel() }
+	t.titlePfx = "[gosh] "
 
 	return t, nil
 }
@@ -534,12 +536,12 @@ func (t *Terminal) handleOSC(act pAction, cmd rune) {
 			parts := strings.SplitN(data, ";", 3)
 			switch parts[0] {
 			case OSC_ICON_TITLE:
-				t.title = "[gosh] " + parts[1]
+				t.title = t.titlePfx + parts[1]
 				t.icon = parts[1]
 			case OSC_ICON:
 				t.icon = parts[1]
 			case OSC_TITLE:
-				t.title = "[gosh] " + parts[1]
+				t.title = t.titlePfx + parts[1]
 			case OSC_SETSIZE: // a Gosh convention
 				if len(parts) == 3 {
 					for {
