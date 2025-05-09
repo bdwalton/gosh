@@ -186,17 +186,18 @@ func (t *Terminal) Copy() *Terminal {
 	// rendering so we can ignore it as long as we handle it
 	// appropriately and ship the visual diff to the client.
 	return &Terminal{
-		fb:      t.fb.copy(),
-		title:   t.title,
-		icon:    t.icon,
-		cur:     t.cur,
-		curF:    t.curF,
-		keypad:  t.keypad,
-		modes:   modes,
-		lastChg: t.lastChg,
-		p:       t.p.copy(),
-		ptyF:    t.ptyF,
-		cs:      t.cs.copy(),
+		fb:       t.fb.copy(),
+		title:    t.title,
+		titlePfx: t.titlePfx,
+		icon:     t.icon,
+		cur:      t.cur,
+		curF:     t.curF,
+		keypad:   t.keypad,
+		modes:    modes,
+		lastChg:  t.lastChg,
+		p:        t.p.copy(),
+		ptyF:     t.ptyF,
+		cs:       t.cs.copy(),
 	}
 }
 
@@ -206,6 +207,7 @@ func (t *Terminal) Replace(other *Terminal) {
 
 	t.fb = other.fb.copy()
 	t.title = other.title
+	t.titlePfx = other.titlePfx
 	t.icon = other.icon
 	t.curF = other.curF
 	t.savedF = other.savedF
