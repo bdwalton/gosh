@@ -7,15 +7,15 @@ VPATH := .:./protos/
 all: $(GOSH_PROTO) gosh gosh-client gosh-server
 
 gosh: gosh.go $(SUBPACKAGE_FILES) $(GOSH_PROTO)
-	@echo Building $<
+	@echo Building gosh binary
 	@go build $<
 
 gosh-client: client/gosh-client.go $(SUBPACKAGE_FILES) $(GOSH_PROTO)
-	@echo Building $<
+	@echo Building gosh-client binary
 	@go build $<
 
 gosh-server: server/gosh-server.go $(SUBPACKAGE_FILES) $(GOSH_PROTO)
-	@echo Building $<
+	@echo Building gosh-server binary
 	@go build $<
 
 $(GOSH_PROTO): goshpb.proto
