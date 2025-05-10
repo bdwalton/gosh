@@ -21,7 +21,8 @@ gosh-server: $(SERVER_FILES) $(SUBPACKAGE_FILES) $(GOSH_PROTO)
 
 $(GOSH_PROTO): goshpb.proto
 	@echo Builing protos
-	@(mkdir $(PROTO_OUT); cd protos; \
+	@(mkdir $(PROTO_OUT) 2>/dev/null; \
+	  cd protos; \
 	  $(PROTOC) --go_out=./goshpb --go_opt=paths=source_relative $(<F) )
 
 test:
