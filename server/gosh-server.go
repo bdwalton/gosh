@@ -153,6 +153,14 @@ func getCmd() (*exec.Cmd, context.CancelFunc) {
 func remIP() string {
 	if sshC := os.Getenv("SSH_CONNECTION"); sshC != "" {
 		parts := strings.SplitN(sshC, " ", 4)
+		return parts[0]
+	}
+	return ""
+}
+
+func localIP() string {
+	if sshC := os.Getenv("SSH_CONNECTION"); sshC != "" {
+		parts := strings.SplitN(sshC, " ", 4)
 		return parts[2]
 	}
 	return ""
@@ -163,7 +171,7 @@ func getIP(flagv string) string {
 	case "any":
 		return "" // clients will just join this to ":<port>"
 	case "ssh":
-		return remIP()
+		return localIP()
 	default:
 		return flagv
 	}
