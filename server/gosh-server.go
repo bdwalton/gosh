@@ -5,16 +5,17 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/bdwalton/gosh/logging"
 	"github.com/bdwalton/gosh/network"
 	"github.com/bdwalton/gosh/stm"
 	"github.com/bdwalton/gosh/vt"
-	"strings"
 )
 
 var (
@@ -65,6 +66,18 @@ func main() {
 		}
 	}()
 
+	var sock net.Listener
+	if *agentForward {
+		sock, err = openAuthSock()
+		if err != nil {
+			slog.Error("couldn't open auth socket", "err", err)
+			os.Exit(1)
+		}
+		defer sock.Close()
+		// Do this before we start the terminal and run the command
+		os.Setenv("SSH_AUTH_SOCK", sock.Addr().String())
+	}
+
 	cmd, cancel := getCmd()
 	t, err := vt.NewTerminalWithPty(cmd, cancel)
 	if err != nil {
@@ -72,7 +85,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	s := stm.NewServer(gc, t, *agentForward)
+	s := stm.NewServer(gc, t, sock)
 
 	port, pid := gc.LocalPort(), os.Getpid()
 	slog.Info("Running", "port", port)
@@ -148,4 +161,22 @@ func getIP(flagv string) string {
 	default:
 		return flagv
 	}
+}
+
+func openAuthSock() (net.Listener, error) {
+	// net.Listen doesn't allow specifying file make for
+	// the socket, so work around that by tightening the
+	// umask. restore it after as we don't want to
+	// interfere with user intent.
+	om := syscall.Umask(0177)
+	sockPath := filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), fmt.Sprintf("ssh-agent-gosh.%d.socket", os.Getpid()))
+	l, err := net.Listen("unix", sockPath)
+	syscall.Umask(om)
+	if err != nil {
+		slog.Debug("failed to open unix socket", "path", sockPath, "err", err)
+		return nil, err
+	}
+
+	slog.Debug("returning auth socket", "addr", l.Addr())
+	return l, nil
 }

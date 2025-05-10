@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"sync"
 	"syscall"
 	"time"
@@ -58,7 +57,7 @@ type stmObj struct {
 	states               map[time.Time]*vt.Terminal
 }
 
-func new(remote io.ReadWriter, t *vt.Terminal, st uint8, forwardAgent bool) *stmObj {
+func new(remote io.ReadWriter, t *vt.Terminal, st uint8) *stmObj {
 	s := &stmObj{
 		remote:     remote,
 		st:         st,
@@ -66,39 +65,6 @@ func new(remote io.ReadWriter, t *vt.Terminal, st uint8, forwardAgent bool) *stm
 		frag:       fragmenter.New(MAX_PACKET_SIZE),
 		states:     make(map[time.Time]*vt.Terminal),
 		agentConns: make(map[uint32]net.Conn),
-	}
-
-	if forwardAgent {
-		switch st {
-		case SERVER:
-			// net.Listen doesn't allow specifying file make for
-			// the socket, so work around that by tightening the
-			// umask. restore it after as we don't want to
-			// interfere with user intent.
-			om := syscall.Umask(0177)
-			sockPath := filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), "ssh-agent-gosh.socket")
-			l, err := net.Listen("unix", sockPath)
-			if err != nil {
-				slog.Debug("couldn't open unix socket", "path", sockPath, "err", err)
-			} else {
-				s.remoteAgent = l
-				s.socketPath = sockPath
-			}
-			syscall.Umask(om)
-		case CLIENT:
-			sockPath := os.Getenv("SSH_AUTH_SOCK")
-			if sockPath == "" {
-				slog.Error("no SSH_AUTH_SOCK set, ignoring agent forwarding")
-			} else {
-				if authSock, err := net.Dial("unix", sockPath); err == nil {
-					s.localAgent = authSock
-					s.socketPath = sockPath
-				} else {
-					slog.Debug("couldn't open auth sock", "socket", sockPath, "err", err)
-				}
-			}
-
-		}
 	}
 
 	// snag a copy of the newly initialized Terminal. The last
@@ -113,12 +79,18 @@ func new(remote io.ReadWriter, t *vt.Terminal, st uint8, forwardAgent bool) *stm
 	return s
 }
 
-func NewClient(remote io.ReadWriter, t *vt.Terminal, forwardAgent bool) *stmObj {
-	return new(remote, t, CLIENT, forwardAgent)
+func NewClient(remote io.ReadWriter, t *vt.Terminal, sock net.Conn) *stmObj {
+	s := new(remote, t, CLIENT)
+	s.localAgent = sock
+	s.socketPath = sock.RemoteAddr().String()
+	return s
 }
 
-func NewServer(remote io.ReadWriter, t *vt.Terminal, forwardAgent bool) *stmObj {
-	return new(remote, t, SERVER, forwardAgent)
+func NewServer(remote io.ReadWriter, t *vt.Terminal, sock net.Listener) *stmObj {
+	s := new(remote, t, SERVER)
+	s.remoteAgent = sock
+	s.socketPath = sock.Addr().String()
+	return s
 }
 
 func (s *stmObj) sendPayload(msg *goshpb.Payload) {

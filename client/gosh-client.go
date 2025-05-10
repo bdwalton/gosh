@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
+	"net"
 	"os"
 
 	"github.com/bdwalton/gosh/logging"
@@ -67,7 +69,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	c := stm.NewClient(gc, t, *agentForward)
+	var sock net.Conn
+	if *agentForward {
+		sock, err = openAuthSock()
+		if err != nil {
+			slog.Error("couldn't open auth socket", "err", err)
+			os.Exit(1)
+		}
+		defer sock.Close()
+	}
+	c := stm.NewClient(gc, t, sock)
 	c.Run()
 
 	slog.Info("Shutting down")
@@ -92,4 +103,12 @@ func maybeAltScreen() func() {
 	}
 
 	return func() {}
+}
+
+func openAuthSock() (net.Conn, error) {
+	sockPath := os.Getenv("SSH_AUTH_SOCK")
+	if sockPath == "" {
+		return nil, errors.New("no SSH_AUTH_SOCK set, ignoring agent forwarding")
+	}
+	return net.Dial("unix", sockPath)
 }
