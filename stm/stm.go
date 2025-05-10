@@ -106,38 +106,46 @@ func (s *stmObj) heartbeat() {
 			if s.lastSeenRem.Add(1 * time.Minute).Before(time.Now()) {
 				os.Stdout.Write(s.term.MakeOverlay(fmt.Sprintf(msg, time.Now().Sub(s.lastSeenRem).Round(500*time.Millisecond))))
 				s.overlay = true
-				s.sendPayload(s.buildPayload(goshpb.PayloadType_HEARTBEAT.Enum()))
+				slog.Debug("sending heartbeat")
+				err := s.sendPayload(s.buildPayload(goshpb.PayloadType_HEARTBEAT.Enum()))
+				if err != nil {
+					secs = max(secs*2, 64)
+				} else {
+					secs = 1
+				}
 			}
 			s.smux.Unlock()
 		}
 	}
 }
 
-func (s *stmObj) sendPayload(msg *goshpb.Payload) {
+func (s *stmObj) sendPayload(msg *goshpb.Payload) error {
 	p, err := proto.Marshal(msg)
 	if err != nil {
 		slog.Error("couldn't marshal message", "err", err)
-		return
+		return err
 	}
 
 	frags, err := s.frag.CreateFragments(p)
 	if err != nil {
 		slog.Error("couldn't fragment payload", "err", err)
-		return
+		return err
 	}
 
 	for i, f := range frags {
 		pf, err := proto.Marshal(f)
 		if err != nil {
 			slog.Error("couldn't marshal fragment", "i", i, "err", err)
-			return
+			return err
 		}
 
 		if n, err := s.remote.Write(pf); err != nil || n < len(pf) {
 			slog.Error("failed or parial write to remote", "n", n, "err", err)
+			return err
 		}
 	}
 
+	return nil
 }
 
 func (s *stmObj) fragCleaner() {
