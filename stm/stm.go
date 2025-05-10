@@ -96,12 +96,12 @@ func NewServer(remote io.ReadWriter, t *vt.Terminal, sock net.Listener) *stmObj 
 }
 
 func (s *stmObj) heartbeat() {
-	t := time.NewTicker(1 * time.Second)
+	secs := 1
 	msg := "Stale connection. Remote last seen %s ago. Press ^. to exit gosh."
 
 	for {
 		select {
-		case <-t.C:
+		case <-time.Tick(time.Second * time.Duration(secs)):
 			s.smux.Lock()
 			if s.lastSeenRem.Add(1 * time.Minute).Before(time.Now()) {
 				os.Stdout.Write(s.term.MakeOverlay(fmt.Sprintf(msg, time.Now().Sub(s.lastSeenRem).Round(500*time.Millisecond))))
