@@ -141,14 +141,15 @@ func (t *Terminal) MakeOverlay(text string) []byte {
 }
 
 // FirstRow will return the byte sequence to generate the first row of the vt
-func (t *Terminal) FirstRow() ([]byte, error) {
+func (t *Terminal) FirstRow() []byte {
 	fb, err := t.fb.subRegion(0, 0, 0, t.Cols()-1)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't retrieve first row subregion: %v", err)
+		slog.Debug("couldn't retrieve first row subregion", "err", err)
+		return []byte{}
 	}
 	fbe := fb.copy()
 	fbe.fill(newCell(' ', defFmt))
-	return fbe.diff(fb), nil
+	return fbe.diff(fb)
 }
 
 func (t *Terminal) Write(p []byte) (int, error) {
