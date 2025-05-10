@@ -418,12 +418,14 @@ func (s *stmObj) consumePayload(id uint32) {
 
 	switch msg.GetType() {
 	case goshpb.PayloadType_ACK:
-		at := msg.GetAck().AsTime()
+		at := msg.GetReceived().AsTime()
 		slog.Debug("received ack", "time", at)
+		rt := msg.GetReceived().AsTime()
+		slog.Debug("received ack", "time", rt)
 		s.smux.Lock()
-		s.remState = at
+		s.remState = rt
 		for k := range s.states {
-			if k.Before(at) {
+			if k.Before(rt) {
 				delete(s.states, k)
 				slog.Debug("removing state", "k", k)
 			}
@@ -538,7 +540,7 @@ func (s *stmObj) applyState(msg *goshpb.Payload) {
 func (s *stmObj) ack(t time.Time) {
 	s.localState = t
 	msg := s.buildPayload(goshpb.PayloadType_ACK.Enum())
-	msg.SetAck(tspb.New(t))
+	msg.SetReceived(tspb.New(t))
 	s.sendPayload(msg)
 	slog.Debug("sent ack", "time", t)
 }

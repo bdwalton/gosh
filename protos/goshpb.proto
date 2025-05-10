@@ -16,19 +16,21 @@ message Fragment {
 enum PayloadType {
   UNKNOWN = 0;
   SHUTDOWN = 1; // no other data
-  ACK = 2;
-  WINDOW_RESIZE = 3;
-  CLIENT_INPUT = 4;
-  SERVER_OUTPUT = 5;
-  SSH_AGENT_REQUEST = 6;
-  SSH_AGENT_RESPONSE = 7;
+  HEARTBEAT = 2;
+  HEARTBEAT_ACK = 3;
+  ACK = 4;
+  WINDOW_RESIZE = 5;
+  CLIENT_INPUT = 6;
+  SERVER_OUTPUT = 7;
+  SSH_AGENT_REQUEST = 8;
+  SSH_AGENT_RESPONSE = 9;
 }
 
 message Payload {
   google.protobuf.Timestamp source = 1;
   google.protobuf.Timestamp target = 2;
   google.protobuf.Timestamp retire = 3;
-  google.protobuf.Timestamp ack = 4;
+  google.protobuf.Timestamp received = 4;
 
   PayloadType type = 5;
 
