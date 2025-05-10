@@ -1,6 +1,6 @@
 module github.com/bdwalton/gosh
 
-go 1.22.7
+go 1.23.1
 
 require (
 	github.com/creack/pty v1.1.24
