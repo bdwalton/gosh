@@ -101,6 +101,11 @@ func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc, host string) (
 	t.stop = func() { cancel(); rmUtmp(ptmx) }
 	t.titlePfx = "[gosh] "
 
+	// this assumes we've run a shell, so we'll need to make it
+	// conditional in the future when we add support for running
+	// something else.
+	t.Write([]byte("clear; cat /run/motd.dynamic\n"))
+
 	return t, nil
 }
 
