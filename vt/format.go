@@ -13,18 +13,20 @@ const FMT_RESET = "\x1b[m"
 const (
 	BOLD       = 1 << 0
 	FAINT      = 1 << 1
-	BOLD_FAINT = 1 << 2 // it is valid to set both, we handle is specially
-	UNDERLINE  = 1 << 3
-	BLINK      = 1 << 4
-	REVERSED   = 1 << 5
-	INVISIBLE  = 1 << 6
-	STRIKEOUT  = 1 << 7
+	ITALIC     = 1 << 2
+	BOLD_FAINT = 1 << 3 // it is valid to set both, we handle is specially
+	UNDERLINE  = 1 << 4
+	BLINK      = 1 << 5
+	REVERSED   = 1 << 6
+	INVISIBLE  = 1 << 7
+	STRIKEOUT  = 1 << 8
 )
 
-var attrs = []uint8{BOLD_FAINT, BOLD, FAINT, UNDERLINE, BLINK, REVERSED, INVISIBLE, STRIKEOUT}
-var attrToggle = map[uint8]map[bool]string{
+var attrs = []uint16{BOLD_FAINT, BOLD, FAINT, ITALIC, UNDERLINE, BLINK, REVERSED, INVISIBLE, STRIKEOUT}
+var attrToggle = map[uint16]map[bool]string{
 	BOLD:       map[bool]string{true: fmt.Sprintf("%d", INTENSITY_BOLD), false: fmt.Sprintf("%d", INTENSITY_NORMAL)},
 	FAINT:      map[bool]string{true: fmt.Sprintf("%d", INTENSITY_FAINT), false: fmt.Sprintf("%d", INTENSITY_NORMAL)},
+	ITALIC:     map[bool]string{true: fmt.Sprintf("%d", ITALIC_ON), false: fmt.Sprintf("%d", ITALIC_OFF)},
 	BOLD_FAINT: map[bool]string{true: fmt.Sprintf("%d;%d", INTENSITY_BOLD, INTENSITY_FAINT), false: fmt.Sprintf("%d", INTENSITY_NORMAL)},
 	UNDERLINE:  map[bool]string{true: fmt.Sprintf("%d", UNDERLINE_ON), false: fmt.Sprintf("%d", UNDERLINE_OFF)},
 	BLINK:      map[bool]string{true: fmt.Sprintf("%d", BLINK_ON), false: fmt.Sprintf("%d", BLINK_OFF)},
@@ -35,10 +37,10 @@ var attrToggle = map[uint8]map[bool]string{
 
 type format struct {
 	fg, bg color
-	attrs  uint8 // a bitmap of which of the attrs (^ above) are enabled
+	attrs  uint16 // a bitmap of which of the attrs (^ above) are enabled
 }
 
-func setAttr(orig, new uint8, val bool) uint8 {
+func setAttr(orig, new uint16, val bool) uint16 {
 	if val {
 		return orig | new
 	}
@@ -46,7 +48,7 @@ func setAttr(orig, new uint8, val bool) uint8 {
 	return orig &^ new
 }
 
-func (f format) attrIsSet(attr uint8) bool {
+func (f format) attrIsSet(attr uint16) bool {
 	return (f.attrs & attr) != 0
 }
 
@@ -144,6 +146,8 @@ func formatFromParams(curF format, params *parameters) format {
 			f.attrs = setAttr(f.attrs, BOLD|FAINT|BOLD_FAINT, false)
 		case item == UNDERLINE_ON || item == UNDERLINE_OFF:
 			f.attrs = setAttr(f.attrs, UNDERLINE, (item < 10))
+		case item == ITALIC_ON || item == ITALIC_OFF:
+			f.attrs = setAttr(f.attrs, ITALIC, (item < 10))
 		case item == BLINK_ON || item == BLINK_OFF:
 			f.attrs = setAttr(f.attrs, BLINK, (item < 10))
 		case item == REVERSED_ON || item == REVERSED_OFF:

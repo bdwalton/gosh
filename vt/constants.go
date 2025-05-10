@@ -97,6 +97,7 @@ const (
 	RESET            = 0
 	INTENSITY_BOLD   = 1
 	INTENSITY_FAINT  = 2
+	ITALIC_ON        = 3
 	UNDERLINE_ON     = 4
 	BLINK_ON         = 5
 	RAPID_BLINK_ON   = 6
@@ -105,6 +106,7 @@ const (
 	STRIKEOUT_ON     = 9
 	PRIMARY_FONT     = 10
 	INTENSITY_NORMAL = 22
+	ITALIC_OFF       = 23
 	UNDERLINE_OFF    = 24
 	BLINK_OFF        = 25
 	REVERSED_OFF     = 27
