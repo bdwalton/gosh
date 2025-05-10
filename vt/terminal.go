@@ -149,7 +149,12 @@ func (t *Terminal) FirstRow() []byte {
 	}
 	fbe := fb.copy()
 	fbe.fill(newCell(' ', defFmt))
-	return fbe.diff(fb)
+
+	var sb strings.Builder
+	sb.WriteString(("\x1b7\x1b[H\x1b[2K"))
+	sb.Write(fbe.diff(fb))
+	sb.WriteString("\x1b8")
+	return []byte(sb.String())
 }
 
 func (t *Terminal) Write(p []byte) (int, error) {
