@@ -95,7 +95,7 @@ func NewServer(remote io.ReadWriter, t *vt.Terminal, sock net.Listener) *stmObj 
 }
 
 func (s *stmObj) heartbeat() {
-	t := time.NewTicker(1 * time.Minute)
+	t := time.NewTicker(1 * time.Second)
 	var overlay, stale bool
 	for {
 		select {
