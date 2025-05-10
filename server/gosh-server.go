@@ -79,7 +79,11 @@ func main() {
 	}
 
 	cmd, cancel := getCmd()
-	t, err := vt.NewTerminalWithPty(cmd, cancel)
+	remHost := remIP()
+	if remHost == "" {
+		remHost = "unknown"
+	}
+	t, err := vt.NewTerminalWithPty(cmd, cancel, fmt.Sprintf("gosh[%s]", remHost))
 	if err != nil {
 		slog.Error("Couldn't setup terminal", "err", err)
 		os.Exit(1)
@@ -146,18 +150,20 @@ func getCmd() (*exec.Cmd, context.CancelFunc) {
 	return cmd, cancel
 }
 
+func remIP() string {
+	if sshC := os.Getenv("SSH_CONNECTION"); sshC != "" {
+		parts := strings.SplitN(sshC, " ", 4)
+		return parts[2]
+	}
+	return ""
+}
+
 func getIP(flagv string) string {
 	switch flagv {
 	case "any":
 		return "" // clients will just join this to ":<port>"
 	case "ssh":
-		if sshC := os.Getenv("SSH_CONNECTION"); sshC != "" {
-			parts := strings.SplitN(sshC, " ", 4)
-			return parts[2]
-		} else {
-			slog.Debug("no SSH_CONNECTION environment setting to consume")
-			return ""
-		}
+		return remIP()
 	default:
 		return flagv
 	}

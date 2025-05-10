@@ -80,11 +80,13 @@ func newBasicTerminal(f *os.File) *Terminal {
 	}
 }
 
-func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc) (*Terminal, error) {
+func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc, host string) (*Terminal, error) {
 	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: DEF_ROWS, Cols: DEF_COLS})
 	if err != nil {
 		return nil, fmt.Errorf("couldn't start pty: %v", err)
 	}
+
+	addUtmp(ptmx, host)
 
 	// Any use of Fd(), including indirectly via the Setsize call
 	// above, will set the descriptor non-blocking, so we need to
@@ -96,7 +98,7 @@ func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc) (*Terminal, er
 
 	t := newBasicTerminal(ptmx)
 	t.wait = func() { cmd.Wait() }
-	t.stop = func() { cancel() }
+	t.stop = func() { cancel(); rmUtmp(ptmx) }
 	t.titlePfx = "[gosh] "
 
 	return t, nil

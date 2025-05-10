@@ -1,5 +1,6 @@
 PROTOC := protoc
 SUBPACKAGE_FILES = $(wildcard vt/*go fragmenter/*go network/*go stm/*go)
+SERVER_FILES = $(wildcard server/*go)
 PROTO_OUT := protos/goshpb
 GOSH_PROTO := $(PROTO_OUT)/goshpb.pb.go
 VPATH := .:./protos/
@@ -14,9 +15,9 @@ gosh-client: client/gosh-client.go $(SUBPACKAGE_FILES) $(GOSH_PROTO)
 	@echo Building gosh-client binary
 	@go build $<
 
-gosh-server: server/gosh-server.go $(SUBPACKAGE_FILES) $(GOSH_PROTO)
+gosh-server: $(SERVER_FILES) $(SUBPACKAGE_FILES) $(GOSH_PROTO)
 	@echo Building gosh-server binary
-	@go build $<
+	@(cd server; go build -o ../gosh-server)
 
 $(GOSH_PROTO): goshpb.proto
 	@echo Builing protos
