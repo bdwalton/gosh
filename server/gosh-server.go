@@ -24,7 +24,7 @@ var (
 	debug        = flag.Bool("debug", false, "If true, enable DEBUG log level for verbose log output")
 	defTerm      = flag.String("default_terminal", "xterm-256color", "Default TERM value if not set by remote environment")
 	detached     = flag.Bool("detached", false, "For use gosh-server to setup a detached version")
-	portRange    = flag.String("port_range", "61000:61999", "Port range")
+	portRange    = flag.String("port_range", "60000:61000", "Port range")
 	logfile      = flag.String("logfile", "", "If set, logs will be written to this file.")
 )
 
