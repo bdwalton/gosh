@@ -56,6 +56,7 @@ type stmObj struct {
 	remState, localState time.Time
 	lastSeenRem          time.Time
 	states               map[time.Time]*vt.Terminal
+	overlay              bool
 }
 
 func new(remote io.ReadWriter, t *vt.Terminal, st uint8) *stmObj {
@@ -96,26 +97,16 @@ func NewServer(remote io.ReadWriter, t *vt.Terminal, sock net.Listener) *stmObj 
 
 func (s *stmObj) heartbeat() {
 	t := time.NewTicker(1 * time.Second)
-	var overlay, stale bool
+	msg := "Stale connection. Remote last seen %s ago. Press ^. to exit gosh."
+
 	for {
 		select {
 		case <-t.C:
 			s.smux.Lock()
-			stale = s.lastSeenRem.Add(1 * time.Minute).Before(time.Now())
-
-			if stale {
-				s.sendPayload(s.buildPayload(goshpb.PayloadType_HEARTBEAT.Enum()))
-			} else {
-				s.smux.Unlock()
-				continue
-			}
-
-			overlay = s.lastSeenRem.Add(2 * time.Minute).Before(time.Now())
-			if overlay {
-				msg := "Stale connection. Remote last seen %s ago. Press ^. to exit gosh."
+			if s.lastSeenRem.Add(1 * time.Minute).Before(time.Now()) {
 				os.Stdout.Write(s.term.MakeOverlay(fmt.Sprintf(msg, time.Now().Sub(s.lastSeenRem).Round(500*time.Millisecond))))
-			} else {
-				os.Stdout.Write(s.term.FirstRow())
+				s.overlay = true
+				s.sendPayload(s.buildPayload(goshpb.PayloadType_HEARTBEAT.Enum()))
 			}
 			s.smux.Unlock()
 		}
@@ -451,18 +442,12 @@ func (s *stmObj) consumePayload(id uint32) {
 	switch msg.GetType() {
 	case goshpb.PayloadType_HEARTBEAT:
 		slog.Debug("received heartbeat")
-		s.smux.Lock()
-		s.lastSeenRem = time.Now()
-		s.smux.Unlock()
 		msg := s.buildPayload(goshpb.PayloadType_HEARTBEAT_ACK.Enum())
 		msg.SetReceived(tspb.New(time.Now()))
 		s.sendPayload(msg)
 		slog.Debug("sent heartbeat ack")
 	case goshpb.PayloadType_HEARTBEAT_ACK:
 		slog.Debug("received heartbeat ack")
-		s.smux.Lock()
-		s.lastSeenRem = time.Now()
-		s.smux.Unlock()
 	case goshpb.PayloadType_ACK:
 		rt := msg.GetReceived().AsTime()
 		slog.Debug("received ack", "time", rt)
@@ -615,6 +600,12 @@ func (s *stmObj) handleRemote() {
 		}
 
 		s.lastSeenRem = time.Now()
+		s.smux.Lock()
+		if s.overlay {
+			os.Stdout.Write(s.term.FirstRow())
+			s.overlay = false
+		}
+		s.smux.Unlock()
 
 		if s.frag.Store(&frag) {
 			s.consumePayload(frag.GetId())
