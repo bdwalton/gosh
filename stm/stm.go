@@ -220,14 +220,13 @@ func (s *stmObj) Run() {
 			s.wg.Done()
 		}()
 
-		tick := time.NewTicker(10 * time.Millisecond)
 		for {
 			if s.shutdown {
 				break
 			}
 
 			select {
-			case <-tick.C:
+			case <-time.Tick(10 * time.Millisecond):
 				// We always source from the most
 				// recent known remote state for now.
 				// We can get into p-retransmission
