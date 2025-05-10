@@ -2,6 +2,7 @@ package stm
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net"
@@ -93,6 +94,34 @@ func NewServer(remote io.ReadWriter, t *vt.Terminal, sock net.Listener) *stmObj 
 	return s
 }
 
+func (s *stmObj) heartbeat() {
+	t := time.NewTicker(1 * time.Minute)
+	var overlay, stale bool
+	for {
+		select {
+		case <-t.C:
+			s.smux.Lock()
+			stale = s.lastSeenRem.Add(1 * time.Minute).Before(time.Now())
+
+			if stale {
+				s.sendPayload(s.buildPayload(goshpb.PayloadType_HEARTBEAT.Enum()))
+			} else {
+				s.smux.Unlock()
+				continue
+			}
+
+			overlay = s.lastSeenRem.Add(2 * time.Minute).Before(time.Now())
+			if overlay {
+				msg := "Stale connection. Remote last seen %s ago. Press ^. to exit gosh."
+				os.Stdout.Write(s.term.MakeOverlay(fmt.Sprintf(msg, time.Now().Sub(s.lastSeenRem).Round(500*time.Millisecond))))
+			} else {
+				os.Stdout.Write(s.term.FirstRow())
+			}
+			s.smux.Unlock()
+		}
+	}
+}
+
 func (s *stmObj) sendPayload(msg *goshpb.Payload) {
 	p, err := proto.Marshal(msg)
 	if err != nil {
@@ -160,6 +189,9 @@ func (s *stmObj) Run() {
 			s.handleWinCh()
 			s.wg.Done()
 		}()
+
+		// leaked
+		go s.heartbeat()
 
 		// We don't try to gracefully shut this one down
 		// because it'll be blocked on a Read() and using
@@ -417,9 +449,21 @@ func (s *stmObj) consumePayload(id uint32) {
 	}
 
 	switch msg.GetType() {
+	case goshpb.PayloadType_HEARTBEAT:
+		slog.Debug("received heartbeat")
+		s.smux.Lock()
+		s.lastSeenRem = time.Now()
+		s.smux.Unlock()
+		msg := s.buildPayload(goshpb.PayloadType_HEARTBEAT_ACK.Enum())
+		msg.SetReceived(tspb.New(time.Now()))
+		s.sendPayload(msg)
+		slog.Debug("sent heartbeat ack")
+	case goshpb.PayloadType_HEARTBEAT_ACK:
+		slog.Debug("received heartbeat ack")
+		s.smux.Lock()
+		s.lastSeenRem = time.Now()
+		s.smux.Unlock()
 	case goshpb.PayloadType_ACK:
-		at := msg.GetReceived().AsTime()
-		slog.Debug("received ack", "time", at)
 		rt := msg.GetReceived().AsTime()
 		slog.Debug("received ack", "time", rt)
 		s.smux.Lock()
