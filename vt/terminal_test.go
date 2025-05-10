@@ -861,7 +861,7 @@ func TestMakeOverlay(t *testing.T) {
 		return x
 	}
 
-	prefix := "\x1b7\x1b[H\x1b[93;41;1m\x1b[2K"
+	prefix := "\x1b7\x1b[H\x1b[30;41;1m\x1b[2K"
 	suffix := "\x1b8"
 
 	cases := []struct {
