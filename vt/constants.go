@@ -86,6 +86,7 @@ const (
 	CSI_MODE_RESET = 'l' // l typically disables or deactivates something
 	CSI_SGR        = 'm' // select graphic rendition
 	CSI_DSR        = 'n' // device status report
+	CSI_RIS        = 'p' // soft reset (vt220)
 	CSI_Q_MULTI    = 'q' // overloaded, common for returning xterm name and version
 	CSI_DECSTBM    = 'r' // set top and bottom margin
 	CSI_DECSLRM    = 's' // set left and right margin

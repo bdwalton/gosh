@@ -606,6 +606,17 @@ func (t *Terminal) clearFrags(row, col int) {
 	}
 }
 
+func (t *Terminal) softReset() {
+	t.setMode(IRM, "", CSI_MODE_RESET)        // insert mode off
+	t.setMode(DECOM, "?", CSI_MODE_RESET)     // origin mode off
+	t.setMode(SHOW_CURSOR, "?", CSI_MODE_SET) // cursor visible (xterm, gnome terminal , mosh)
+	t.keypad = PNM                            // disable application cursor keys
+	t.vertMargin = margin{}
+	t.horizMargin = margin{}
+	t.savedCur = cursor{}
+	t.curF = defFmt
+}
+
 func (t *Terminal) reset() {
 	cols := t.Cols()
 	t.fb = newFramebuffer(t.Rows(), cols)
@@ -764,6 +775,12 @@ func makeCommand(params *parameters, data string, cmd rune) string {
 func (t *Terminal) handleCSI(params *parameters, data string, cmd rune) {
 	slog.Debug("handling CSI command", "cmd", makeCommand(params, data, cmd))
 	switch cmd {
+	case CSI_RIS:
+		if data == "!" {
+			t.softReset()
+		} else {
+			slog.Debug("unimplemented CSI_RIS command", "cmd", makeCommand(params, data, cmd))
+		}
 	case CSI_DSR:
 		t.handleDSR(params.item(0, 0), data)
 	case CSI_DA:
