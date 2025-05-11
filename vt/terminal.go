@@ -103,8 +103,10 @@ func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc, host string) (
 
 	// this assumes we've run a shell, so we'll need to make it
 	// conditional in the future when we add support for running
-	// something else.
-	t.Write([]byte("clear; cat /run/motd.dynamic\n"))
+	// something else. it's also polluting shell history, so we
+	// need to replace it no matter what.
+	motds := []string{"/run/motd.dynamic", "/etc/motd"}
+	t.Write([]byte(fmt.Sprintf("clear; [ -f %q ] && cat %q; [ -f %q ] && cat %q\n", motds[0], motds[0], motds[1], motds[1])))
 
 	return t, nil
 }
