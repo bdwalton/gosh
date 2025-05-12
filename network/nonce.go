@@ -8,21 +8,21 @@ import (
 )
 
 type nonce struct {
-	n   uint64
+	v   uint64
 	mux sync.Mutex
 }
 
-func (n *nonce) nextId() uint64 {
+func (n *nonce) nextVal() uint64 {
 	n.mux.Lock()
-	n.n += 1
-	ret := n.n
+	n.v += 1
+	ret := n.v
 	n.mux.Unlock()
 
 	return ret
 }
 
-func (n *nonce) nextGCMNonce(dir uint8) []byte {
-	nce := n.nextId()
+func (n *nonce) get(dir uint8) []byte {
+	nce := n.nextVal()
 	if nce > uint64(math.MaxUint32) {
 		slog.Error("nonce pool exceeded", "nonce", nce)
 		panic("nonce pool exceeded")
@@ -33,9 +33,9 @@ func (n *nonce) nextGCMNonce(dir uint8) []byte {
 	return b
 }
 
-// nonceFromBytes returns a nonce value and the "direction" of the
+// extractNonce returns a nonce value and the "direction" of the
 // nonce, which should match either CLIENT or SERVER
-func nonceFromBytes(b []byte) (uint64, uint8) {
+func extractNonce(b []byte) (uint64, uint8) {
 	if len(b) != 12 {
 		slog.Error("invalid nonce bytes")
 		panic("invalid nonce bytes")

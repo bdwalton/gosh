@@ -142,7 +142,7 @@ func (gc *GConn) Close() error {
 
 func (gc *GConn) Write(msg []byte) (int, error) {
 	// panics if we overflow 32bits of nonce usage
-	nce := gc.nce.nextGCMNonce(gc.cType)
+	nce := gc.nce.get(gc.cType)
 
 	sealed := gc.aead.Seal(nil, nce, msg, nil)
 
@@ -178,7 +178,7 @@ func (gc *GConn) Read(extbuf []byte) (int, error) {
 	} else {
 		nce := buf[0:12]
 		// Will panic if the nonce exceeds a 32-bit uint
-		rn, dir := nonceFromBytes(nce)
+		rn, dir := extractNonce(nce)
 		if dir == gc.cType {
 			slog.Error("received nonce with our own 'direction'")
 			return 0, errors.New("invalid nonce received - bad directionality")
