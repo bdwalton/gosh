@@ -60,7 +60,10 @@ type Terminal struct {
 	mux sync.Mutex
 }
 
-func newBasicTerminal(f *os.File) *Terminal {
+func NewTerminal() (*Terminal, error) {
+	// On the client end, we don't need a file as we back Write()
+	// with direct parser input instead of routing it via the pty
+	// to the program we're running.
 	modes := make(map[string]*mode)
 	for id, md := range modeDefaults {
 		modes[id] = md.copy()
@@ -73,20 +76,31 @@ func newBasicTerminal(f *os.File) *Terminal {
 		modes:   modes,
 		keypad:  PNM, // normal
 		p:       newParser(),
-		ptyF:    f,
 		wait:    func() {},
 		stop:    func() {},
 		cs:      &charset{},
-	}
+	}, nil
 }
 
 func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc, host string) (*Terminal, error) {
+	t, err := NewTerminal()
+	if err != nil {
+		return nil, err
+	}
+
 	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: DEF_ROWS, Cols: DEF_COLS})
 	if err != nil {
 		return nil, fmt.Errorf("couldn't start pty: %v", err)
 	}
+	t.ptyF = ptmx
 
 	addUtmp(ptmx, host)
+
+	t.motd()
+
+	t.wait = func() { cmd.Wait() }
+	t.stop = func() { cancel(); rmUtmp(ptmx) }
+	t.titlePfx = "[gosh] "
 
 	// Any use of Fd(), including indirectly via the Setsize call
 	// above, will set the descriptor non-blocking, so we need to
@@ -96,26 +110,28 @@ func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc, host string) (
 		return nil, fmt.Errorf("couldn't set ptmx non-blocking: %v", err)
 	}
 
-	t := newBasicTerminal(ptmx)
-	t.wait = func() { cmd.Wait() }
-	t.stop = func() { cancel(); rmUtmp(ptmx) }
-	t.titlePfx = "[gosh] "
-
-	// this assumes we've run a shell, so we'll need to make it
-	// conditional in the future when we add support for running
-	// something else. it's also polluting shell history, so we
-	// need to replace it no matter what.
-	motds := []string{"/run/motd.dynamic", "/etc/motd"}
-	t.Write([]byte(fmt.Sprintf("clear; [ -f %q ] && cat %q; [ -f %q ] && cat %q\n", motds[0], motds[0], motds[1], motds[1])))
-
 	return t, nil
 }
 
-func NewTerminal() (*Terminal, error) {
-	// On the client end, we don't need a file as we back Write()
-	// with direct parser input instead of routing it via the pty
-	// to the program we're running.
-	return newBasicTerminal(nil), nil
+func (t *Terminal) motd() {
+	// try to print both motd files, dumping them directly into the parser
+	for i, motdF := range []string{"/run/motd.dynamic", "/etc/motd"} {
+		mfd, err := os.ReadFile(motdF)
+		if err != nil {
+			slog.Debug("error reading motd file", "motdF", motdF, "err", err)
+			continue
+		}
+		mfd = bytes.ReplaceAll(mfd, []byte("\n"), []byte("\r\n"))
+
+		// Pad a bit between motd and first prompt
+		if i == 1 {
+			mfd = append(mfd, '\r', '\n')
+		}
+
+		if err := t.doParse(bufio.NewReader(bytes.NewReader(mfd))); err != nil {
+			slog.Debug("motd doParse error", "err", err)
+		}
+	}
 }
 
 func (t *Terminal) Wait() {

@@ -69,11 +69,11 @@ func new(remote io.ReadWriter, t *vt.Terminal, st uint8) *stmObj {
 		agentConns: make(map[uint32]net.Conn),
 	}
 
-	// snag a copy of the newly initialized Terminal. The last
-	// change time should be the zero value every time, so that
-	// gives us a coordinated time for the client and server to
-	// base everything from.
-	baseT := s.term.Copy()
+	// Always use a new, empty terminal for the initial zero
+	// state. This lets the actual terminal mutate itself at
+	// setup, changing its LastChange() timestamp if needed.
+	// This was done when we added better motd support.
+	baseT, _ := vt.NewTerminal()
 	tm := baseT.LastChange()
 	s.states[tm] = baseT
 	s.remState = tm
