@@ -97,7 +97,7 @@ func NewServer(remote io.ReadWriter, t *vt.Terminal, sock net.Listener) *stmObj 
 
 func (s *stmObj) heartbeat() {
 	secs := 1
-	msg := "Stale connection. Remote last seen %s ago. Press ^. to exit gosh."
+	msg := "Stale connection. Remote last seen %s ago. Press 'Ctrl-^ .' to exit gosh."
 
 	for {
 		select {
