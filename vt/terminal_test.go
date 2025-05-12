@@ -136,7 +136,7 @@ func TestPrintCharsets(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		term, _ := NewTerminal()
+		term, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 		term.fb = c.fb.copy()
 		term.cs = c.cs
 		term.print(c.r)
@@ -238,7 +238,7 @@ func TestPrint(t *testing.T) {
 
 	// wrap == CSI_MODE_{RE,}SET
 	dterm := func(c cursor, fb *framebuffer, wrap, irm rune) *Terminal {
-		t, _ := NewTerminal()
+		t, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 		t.fb = fb
 		t.cur = c
 		t.setMode(DECAWM, "?", wrap)
@@ -315,11 +315,11 @@ func testTerminalCopy(term *Terminal) *Terminal {
 }
 
 func TestTerminalDiff(t *testing.T) {
-	t1, _ := NewTerminal()
+	t1, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t1.Resize(10, 10)
-	t2, _ := NewTerminal()
+	t2, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t2.Resize(10, 10)
-	t3, _ := NewTerminal()
+	t3, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t3.Resize(20, 15)
 	t4 := testTerminalCopy(t3)
 	t4.fb.setCell(5, 7, newCell('a', format{fg: newColor(FG_RED)}))
@@ -343,7 +343,7 @@ func TestTerminalDiff(t *testing.T) {
 	t13 := testTerminalCopy(t10)
 	t13.horizMargin = newMargin(0, 4)
 	t13.vertMargin = newMargin(1, 6)
-	t14, _ := NewTerminal()
+	t14, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t15 := testTerminalCopy(t14)
 	t15.curF = format{fg: newColor(FG_RED), attrs: UNDERLINE}
 	t16 := testTerminalCopy(t15)
@@ -351,13 +351,13 @@ func TestTerminalDiff(t *testing.T) {
 	t17 := testTerminalCopy(t1)
 	t17.setMode(DECOM, "?", CSI_MODE_SET) // no transport, no diff
 	t17.setMode(IRM, "", CSI_MODE_SET)    // no transport, no diff
-	t19, _ := NewTerminal()
+	t19, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t19.Resize(10, 10)
 	t19.fb.setCell(0, 0, newCell('A', defFmt))
 	t20 := t19.Copy()
 	t20.fb.setCell(0, 1, newCell('*', defFmt))
 	t20.lastChg = time.Now()
-	t21, _ := NewTerminal()
+	t21, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t22 := t21.Copy()
 	t22.lastChg = time.Now()
 	t22.cur = cursor{10, 10}
@@ -464,7 +464,7 @@ func TestEraseInDisplay(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		term, _ := NewTerminal()
+		term, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 		term.fb = c.fb
 		term.cur = c.cur
 		term.eraseInDisplay(c.ep)
@@ -644,7 +644,7 @@ func TestStepTabs(t *testing.T) {
 }
 
 func TestIRM(t *testing.T) {
-	t1, _ := NewTerminal()
+	t1, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	want1 := t1.Copy()
 	t1.print('a')
 	t1.print('b')
@@ -657,7 +657,7 @@ func TestIRM(t *testing.T) {
 	want1.print('b')
 	want1.lastChg = time.Now()
 
-	t2, _ := NewTerminal()
+	t2, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	want2 := t2.Copy()
 	want2.lastChg = time.Now()
 	t2.cursorMoveAbs(0, 79)
@@ -669,7 +669,7 @@ func TestIRM(t *testing.T) {
 	want2.cursorMoveAbs(0, 79)
 	want2.print('*')
 
-	t3, _ := NewTerminal()
+	t3, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t3.setMode(DECAWM, "?", CSI_MODE_RESET)
 	want3 := t3.Copy()
 	want3.lastChg = time.Now()
@@ -682,7 +682,7 @@ func TestIRM(t *testing.T) {
 	want3.print('世')
 	want3.cursorMoveAbs(0, 78) // because t3 has insert on
 
-	t4, _ := NewTerminal()
+	t4, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	want4 := t4.Copy()
 	want4.lastChg = time.Now()
 	t4.print('x')
@@ -716,7 +716,7 @@ type prtCmd struct {
 }
 
 func mt(cmds []prtCmd, m *margin) *Terminal {
-	nt, _ := NewTerminal()
+	nt, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	nt.lastChg = time.Now()
 	for _, c := range cmds {
 		nt.cursorMoveAbs(c.row, c.col)
@@ -820,7 +820,7 @@ func TestDeleteChars(t *testing.T) {
 
 func TestOSCResize(t *testing.T) {
 	nt := func() *Terminal {
-		x, _ := NewTerminal()
+		x, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 		return x
 	}
 	cases := []struct {
@@ -856,7 +856,7 @@ func TestOSCResize(t *testing.T) {
 
 func TestMakeOverlay(t *testing.T) {
 	nt := func(rows, cols int) *Terminal {
-		x, _ := NewTerminal()
+		x, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 		x.fb.resize(rows, cols)
 		return x
 	}

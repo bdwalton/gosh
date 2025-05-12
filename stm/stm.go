@@ -73,7 +73,7 @@ func new(remote io.ReadWriter, t *vt.Terminal, st uint8) *stmObj {
 	// state. This lets the actual terminal mutate itself at
 	// setup, changing its LastChange() timestamp if needed.
 	// This was done when we added better motd support.
-	baseT, _ := vt.NewTerminal()
+	baseT, _ := vt.NewTerminal(vt.DEF_ROWS, vt.DEF_COLS)
 	tm := baseT.LastChange()
 	s.states[tm] = baseT
 	s.remState = tm

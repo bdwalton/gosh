@@ -8,6 +8,9 @@ import (
 	"regexp"
 	"strings"
 	"syscall"
+
+	"github.com/bdwalton/gosh/vt"
+	"golang.org/x/term"
 )
 
 var (
@@ -69,6 +72,10 @@ func runServer() (*connectData, error) {
 
 	args = append(args, "--bind_server", *bindServer)
 
+	rows, cols := initialSize()
+	args = append(args, fmt.Sprintf("--initial_rows=%d", rows))
+	args = append(args, fmt.Sprintf("--initial_cols=%d", cols))
+
 	cmd := exec.Command("ssh", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -109,4 +116,14 @@ func hostFromDest(dest string) string {
 		return strings.SplitN(dest, "@", 2)[1]
 	}
 	return dest
+}
+
+func initialSize() (int, int) {
+	cols, rows, err := term.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "couldn't get terminal size: %v", err)
+		return vt.DEF_ROWS, vt.DEF_COLS
+	}
+
+	return rows, cols
 }

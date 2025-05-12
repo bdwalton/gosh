@@ -60,7 +60,7 @@ type Terminal struct {
 	mux sync.Mutex
 }
 
-func NewTerminal() (*Terminal, error) {
+func NewTerminal(rows, cols int) (*Terminal, error) {
 	// On the client end, we don't need a file as we back Write()
 	// with direct parser input instead of routing it via the pty
 	// to the program we're running.
@@ -70,9 +70,9 @@ func NewTerminal() (*Terminal, error) {
 	}
 
 	return &Terminal{
-		fb:      newFramebuffer(DEF_ROWS, DEF_COLS),
+		fb:      newFramebuffer(rows, cols),
 		oscTemp: make([]rune, 0),
-		tabs:    makeTabs(DEF_COLS),
+		tabs:    makeTabs(cols),
 		modes:   modes,
 		keypad:  PNM, // normal
 		p:       newParser(),
@@ -82,8 +82,8 @@ func NewTerminal() (*Terminal, error) {
 	}, nil
 }
 
-func NewTerminalWithPty(cmd *exec.Cmd, cancel context.CancelFunc, host string) (*Terminal, error) {
-	t, err := NewTerminal()
+func NewTerminalWithPty(rows, cols int, cmd *exec.Cmd, cancel context.CancelFunc, host string) (*Terminal, error) {
+	t, err := NewTerminal(rows, cols)
 	if err != nil {
 		return nil, err
 	}

@@ -24,6 +24,8 @@ var (
 	debug        = flag.Bool("debug", false, "If true, enable DEBUG log level for verbose log output")
 	defTerm      = flag.String("default_terminal", "xterm-256color", "Default TERM value if not set by remote environment")
 	detached     = flag.Bool("detached", false, "For use gosh-server to setup a detached version")
+	initCols     = flag.Int("initial_cols", vt.DEF_COLS, "Numer of columns to start the terminal with")
+	initRows     = flag.Int("initial_rows", vt.DEF_ROWS, "Numer of rows to start the terminal with")
 	portRange    = flag.String("port_range", "60000:61000", "Port range")
 	logfile      = flag.String("logfile", "", "If set, logs will be written to this file.")
 )
@@ -83,7 +85,7 @@ func main() {
 	if remHost == "" {
 		remHost = "unknown"
 	}
-	t, err := vt.NewTerminalWithPty(cmd, cancel, fmt.Sprintf("gosh[%s]", remHost))
+	t, err := vt.NewTerminalWithPty(*initRows, *initCols, cmd, cancel, fmt.Sprintf("gosh[%s]", remHost))
 	if err != nil {
 		slog.Error("Couldn't setup terminal", "err", err)
 		os.Exit(1)
