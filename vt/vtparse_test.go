@@ -48,6 +48,31 @@ func (d *dummyD) handle(act pAction, params *parameters, intermediate []rune, la
 func (d *dummyD) print(r rune) {
 }
 
+func TestColonParamSeparator(t *testing.T) {
+	cases := []struct {
+		input      []byte
+		wantParams *parameters
+	}{
+		{[]byte{ESC, CSI, ':'}, paramsFromInts([]int{0, 0})},
+		{[]byte{ESC, CSI, ':', ':'}, paramsFromInts([]int{0, 0, 0})},
+		{[]byte{ESC, CSI, ':', '0', ':'}, paramsFromInts([]int{0, 0, 0})},
+		{[]byte{ESC, CSI, ':', '5', '0', ':'}, paramsFromInts([]int{0, 50, 0})},
+		{[]byte{ESC, CSI, '1', '0', ':', ':'}, paramsFromInts([]int{10, 0, 0})},
+		{[]byte{ESC, CSI, '1', '0', ':', ':'}, paramsFromInts([]int{10, 0, 0})},
+		{[]byte{ESC, CSI, '3', '8', ':', '2', ':', '5', ':', '1', ':', '6'}, paramsFromInts([]int{38, 2, 5, 1, 6})},
+	}
+
+	for i, c := range cases {
+		p := newParser()
+		for _, b := range c.input {
+			p.parse(rune(b))
+		}
+		if p.params.numItems() != c.wantParams.numItems() || !slices.Equal(p.params.items, c.wantParams.items) {
+			t.Errorf("%d: Got %v, want %v", i, p.params, c.wantParams)
+		}
+	}
+}
+
 func TestFirstParamEmpty(t *testing.T) {
 	cases := []struct {
 		input      []byte

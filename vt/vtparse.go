@@ -160,15 +160,15 @@ func (p *parser) action(act pAction, r rune) *action {
 	case VTPARSE_ACTION_COLLECT:
 		p.intermediate = append(p.intermediate, r)
 	case VTPARSE_ACTION_PARAM:
-		// State table only covers ; for param separator, but
-		// : should be allowed.
-		// TODO: Add : support later when we get to vttest level.
-		if r == ';' {
+		switch r {
+		// : is used for some CSI sequences like:
+		// CSI 32 : 2 : Pi : Pr : Pg : Pb m to set true colors
+		case ';', ':':
 			if p.params.numItems() == 0 {
 				p.params.addItem(0)
 			}
 			p.params.addItem(0)
-		} else {
+		default:
 			switch p.params.numItems() {
 			case 0:
 				p.params.addItem(int(r - '0'))
