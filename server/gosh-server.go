@@ -178,7 +178,7 @@ func getIP(flagv string) string {
 }
 
 func openAuthSock() (net.Listener, error) {
-	// net.Listen doesn't allow specifying file make for
+	// net.Listen doesn't allow specifying file mode for
 	// the socket, so work around that by tightening the
 	// umask. restore it after as we don't want to
 	// interfere with user intent.
@@ -191,6 +191,7 @@ func openAuthSock() (net.Listener, error) {
 		return nil, err
 	}
 
+	os.Setenv("SSH_AUTH_SOCK", sockPath)
 	slog.Debug("returning auth socket", "addr", l.Addr())
 	return l, nil
 }
