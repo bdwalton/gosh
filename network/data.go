@@ -165,10 +165,6 @@ func (gc *GConn) Write(msg []byte) (int, error) {
 	return n, err
 }
 
-func (gc *GConn) Connected() bool {
-	return gc.remote != nil
-}
-
 func (gc *GConn) Read(extbuf []byte) (int, error) {
 	buf := make([]byte, MTU, MTU)
 
