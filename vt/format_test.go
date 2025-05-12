@@ -149,7 +149,7 @@ func TestFormatDiff(t *testing.T) {
 		{
 			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
 			format{fg: newRGBColor([]int{30, 20, 10}), bg: newRGBColor([]int{10, 20, 30})},
-			fmt.Sprintf("%c%c%d;2;%d;%d;%d%c%c%c%d;2;%d;%d;%d%c", ESC, CSI, SET_FG, 30, 20, 10, CSI_SGR, ESC, CSI, SET_BG, 10, 20, 30, CSI_SGR),
+			fmt.Sprintf("%c%c%d:2:%d:%d:%d%c%c%c%d:2:%d:%d:%d%c", ESC, CSI, SET_FG, 30, 20, 10, CSI_SGR, ESC, CSI, SET_BG, 10, 20, 30, CSI_SGR),
 		},
 		{
 			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},

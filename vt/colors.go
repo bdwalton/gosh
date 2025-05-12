@@ -34,7 +34,7 @@ func (c color) ansiString(set int) string {
 	case ANSI256:
 		return fmt.Sprintf("%d;5;%d", set, c.data[0])
 	case RGB:
-		return fmt.Sprintf("%d;2;%d;%d;%d", set, c.data[0], c.data[1], c.data[2])
+		return fmt.Sprintf("%d:2:%d:%d:%d", set, c.data[0], c.data[1], c.data[2])
 	default:
 		slog.Error("invalid color type")
 		return ""

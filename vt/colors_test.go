@@ -12,8 +12,8 @@ func TestColorAnsiString(t *testing.T) {
 	}{
 		{newColor(FG_BLACK), SET_FG, "30"},
 		{newColor(BG_CYAN), SET_BG, "46"},
-		{newRGBColor([]int{248, 123, 0}), SET_FG, "38;2;248;123;0"},
-		{newRGBColor([]int{248, 123, 0}), SET_BG, "48;2;248;123;0"},
+		{newRGBColor([]int{248, 123, 0}), SET_FG, "38:2:248:123:0"},
+		{newRGBColor([]int{248, 123, 0}), SET_BG, "48:2:248:123:0"},
 		{newAnsiColor(165), SET_FG, "38;5;165"},
 		{newAnsiColor(165), SET_BG, "48;5;165"},
 	}
