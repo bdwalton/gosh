@@ -103,9 +103,13 @@ func (s *stmObj) heartbeat() {
 		select {
 		case <-time.Tick(time.Second * time.Duration(secs)):
 			s.smux.Lock()
-			if s.lastSeenRem.Add(1 * time.Minute).Before(time.Now()) {
-				os.Stdout.Write(s.term.MakeOverlay(fmt.Sprintf(msg, time.Now().Sub(s.lastSeenRem).Round(500*time.Millisecond))))
-				s.overlay = true
+			now := time.Now()
+			if s.lastSeenRem.Add(60 * time.Second).Before(now) {
+				if s.lastSeenRem.Add(90 * time.Second).Before(now) {
+					os.Stdout.Write(s.term.MakeOverlay(fmt.Sprintf(msg, time.Now().Sub(s.lastSeenRem).Round(500*time.Millisecond))))
+					s.overlay = true
+				}
+
 				slog.Debug("sending heartbeat")
 				err := s.sendPayload(s.buildPayload(goshpb.PayloadType_HEARTBEAT.Enum()))
 				if err != nil {
