@@ -35,14 +35,14 @@ func TestNextGCMNoncePanicClient(t *testing.T) {
 		}
 	}()
 
-	n := &nonce{v: uint64(math.MaxUint32)}
+	n := &nonce{v: MAX_NONCE_VAL - 1}
 	// Should panic
 	n.get(CLIENT)
 
-	t.Errorf("nextGCMNonce() didn't panic when rolling over 32 bits: %d", n.v)
+	t.Errorf("nextGCMNonce() didn't panic when reaching max 64-bit int: %d", n.v)
 }
 
-func TestNonceFromBytesPanic32BitsClient(t *testing.T) {
+func TestExtractNoncePanic64BitsClient(t *testing.T) {
 	// Defer a function to recover from panic
 	defer func() {
 		if r := recover(); r != nil {
@@ -52,8 +52,7 @@ func TestNonceFromBytesPanic32BitsClient(t *testing.T) {
 	}()
 
 	// Should panic
-	n, dir := extractNonce([]byte{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0})
-
+	n, dir := extractNonce([]byte{0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40})
 	t.Errorf("nonceFromBytes() didn't panic when over 32 bits: %d/%d", n, dir)
 }
 
@@ -65,14 +64,13 @@ func TestNextGCMNoncePanicServer(t *testing.T) {
 		}
 	}()
 
-	n := nonce{v: uint64(math.MaxUint32)}
+	n := nonce{v: MAX_NONCE_VAL - 1}
 	// Should panic
 	n.get(SERVER)
-
-	t.Errorf("nextGCMNonce() didn't panic when rolling over 32 bits: %d", n.v)
+	t.Errorf("nextGCMNonce() didn't panic when reaching max 64-bit int: %d", n.v)
 }
 
-func TestNonceFromBytesPanic32BitsServer(t *testing.T) {
+func TestExtractNoncePanic64BitsServer(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
 			// We successfully recovered from panic
@@ -81,13 +79,11 @@ func TestNonceFromBytesPanic32BitsServer(t *testing.T) {
 	}()
 
 	// Should panic
-	n, dir := extractNonce([]byte{1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0})
-
-	// If the panic was not caught, the test will fail
+	n, dir := extractNonce([]byte{1, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255})
 	t.Errorf("nonceFromBytes() didn't panic when over 32 bits: %d/%d", n, dir)
 }
 
-func TestNonceFromBytes(t *testing.T) {
+func TestExtractNonce(t *testing.T) {
 	cases := []struct {
 		bytes   []byte
 		want    uint64
@@ -111,7 +107,7 @@ func TestNonceIncrement(t *testing.T) {
 		want []uint64
 	}{
 		{&nonce{}, []uint64{1, 2, 3}},
-		{&nonce{v: uint64(math.MaxUint32) - 1}, []uint64{uint64(math.MaxUint32)}},
+		{&nonce{v: math.MaxUint64 - 2}, []uint64{math.MaxUint64 - 1}},
 		{&nonce{v: 255}, []uint64{256, 257}},
 	}
 
@@ -125,7 +121,7 @@ func TestNonceIncrement(t *testing.T) {
 	}
 }
 
-func TestNonceFromBytesWithInvalidInputShort(t *testing.T) {
+func TestExtractNonceWithInvalidInput(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
 			// We successfully recovered from panic
@@ -139,7 +135,7 @@ func TestNonceFromBytesWithInvalidInputShort(t *testing.T) {
 	t.Errorf("nonceFromBytes() didn't panic when given 11 bytes instead of 12.")
 }
 
-func TestNonceFromBytesWithInvalidInputLong(t *testing.T) {
+func TestExtractNonceWithInvalidInputLong(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
 			// We successfully recovered from panic
