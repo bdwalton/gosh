@@ -82,8 +82,9 @@ func NewClient(addr, key string) (*GConn, error) {
 	return gc, nil
 }
 
-// NewServer takes a port range "n:m" and returns a GConn object
-// listening to a port in that range or an error if it can't listen.
+// NewServer takes an ip to listen on and port range "n:m" and returns
+// a GConn object listening to a port in that range or an error if it
+// can't listen.
 func NewServer(ip, prng string) (*GConn, error) {
 	var pr [2]uint16
 	for i, ns := range strings.SplitN(prng, ":", 2) {
