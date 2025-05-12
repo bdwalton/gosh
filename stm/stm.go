@@ -97,7 +97,7 @@ func NewServer(remote io.ReadWriter, t *vt.Terminal, sock net.Listener) *stmObj 
 
 func (s *stmObj) heartbeat() {
 	secs := 1
-	msg := "Stale connection. Remote last seen %s ago. Press 'Ctrl-^ .' to exit gosh."
+	msg := "Remote last seen %s. 'Ctrl-^ .' to exit."
 
 	for {
 		select {
@@ -106,7 +106,8 @@ func (s *stmObj) heartbeat() {
 			now := time.Now()
 			if s.lastSeenRem.Add(60 * time.Second).Before(now) {
 				if s.lastSeenRem.Add(90 * time.Second).Before(now) {
-					os.Stdout.Write(s.term.MakeOverlay(fmt.Sprintf(msg, time.Now().Sub(s.lastSeenRem).Round(500*time.Millisecond))))
+					ls := s.lastSeenRem.Format("2006-01-02 15:04:05")
+					os.Stdout.Write(s.term.MakeOverlay(fmt.Sprintf(msg, ls)))
 					s.overlay = true
 				}
 
