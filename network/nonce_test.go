@@ -89,8 +89,8 @@ func TestExtractNonce(t *testing.T) {
 		want    uint64
 		wantDir uint8
 	}{
-		{[]byte{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, SERVER},
-		{[]byte{0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0}, 255, CLIENT},
+		{[]byte{SERVER << 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, SERVER},
+		{[]byte{CLIENT << 7, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0}, 255, CLIENT},
 	}
 
 	for i, c := range cases {
