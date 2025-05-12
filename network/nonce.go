@@ -32,7 +32,7 @@ func (n *nonce) get(dir uint8) []byte {
 		panic("nonce pool exceeded")
 	}
 	b := make([]byte, NONCE_BYTES)
-	b[0] = byte(dir << 7)
+	b[0] = byte(dir)
 	binary.LittleEndian.PutUint64(b[4:], uint64(nce))
 	return b
 }
@@ -49,5 +49,5 @@ func extractNonce(b []byte) (uint64, uint8) {
 		slog.Error("nonce pool exceeded", "nonce", n)
 		panic("nonce pool exceeded")
 	}
-	return n, uint8(b[0] >> 7)
+	return n, uint8(b[0])
 }

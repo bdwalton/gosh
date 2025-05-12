@@ -21,7 +21,7 @@ const (
 
 const (
 	CLIENT = iota
-	SERVER
+	SERVER = 1 << 7
 )
 
 type GConn struct {
