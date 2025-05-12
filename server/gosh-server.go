@@ -192,6 +192,7 @@ func openAuthSock() (net.Listener, error) {
 	}
 
 	os.Setenv("SSH_AUTH_SOCK", sockPath)
+	os.Setenv("GOSH_AUTH_SOCK", sockPath)
 	slog.Debug("returning auth socket", "addr", l.Addr())
 	return l, nil
 }
