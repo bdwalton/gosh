@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"slices"
 	"testing"
 )
 
@@ -27,42 +26,42 @@ func fillBuffer(fb *framebuffer) *framebuffer {
 func TestCellDiff(t *testing.T) {
 	cases := []struct {
 		src, dest cell
-		want      []byte
+		want      string
 	}{
 		{
 			defaultCell(),
 			defaultCell(),
-			[]byte{},
+			"",
 		},
 		{
 			defaultCell(),
 			fragCell('世', defFmt, FRAG_SECONDARY),
-			[]byte{},
+			"",
 		},
 		{
 			newCell('a', defFmt),
 			newCell(' ', defFmt),
-			[]byte{' '},
+			" ",
 		},
 		{
 			newCell('b', format{fg: newColor(FG_BLUE)}),
 			newCell(' ', defFmt),
-			[]byte{ESC, CSI, CSI_SGR, ' '},
+			"\x1b[m ",
 		},
 		{
 			newCell('b', format{attrs: UNDERLINE}),
 			newCell('b', defFmt),
-			[]byte{ESC, CSI, CSI_SGR, 'b'},
+			"\x1b[mb",
 		},
 		{
 			newCell('b', defFmt),
 			newCell('b', format{attrs: UNDERLINE}),
-			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, CSI, UNDERLINE_ON, CSI_SGR, 'b')),
+			fmt.Sprintf("%c%c%d%c%c", ESC, CSI, UNDERLINE_ON, CSI_SGR, 'b'),
 		},
 	}
 
 	for i, c := range cases {
-		if got := c.src.diff(c.dest); !slices.Equal(got, c.want) {
+		if got := string(c.src.diff(c.dest)); got != c.want {
 			t.Errorf("\n%d: Got: %v\nWanted: %v", i, got, c.want)
 		}
 	}
@@ -72,36 +71,36 @@ func TestCellEfficientDiff(t *testing.T) {
 	cases := []struct {
 		src, dest cell
 		f         format
-		want      []byte
+		want      string
 	}{
 		{
 			defaultCell(),
 			defaultCell(),
 			defFmt,
-			[]byte{},
+			"",
 		},
 		{
 			newCell('a', format{fg: newColor(FG_RED)}),
 			newCell('a', format{fg: newColor(FG_RED)}),
 			format{fg: newColor(FG_RED)},
-			[]byte{},
+			"",
 		},
 		{
 			newCell('a', format{fg: newColor(FG_RED)}),
 			newCell('a', format{fg: newColor(FG_RED)}),
 			defFmt,
-			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, CSI, FG_RED, CSI_SGR, 'a')),
+			fmt.Sprintf("%c%c%d%c%c", ESC, CSI, FG_RED, CSI_SGR, 'a'),
 		},
 		{
 			newCell('a', format{fg: newColor(FG_RED)}),
 			newCell('a', format{bg: newColor(BG_RED)}),
 			defFmt,
-			[]byte(fmt.Sprintf("%c%c%d%c%c", ESC, CSI, BG_RED, CSI_SGR, 'a')),
+			fmt.Sprintf("%c%c%d%c%c", ESC, CSI, BG_RED, CSI_SGR, 'a'),
 		},
 	}
 
 	for i, c := range cases {
-		if got := c.src.efficientDiff(c.dest, c.f); !slices.Equal(got, c.want) {
+		if got := string(c.src.efficientDiff(c.dest, c.f)); got != c.want {
 			t.Errorf("\n%d: Got: %v %q\nWanted: %v %q", i, got, string(got), c.want, string(c.want))
 		}
 	}
@@ -354,15 +353,15 @@ func TestCopy(t *testing.T) {
 func TestAnsiOSCSize(t *testing.T) {
 	cases := []struct {
 		fb   *framebuffer
-		want []byte
+		want string
 	}{
-		{newFramebuffer(10, 10), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, OSC, 10, 10, BEL))},
-		{newFramebuffer(10, 5), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, OSC, 10, 5, BEL))},
-		{newFramebuffer(15, 22), []byte(fmt.Sprintf("%c%cX;%d;%d%c", ESC, OSC, 15, 22, BEL))},
+		{newFramebuffer(10, 10), fmt.Sprintf("%c%cX;%d;%d%c", ESC, OSC, 10, 10, BEL)},
+		{newFramebuffer(10, 5), fmt.Sprintf("%c%cX;%d;%d%c", ESC, OSC, 10, 5, BEL)},
+		{newFramebuffer(15, 22), fmt.Sprintf("%c%cX;%d;%d%c", ESC, OSC, 15, 22, BEL)},
 	}
 
 	for i, c := range cases {
-		if got := c.fb.ansiOSCSize(); !slices.Equal(got, c.want) {
+		if got := string(c.fb.ansiOSCSize()); got != c.want {
 			t.Errorf("%d: Got\n\t%v, wanted\n\t%v", i, got, c.want)
 		}
 	}
