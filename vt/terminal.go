@@ -82,7 +82,7 @@ func NewTerminal(rows, cols int) (*Terminal, error) {
 	}, nil
 }
 
-func NewTerminalWithPty(rows, cols int, cmd *exec.Cmd, cancel context.CancelFunc, host string) (*Terminal, error) {
+func NewTerminalWithPty(rows, cols int, cmd *exec.Cmd, cancel context.CancelFunc) (*Terminal, error) {
 	t, err := NewTerminal(rows, cols)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func NewTerminalWithPty(rows, cols int, cmd *exec.Cmd, cancel context.CancelFunc
 	}
 	t.ptyF = ptmx
 
-	addUtmp(ptmx, host)
+	addUtmp(ptmx)
 
 	t.motd()
 

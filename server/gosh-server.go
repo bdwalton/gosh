@@ -81,11 +81,7 @@ func main() {
 	}
 
 	cmd, cancel := getCmd()
-	remHost := remIP()
-	if remHost == "" {
-		remHost = "unknown"
-	}
-	t, err := vt.NewTerminalWithPty(*initRows, *initCols, cmd, cancel, fmt.Sprintf("gosh[%s]", remHost))
+	t, err := vt.NewTerminalWithPty(*initRows, *initCols, cmd, cancel)
 	if err != nil {
 		slog.Error("Couldn't setup terminal", "err", err)
 		os.Exit(1)
