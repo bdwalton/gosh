@@ -109,7 +109,7 @@ type parser struct {
 
 func newParser() *parser {
 	return &parser{
-		state:        VTPARSE_STATE_GROUND,
+		state:        STATE_GROUND,
 		params:       newParams(),
 		intermediate: make([]rune, 0, MAX_EXPECTED_INTERMEDIATE),
 	}
@@ -129,10 +129,10 @@ func (p *parser) parse(r rune) []*action {
 	trans, ok := STATE_TABLE[p.state][r]
 	if !ok {
 		switch p.state {
-		case VTPARSE_STATE_GROUND:
-			return []*action{p.action(VTPARSE_ACTION_PRINT, r)}
-		case VTPARSE_STATE_OSC_STRING:
-			return []*action{p.action(VTPARSE_ACTION_OSC_PUT, r)}
+		case STATE_GROUND:
+			return []*action{p.action(ACTION_PRINT, r)}
+		case STATE_OSC_STRING:
+			return []*action{p.action(ACTION_OSC_PUT, r)}
 		default:
 			slog.Debug("unhandled state for failed rune lookup", "state", STATE_NAME[p.state], "r", r)
 		}
@@ -153,13 +153,13 @@ type action struct {
 
 func (p *parser) action(act pAction, r rune) *action {
 	switch act {
-	case VTPARSE_ACTION_PRINT, VTPARSE_ACTION_EXECUTE, VTPARSE_ACTION_HOOK, VTPARSE_ACTION_PUT, VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END, VTPARSE_ACTION_UNHOOK, VTPARSE_ACTION_CSI_DISPATCH, VTPARSE_ACTION_ESC_DISPATCH:
+	case ACTION_PRINT, ACTION_EXECUTE, ACTION_HOOK, ACTION_PUT, ACTION_OSC_START, ACTION_OSC_PUT, ACTION_OSC_END, ACTION_UNHOOK, ACTION_CSI_DISPATCH, ACTION_ESC_DISPATCH:
 		return &action{act, p.params, p.intermediate, r}
-	case VTPARSE_ACTION_IGNORE:
+	case ACTION_IGNORE:
 		// Do nothing
-	case VTPARSE_ACTION_COLLECT:
+	case ACTION_COLLECT:
 		p.intermediate = append(p.intermediate, r)
-	case VTPARSE_ACTION_PARAM:
+	case ACTION_PARAM:
 		switch r {
 		// : is used for some CSI sequences like:
 		// CSI 32 : 2 : Pi : Pr : Pg : Pb m to set true colors
@@ -176,11 +176,11 @@ func (p *parser) action(act pAction, r rune) *action {
 				p.params.alterItem(p.params.lastItem()*10 + int(r-'0'))
 			}
 		}
-	case VTPARSE_ACTION_CLEAR:
+	case ACTION_CLEAR:
 		p.intermediate = p.intermediate[:0]
 		p.params.reset()
 	default:
-		return &action{VTPARSE_ACTION_ERROR, nil, nil, 0}
+		return &action{ACTION_ERROR, nil, nil, 0}
 	}
 
 	return nil
@@ -192,23 +192,23 @@ func (p *parser) stateChange(t transition, r rune) []*action {
 
 	ret := []*action{}
 
-	if newState != VTPARSE_STATE_NONE {
+	if newState != STATE_NONE {
 		exit := EXIT_ACTIONS[p.state]
 		enter := ENTRY_ACTIONS[newState]
 
-		if exit != VTPARSE_ACTION_NOP {
+		if exit != ACTION_NOP {
 			if a := p.action(exit, r); a != nil {
 				ret = append(ret, a)
 			}
 		}
 
-		if act != VTPARSE_ACTION_NOP {
+		if act != ACTION_NOP {
 			if a := p.action(act, r); a != nil {
 				ret = append(ret, a)
 			}
 		}
 
-		if enter != VTPARSE_ACTION_NOP {
+		if enter != ACTION_NOP {
 			if a := p.action(enter, r); a != nil {
 				ret = append(ret, a)
 			}

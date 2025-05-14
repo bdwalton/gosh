@@ -34,9 +34,9 @@ func (d *dummyD) getActions() []string {
 func (d *dummyD) handle(act pAction, params *parameters, intermediate []rune, last rune) {
 	d.actions = append(d.actions, act)
 	switch act {
-	case VTPARSE_ACTION_OSC_PUT:
+	case ACTION_OSC_PUT:
 		d.oscTemp = append(d.oscTemp, last)
-	case VTPARSE_ACTION_OSC_END:
+	case ACTION_OSC_END:
 		d.oscString = d.oscTemp
 	default:
 		d.params = params
@@ -109,42 +109,42 @@ func TestCSIParsing(t *testing.T) {
 	}{
 		{
 			[]rune{ESC, CSI, ';', 'm'},
-			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
+			[]pAction{ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{0, 0}),
 			[]rune{},
 			CSI_SGR,
 		},
 		{
 			[]rune{ESC, CSI, 'm'},
-			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
+			[]pAction{ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{}),
 			[]rune{},
 			CSI_SGR,
 		},
 		{
 			[]rune{ESC, CSI, '1', '0', 'A'},
-			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
+			[]pAction{ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{10}),
 			[]rune{},
 			CSI_CUU,
 		},
 		{
 			[]rune{ESC, CSI, '1', '0', ';', '3', 'H'},
-			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
+			[]pAction{ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{10, 3}),
 			[]rune{},
 			CSI_CUP,
 		},
 		{
 			[]rune{ESC, CSI, '6', 'n'},
-			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
+			[]pAction{ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{6}),
 			[]rune{},
 			CSI_DSR,
 		},
 		{
 			[]rune{ESC, CSI, '?', '2', '0', '0', '4', 'l'},
-			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
+			[]pAction{ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{2004}),
 			[]rune{'?'},
 			CSI_MODE_RESET,

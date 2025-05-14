@@ -840,7 +840,7 @@ func TestOSCResize(t *testing.T) {
 
 	for i, c := range cases {
 		c.term.oscTemp = []rune(fmt.Sprintf("%s;%d;%d", OSC_SETSIZE, c.rows, c.cols))
-		c.term.handleOSC(VTPARSE_ACTION_OSC_END, BEL)
+		c.term.handleOSC(ACTION_OSC_END, BEL)
 		switch c.wantSuccess {
 		case true:
 			if rows, cols := c.term.Rows(), c.term.Cols(); rows != c.rows || cols != c.cols {

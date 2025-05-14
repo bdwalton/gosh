@@ -351,15 +351,15 @@ func (t *Terminal) doParse(rr *bufio.Reader) error {
 				t.mux.Lock()
 				t.lastChg = time.Now().UTC()
 				switch a.act {
-				case VTPARSE_ACTION_EXECUTE:
+				case ACTION_EXECUTE:
 					t.handleExecute(a.cmd)
-				case VTPARSE_ACTION_CSI_DISPATCH:
+				case ACTION_CSI_DISPATCH:
 					t.handleCSI(a.params, string(a.data), a.cmd)
-				case VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
+				case ACTION_OSC_START, ACTION_OSC_PUT, ACTION_OSC_END:
 					t.handleOSC(a.act, a.cmd)
-				case VTPARSE_ACTION_PRINT:
+				case ACTION_PRINT:
 					t.print(a.cmd)
-				case VTPARSE_ACTION_ESC_DISPATCH:
+				case ACTION_ESC_DISPATCH:
 					t.handleESC(a.params, string(a.data), a.cmd)
 				default:
 					slog.Debug("unhandled parser action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.cmd)
@@ -530,11 +530,11 @@ func (t *Terminal) cursorRestore() {
 
 func (t *Terminal) handleOSC(act pAction, cmd rune) {
 	switch act {
-	case VTPARSE_ACTION_OSC_START:
+	case ACTION_OSC_START:
 		t.oscTemp = make([]rune, 0)
-	case VTPARSE_ACTION_OSC_PUT:
+	case ACTION_OSC_PUT:
 		t.oscTemp = append(t.oscTemp, cmd)
-	case VTPARSE_ACTION_OSC_END:
+	case ACTION_OSC_END:
 		// https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
 		// is a good description of many of the options
 		// here. So many of them are completely legacy that we
