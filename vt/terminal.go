@@ -329,57 +329,45 @@ func (t *Terminal) Run() {
 
 func (t *Terminal) doParse(rr *bufio.Reader) error {
 	for {
-		r, sz, err := rr.ReadRune()
-		if err != nil {
+
+		if r, sz, err := rr.ReadRune(); err != nil {
 			if !errors.Is(err, os.ErrDeadlineExceeded) {
 				slog.Error("pty ReadRune", "r", r, "sz", sz, "err", err)
 				return nil
 			}
+
+			// We may have bumped into a partially transmitted
+			// message from the wire. Either way, punt here and it
+			// it have another go when more data may have arrived
+			if r == utf8.RuneError {
+				slog.Debug("")
+				rr.UnreadRune()
+				return nil
+			}
+
 			return err
-		}
-
-		if r == utf8.RuneError && sz == 1 {
-			rr.UnreadRune()
-			b, err := rr.ReadByte()
-			if err != nil {
-				return err
+		} else {
+			for _, a := range t.p.parse(r) {
+				t.mux.Lock()
+				t.lastChg = time.Now().UTC()
+				switch a.act {
+				case VTPARSE_ACTION_EXECUTE:
+					t.handleExecute(a.cmd)
+				case VTPARSE_ACTION_CSI_DISPATCH:
+					t.handleCSI(a.params, string(a.data), a.cmd)
+				case VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
+					t.handleOSC(a.act, a.cmd)
+				case VTPARSE_ACTION_PRINT:
+					t.print(a.cmd)
+				case VTPARSE_ACTION_ESC_DISPATCH:
+					t.handleESC(a.params, string(a.data), a.cmd)
+				default:
+					slog.Debug("unhandled parser action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.cmd)
+				}
+				t.mux.Unlock()
 			}
-
-			// Note that this is really gross and we
-			// should handle 8bit inputs more cleanly. It
-			// works because we've coerced all of the
-			// 8-bit bytes into runes in the lookup
-			// table. This means that there exists a small
-			// subset of valid 2-byte runes that we won't
-			// see as printable characters.
-			//
-			// TODO: Fix parsing to cleanly handle 8-bit
-			// input.
-			r = rune(b)
-		}
-
-		for _, a := range t.p.parse(r) {
-			t.mux.Lock()
-			t.lastChg = time.Now().UTC()
-			switch a.act {
-			case VTPARSE_ACTION_EXECUTE:
-				t.handleExecute(a.cmd)
-			case VTPARSE_ACTION_CSI_DISPATCH:
-				t.handleCSI(a.params, string(a.data), a.cmd)
-			case VTPARSE_ACTION_OSC_START, VTPARSE_ACTION_OSC_PUT, VTPARSE_ACTION_OSC_END:
-				t.handleOSC(a.act, a.cmd)
-			case VTPARSE_ACTION_PRINT:
-				t.print(a.cmd)
-			case VTPARSE_ACTION_ESC_DISPATCH:
-				t.handleESC(a.params, string(a.data), a.cmd)
-			default:
-				slog.Debug("unhandled parser action", "action", ACTION_NAMES[a.act], "params", a.params, "data", a.data, "rune", a.cmd)
-			}
-			t.mux.Unlock()
 		}
 	}
-
-	return nil
 }
 
 func (t *Terminal) Resize(rows, cols int) {
