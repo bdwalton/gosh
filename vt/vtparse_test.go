@@ -79,13 +79,13 @@ func TestFirstParamEmpty(t *testing.T) {
 		wantParams *parameters
 	}{
 		{[]byte{ESC, CSI, ';'}, paramsFromInts([]int{0, 0})},
-		{[]byte{C1_CSI, ';'}, paramsFromInts([]int{0, 0})},
-		{[]byte{C1_CSI, ';', ';'}, paramsFromInts([]int{0, 0, 0})},
-		{[]byte{C1_CSI, ';', '0', ';'}, paramsFromInts([]int{0, 0, 0})},
-		{[]byte{C1_CSI, ';', '5', '0', ';'}, paramsFromInts([]int{0, 50, 0})},
-		{[]byte{C1_CSI, '1', '0', ';', ';'}, paramsFromInts([]int{10, 0, 0})},
-		{[]byte{C1_CSI, '1', '0', ';', ';'}, paramsFromInts([]int{10, 0, 0})},
-		{[]byte{C1_CSI, '1', '0', ';', ';', '5'}, paramsFromInts([]int{10, 0, 5})},
+		{[]byte{ESC, CSI, ';'}, paramsFromInts([]int{0, 0})},
+		{[]byte{ESC, CSI, ';', ';'}, paramsFromInts([]int{0, 0, 0})},
+		{[]byte{ESC, CSI, ';', '0', ';'}, paramsFromInts([]int{0, 0, 0})},
+		{[]byte{ESC, CSI, ';', '5', '0', ';'}, paramsFromInts([]int{0, 50, 0})},
+		{[]byte{ESC, CSI, '1', '0', ';', ';'}, paramsFromInts([]int{10, 0, 0})},
+		{[]byte{ESC, CSI, '1', '0', ';', ';'}, paramsFromInts([]int{10, 0, 0})},
+		{[]byte{ESC, CSI, '1', '0', ';', ';', '5'}, paramsFromInts([]int{10, 0, 5})},
 	}
 
 	for i, c := range cases {
@@ -108,42 +108,42 @@ func TestCSIParsing(t *testing.T) {
 		wantLast         rune
 	}{
 		{
-			[]rune{C1_CSI, ';', 'm'},
+			[]rune{ESC, CSI, ';', 'm'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{0, 0}),
 			[]rune{},
 			CSI_SGR,
 		},
 		{
-			[]rune{C1_CSI, 'm'},
+			[]rune{ESC, CSI, 'm'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{}),
 			[]rune{},
 			CSI_SGR,
 		},
 		{
-			[]rune{C1_CSI, '1', '0', 'A'},
+			[]rune{ESC, CSI, '1', '0', 'A'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{10}),
 			[]rune{},
 			CSI_CUU,
 		},
 		{
-			[]rune{C1_CSI, '1', '0', ';', '3', 'H'},
+			[]rune{ESC, CSI, '1', '0', ';', '3', 'H'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{10, 3}),
 			[]rune{},
 			CSI_CUP,
 		},
 		{
-			[]rune{C1_CSI, '6', 'n'},
+			[]rune{ESC, CSI, '6', 'n'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{6}),
 			[]rune{},
 			CSI_DSR,
 		},
 		{
-			[]rune{C1_CSI, '?', '2', '0', '0', '4', 'l'},
+			[]rune{ESC, CSI, '?', '2', '0', '0', '4', 'l'},
 			[]pAction{VTPARSE_ACTION_CSI_DISPATCH},
 			paramsFromInts([]int{2004}),
 			[]rune{'?'},
@@ -180,9 +180,9 @@ func TestOSCString(t *testing.T) {
 		input   []rune
 		wantOSC string
 	}{
-		{[]rune{C1_OSC, '0', ';', 'i', 'c', 'o', 'n', 't', 'i', 't', 'l', 'e', BEL}, "0;icontitle"},
-		{[]rune{C1_OSC, '1', ';', 'i', 'c', 'o', 'n', C1_ST}, "1;icon"},
-		{[]rune{ESC, OSC, '2', ';', 't', 'i', 't', 'l', 'e', C1_ST}, "2;title"},
+		{[]rune{ESC, OSC, '0', ';', 'i', 'c', 'o', 'n', 't', 'i', 't', 'l', 'e', BEL}, "0;icontitle"},
+		{[]rune{ESC, OSC, '1', ';', 'i', 'c', 'o', 'n', ESC, ST}, "1;icon"},
+		{[]rune{ESC, OSC, '2', ';', 't', 'i', 't', 'l', 'e', ESC, ST}, "2;title"},
 		{[]rune{ESC, OSC, '2', ';', 't', 'i', 't', 'l', 'e', ESC, ST}, "2;title"},
 		{[]rune{ESC, OSC, '3', ';', 'F', 'o', 'O', BEL}, "3;FoO"},
 	}

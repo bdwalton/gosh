@@ -43,15 +43,6 @@ const (
 	ST    = '\\' // string terminator
 )
 
-// Control codes
-const (
-	C1_HTS = 0x88
-	C1_DCS = 0x8f
-	C1_CSI = 0x9b
-	C1_ST  = 0x9c
-	C1_OSC = 0x9d
-)
-
 // CSI codes
 const (
 	CSI_ICH        = '@' // insert blank characters
