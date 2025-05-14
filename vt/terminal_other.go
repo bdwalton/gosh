@@ -7,10 +7,10 @@ import (
 	"os"
 )
 
-func AddUtmp(f *os.File, host string) {
+func addUtmp(f *os.File) {
 	slog.Debug("AddUtmp() not implemented on this platform")
 }
 
-func RmUtmp(f *os.File) {
+func rmUtmp(f *os.File) {
 	slog.Debug("RmUtmp() not implemented on this platform")
 }
