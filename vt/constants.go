@@ -186,6 +186,7 @@ const (
 	OSC_ICON_TITLE = "0"
 	OSC_ICON       = "1"
 	OSC_TITLE      = "2"
+	OSC_HYPERLINK  = "8" // hyperlink - https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
 	OSC_SETSIZE    = "X" // Gosh-specific
 )
 

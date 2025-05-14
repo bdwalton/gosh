@@ -29,7 +29,7 @@ func TestCursorInScrollingRegion(t *testing.T) {
 }
 
 func TestLineFeed(t *testing.T) {
-	xc := newCell('x', defFmt)
+	xc := newCell('x', defFmt, defOSC8)
 	defTerm := func() *Terminal {
 		t := &Terminal{fb: newFramebuffer(10, 10)}
 		t.fb.setCell(9, 5, xc)
@@ -112,16 +112,16 @@ func TestPrintCharsets(t *testing.T) {
 	fb := newFramebuffer(10, 10)
 
 	fb1w := fb.copy()
-	fb1w.setCell(0, 0, newCell('a', defFmt))
+	fb1w.setCell(0, 0, newCell('a', defFmt, defOSC8))
 
 	fb2w := fb.copy()
-	fb2w.setCell(0, 0, newCell('a', defFmt))
+	fb2w.setCell(0, 0, newCell('a', defFmt, defOSC8))
 
 	fb3w := fb.copy()
-	fb3w.setCell(0, 0, newCell('£', defFmt))
+	fb3w.setCell(0, 0, newCell('£', defFmt, defOSC8))
 
 	fb4w := fb.copy()
-	fb4w.setCell(0, 0, newCell('┼', defFmt))
+	fb4w.setCell(0, 0, newCell('┼', defFmt, defOSC8))
 
 	cases := []struct {
 		fb   *framebuffer
@@ -152,45 +152,45 @@ func TestPrint(t *testing.T) {
 	}
 
 	wfb1 := newFramebuffer(10, 10)
-	wfb1.setCell(0, 0, newCell('a', defFmt))
+	wfb1.setCell(0, 0, newCell('a', defFmt, defOSC8))
 	wfb1_irm := newFramebuffer(10, 10)
-	wfb1_irm.setCell(0, 0, newCell('b', defFmt))
-	wfb1_irm.setCell(0, 1, newCell('a', defFmt))
+	wfb1_irm.setCell(0, 0, newCell('b', defFmt, defOSC8))
+	wfb1_irm.setCell(0, 1, newCell('a', defFmt, defOSC8))
 
 	wfb2 := newFramebuffer(10, 10)
-	wfb2.setCell(0, 0, newCell('a', defFmt))
-	wfb2.setCell(0, 1, newCell('b', defFmt))
+	wfb2.setCell(0, 0, newCell('a', defFmt, defOSC8))
+	wfb2.setCell(0, 1, newCell('b', defFmt, defOSC8))
 
 	wfb3 := newFramebuffer(10, 10)
-	wfb3.setCell(0, 0, newCell('ü', defFmt))
+	wfb3.setCell(0, 0, newCell('ü', defFmt, defOSC8))
 	wfb3_irm := newFramebuffer(10, 10)
-	wfb3_irm.setCell(0, 0, newCell('x', defFmt))
-	wfb3_irm.setCell(0, 1, newCell('ü', defFmt))
+	wfb3_irm.setCell(0, 0, newCell('x', defFmt, defOSC8))
+	wfb3_irm.setCell(0, 1, newCell('ü', defFmt, defOSC8))
 
 	wfb4 := newFramebuffer(10, 10)
-	wfb4.setCell(0, 9, newCell('ü', defFmt))
+	wfb4.setCell(0, 9, newCell('ü', defFmt, defOSC8))
 
 	wfb5 := newFramebuffer(10, 10)
-	wfb5.setCell(0, 9, newCell('z', defFmt))
+	wfb5.setCell(0, 9, newCell('z', defFmt, defOSC8))
 
 	wfb6 := newFramebuffer(10, 10)
-	wfb6.setCell(1, 0, newCell('z', defFmt))
+	wfb6.setCell(1, 0, newCell('z', defFmt, defOSC8))
 
 	wfb7 := newFramebuffer(10, 10)
-	wfb7.setCell(0, 8, fragCell('世', defFmt, FRAG_PRIMARY))
-	wfb7.setCell(0, 9, fragCell(0, defFmt, FRAG_SECONDARY))
+	wfb7.setCell(0, 8, fragCell('世', defFmt, defOSC8, FRAG_PRIMARY))
+	wfb7.setCell(0, 9, fragCell(0, defFmt, defOSC8, FRAG_SECONDARY))
 
 	wfb8 := newFramebuffer(10, 10)
-	wfb8.setCell(1, 0, fragCell('世', defFmt, FRAG_PRIMARY))
-	wfb8.setCell(1, 1, fragCell(0, defFmt, FRAG_SECONDARY))
+	wfb8.setCell(1, 0, fragCell('世', defFmt, defOSC8, FRAG_PRIMARY))
+	wfb8.setCell(1, 1, fragCell(0, defFmt, defOSC8, FRAG_SECONDARY))
 
 	wfb9 := newFramebuffer(10, 10)
-	wfb9.setCell(0, 5, fragCell('世', defFmt, FRAG_PRIMARY))
-	wfb9.setCell(0, 6, fragCell(0, defFmt, FRAG_SECONDARY))
+	wfb9.setCell(0, 5, fragCell('世', defFmt, defOSC8, FRAG_PRIMARY))
+	wfb9.setCell(0, 6, fragCell(0, defFmt, defOSC8, FRAG_SECONDARY))
 
 	ffb := newFramebuffer(10, 10)
-	ffb.setCell(5, 5, fragCell('世', defFmt, FRAG_PRIMARY))
-	ffb.setCell(5, 6, fragCell(0, defFmt, FRAG_SECONDARY))
+	ffb.setCell(5, 5, fragCell('世', defFmt, defOSC8, FRAG_PRIMARY))
+	ffb.setCell(5, 6, fragCell(0, defFmt, defOSC8, FRAG_SECONDARY))
 
 	// We'll write a combining character at 5,6, which is the
 	// fragmented second half of the wide cell in 5,5 (from
@@ -198,43 +198,43 @@ func TestPrint(t *testing.T) {
 	// a complex case.
 	wffb := newFramebuffer(10, 10)
 	wffb.setCell(5, 5, defaultCell())
-	wffb.setCell(5, 6, newCell('ü', defFmt))
+	wffb.setCell(5, 6, newCell('ü', defFmt, defOSC8))
 
 	ffb2 := newFramebuffer(10, 10)
-	ffb2.setCell(5, 5, fragCell('世', defFmt, FRAG_PRIMARY))
-	ffb2.setCell(5, 6, fragCell(0, defFmt, FRAG_SECONDARY))
+	ffb2.setCell(5, 5, fragCell('世', defFmt, defOSC8, FRAG_PRIMARY))
+	ffb2.setCell(5, 6, fragCell(0, defFmt, defOSC8, FRAG_SECONDARY))
 
 	// We'll write a combining character at 5,5, which is the
 	// fragmented second half of the wide cell in 5,5 (from
 	// ffb2). That should demonstrate overwritting a frag cell with
 	// a complex case.
 	wffb2 := newFramebuffer(10, 10)
-	wffb2.setCell(5, 6, newCell('ü', defFmt))
+	wffb2.setCell(5, 6, newCell('ü', defFmt, defOSC8))
 
 	sfb := newFramebuffer(10, 10)
-	sfb.setCell(8, 9, newCell('b', defFmt))
-	sfb.setCell(9, 0, newCell('a', defFmt))
+	sfb.setCell(8, 9, newCell('b', defFmt, defOSC8))
+	sfb.setCell(9, 0, newCell('a', defFmt, defOSC8))
 
 	wsfb := newFramebuffer(10, 10)
-	wsfb.setCell(7, 9, newCell('b', defFmt))
-	wsfb.setCell(8, 0, newCell('a', defFmt))
-	wsfb.setCell(9, 0, newCell('ü', defFmt))
+	wsfb.setCell(7, 9, newCell('b', defFmt, defOSC8))
+	wsfb.setCell(8, 0, newCell('a', defFmt, defOSC8))
+	wsfb.setCell(9, 0, newCell('ü', defFmt, defOSC8))
 
 	wfb10 := newFramebuffer(10, 10)
-	wfb10.setCell(9, 9, newCell('ü', defFmt))
+	wfb10.setCell(9, 9, newCell('ü', defFmt, defOSC8))
 
 	fb13 := dfb()
-	fb13.setCell(5, 5, fragCell('世', defFmt, FRAG_PRIMARY))
-	fb13.setCell(5, 6, fragCell(0, defFmt, FRAG_SECONDARY))
+	fb13.setCell(5, 5, fragCell('世', defFmt, defOSC8, FRAG_PRIMARY))
+	fb13.setCell(5, 6, fragCell(0, defFmt, defOSC8, FRAG_SECONDARY))
 	wfb13 := dfb()
-	wfb13.setCell(5, 5, newCell('a', defFmt))
+	wfb13.setCell(5, 5, newCell('a', defFmt, defOSC8))
 
 	combFb := dfb()
-	combFb.setCell(1, 0, newCell('a', defFmt))
-	combFb.setCell(1, 1, newCell('b', defFmt))
-	combFb.setCell(1, 2, newCell('u', defFmt))
+	combFb.setCell(1, 0, newCell('a', defFmt, defOSC8))
+	combFb.setCell(1, 1, newCell('b', defFmt, defOSC8))
+	combFb.setCell(1, 2, newCell('u', defFmt, defOSC8))
 	wfb_comb := combFb.copy()
-	wfb_comb.setCell(1, 2, newCell('ü', defFmt))
+	wfb_comb.setCell(1, 2, newCell('ü', defFmt, defOSC8))
 
 	// wrap == CSI_MODE_{RE,}SET
 	dterm := func(c cursor, fb *framebuffer, wrap, irm rune) *Terminal {
@@ -322,7 +322,7 @@ func TestTerminalDiff(t *testing.T) {
 	t3, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t3.Resize(20, 15)
 	t4 := testTerminalCopy(t3)
-	t4.fb.setCell(5, 7, newCell('a', format{fg: newColor(FG_RED)}))
+	t4.fb.setCell(5, 7, newCell('a', format{fg: newColor(FG_RED)}, defOSC8))
 	t5 := testTerminalCopy(t4)
 	t5.title = "mytitle"
 	t6 := testTerminalCopy(t5)
@@ -353,9 +353,9 @@ func TestTerminalDiff(t *testing.T) {
 	t17.setMode(IRM, "", CSI_MODE_SET)    // no transport, no diff
 	t19, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t19.Resize(10, 10)
-	t19.fb.setCell(0, 0, newCell('A', defFmt))
+	t19.fb.setCell(0, 0, newCell('A', defFmt, defOSC8))
 	t20 := t19.Copy()
-	t20.fb.setCell(0, 1, newCell('*', defFmt))
+	t20.fb.setCell(0, 1, newCell('*', defFmt, defOSC8))
 	t20.lastChg = time.Now()
 	t21, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t22 := t21.Copy()
@@ -366,35 +366,34 @@ func TestTerminalDiff(t *testing.T) {
 
 	cases := []struct {
 		src, dest *Terminal
-		want      []byte
+		want      string
 	}{
-		{t1, t1, []byte{}},
-		{t1, t2, []byte{}},
-		{t2, t3, []byte(fmt.Sprintf("%c%c%c%c%c%s;%d;%d%c%c%c%c", ESC, CSI, CSI_SGR, ESC, OSC, OSC_SETSIZE, 20, 15, BEL, ESC, CSI, CSI_CUP))},
-		{t3, t4, []byte(fmt.Sprintf("%c%c%c%s%c%c%d%c%c%s", ESC, CSI, CSI_SGR, cursor{5, 7}.ansiString(), ESC, CSI, FG_RED, CSI_SGR, 'a', cursor{}.ansiString()))},
-		{t4, t5, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_TITLE, "mytitle", BEL))},
-		{t4, t6, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_ICON_TITLE, "mytitle", BEL))},
-		{t4, t7, []byte(fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_ICON, "myicon", BEL))},
-		{t1, t8, []byte(fmt.Sprintf("%c%c%s;%s%c%c%c%c%c%c%s;%d;%d%c%c%c%c", ESC, OSC, OSC_ICON, "myicon", BEL, ESC, CSI, CSI_SGR, ESC, OSC, OSC_SETSIZE, 10, 6, BEL, ESC, CSI, CSI_CUP))},
-		{t8, t9, []byte(fmt.Sprintf("%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_SET))},
-		{t9, t10, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_RESET, ESC, CSI, SHOW_CURSOR, CSI_MODE_RESET))},
-		{t10, t11, []byte{}}, // No diff as we don't ship margins
-		{t10, t12, []byte{}}, // No diff as we don't ship margins
-		{t9, t11, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_RESET, ESC, CSI, SHOW_CURSOR, CSI_MODE_RESET))},
-		{t9, t12, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_RESET, ESC, CSI, SHOW_CURSOR, CSI_MODE_RESET))},
-		{t9, t13, []byte(fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_RESET, ESC, CSI, SHOW_CURSOR, CSI_MODE_RESET))},
-		{t14, t15, []byte(fmt.Sprintf("%c%c%dm%c%c%dm", ESC, CSI, FG_RED, ESC, CSI, UNDERLINE_ON))},
-
-		{t15, t16, []byte(fmt.Sprintf("%c%c%d%c%c%c%dm", ESC, CSI, FG_YELLOW, CSI_SGR, ESC, CSI, INTENSITY_BOLD))},
-		{t1, t17, []byte("")}, // should tranpsort is false for DECOM
-		{t19, t20, []byte(fmt.Sprintf("%c%c%c%c%c;2%c*%c%c%c", ESC, CSI, CSI_SGR, ESC, CSI, CSI_CUP, ESC, CSI, CSI_CUP))},
-		{t21, t22, []byte(fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, 11, 11, CSI_CUP))},
-		{t22, t23, []byte(fmt.Sprintf("%c%c", ESC, PAM))},
+		{t1, t1, ""},
+		{t1, t2, ""},
+		{t2, t3, fmt.Sprintf("%c%c%c%c%c%s;%d;%d%c%c%c%s%c%c%c%c%c", ESC, CSI, CSI_SGR, ESC, OSC, OSC_SETSIZE, 20, 15, BEL, ESC, OSC, cancelHyperlink, ESC, ST, ESC, CSI, CSI_CUP)},
+		{t3, t4, fmt.Sprintf("%c%c%c%s%c%c%d%c%c%c%c%s%c%c%s", ESC, CSI, CSI_SGR, cursor{5, 7}.ansiString(), ESC, CSI, FG_RED, CSI_SGR, 'a', ESC, OSC, cancelHyperlink, ESC, ST, cursor{}.ansiString())},
+		{t4, t5, fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_TITLE, "mytitle", BEL)},
+		{t4, t6, fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_ICON_TITLE, "mytitle", BEL)},
+		{t4, t7, fmt.Sprintf("%c%c%s;%s%c", ESC, OSC, OSC_ICON, "myicon", BEL)},
+		{t1, t8, fmt.Sprintf("%c%c%s;%s%c%c%c%c%c%c%s;%d;%d%c%c%c%s%c%c%c%c%c", ESC, OSC, OSC_ICON, "myicon", BEL, ESC, CSI, CSI_SGR, ESC, OSC, OSC_SETSIZE, 10, 6, BEL, ESC, OSC, cancelHyperlink, ESC, ST, ESC, CSI, CSI_CUP)},
+		{t8, t9, fmt.Sprintf("%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_SET)},
+		{t9, t10, fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_RESET, ESC, CSI, SHOW_CURSOR, CSI_MODE_RESET)},
+		{t10, t11, ""}, // No diff as we don't ship margins
+		{t10, t12, ""}, // No diff as we don't ship margins
+		{t9, t11, fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_RESET, ESC, CSI, SHOW_CURSOR, CSI_MODE_RESET)},
+		{t9, t12, fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_RESET, ESC, CSI, SHOW_CURSOR, CSI_MODE_RESET)},
+		{t9, t13, fmt.Sprintf("%c%c?%d%c%c%c?%d%c", ESC, CSI, REV_VIDEO, CSI_MODE_RESET, ESC, CSI, SHOW_CURSOR, CSI_MODE_RESET)},
+		{t14, t15, fmt.Sprintf("%c%c%dm%c%c%dm", ESC, CSI, FG_RED, ESC, CSI, UNDERLINE_ON)},
+		{t15, t16, fmt.Sprintf("%c%c%d%c%c%c%dm", ESC, CSI, FG_YELLOW, CSI_SGR, ESC, CSI, INTENSITY_BOLD)},
+		{t1, t17, ""}, // should tranpsort is false for DECOM
+		{t19, t20, fmt.Sprintf("%c%c%c%c%c;2%c*%c%c%s%c%c%c%c%c", ESC, CSI, CSI_SGR, ESC, CSI, CSI_CUP, ESC, OSC, cancelHyperlink, ESC, ST, ESC, CSI, CSI_CUP)},
+		{t21, t22, fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, 11, 11, CSI_CUP)},
+		{t22, t23, fmt.Sprintf("%c%c", ESC, PAM)},
 	}
 
 	for i, c := range cases {
-		if got := c.src.Diff(c.dest); !slices.Equal(got, c.want) {
-			t.Errorf("%d: Got\n\t%q, wanted\n\t%q", i, string(got), string(c.want))
+		if got := string(c.src.Diff(c.dest)); got != c.want {
+			t.Errorf("%d: Got\n\t%q, wanted\n\t%q", i, got, c.want)
 		}
 	}
 }

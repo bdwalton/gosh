@@ -43,6 +43,7 @@ type Terminal struct {
 	savedTitle, savedIcon string
 	cur, savedCur         cursor
 	curF, savedF          format
+	hl, savedHL           *osc8
 	tabs                  []bool
 
 	cs, savedCS *charset
@@ -79,6 +80,7 @@ func NewTerminal(rows, cols int) (*Terminal, error) {
 		wait:    func() {},
 		stop:    func() {},
 		cs:      &charset{},
+		hl:      defOSC8,
 	}, nil
 }
 
@@ -171,7 +173,7 @@ func (t *Terminal) FirstRow() []byte {
 		return []byte{}
 	}
 	fbe := fb.copy()
-	fbe.fill(newCell(' ', defFmt))
+	fbe.fill(newCell(' ', defFmt, defOSC8))
 
 	var sb strings.Builder
 	sb.WriteString(("\x1b7\x1b[H\x1b[2K"))
@@ -228,6 +230,7 @@ func (t *Terminal) Copy() *Terminal {
 		p:        t.p.copy(),
 		ptyF:     t.ptyF,
 		cs:       t.cs.copy(),
+		hl:       t.hl,
 	}
 }
 
@@ -245,6 +248,7 @@ func (t *Terminal) Replace(other *Terminal) {
 	t.savedCur = other.savedCur
 	t.p = other.p
 	t.modes = other.modes
+	t.hl = other.hl
 }
 
 func (t *Terminal) LastChange() time.Time {
@@ -306,6 +310,8 @@ func (src *Terminal) Diff(dest *Terminal) []byte {
 		// writing of the framebuffer diff, so always generate
 		// a full format reset for the diff
 		sb.Write(defFmt.diff(dest.curF))
+		// Similarly for the osc8 data
+		sb.WriteString(dest.hl.ansiString())
 	} else {
 		// If we didn't write anything, the pen may still be
 		// different so we should ship the delta.
@@ -518,6 +524,7 @@ func (t *Terminal) handleESC(params *parameters, data string, cmd rune) {
 func (t *Terminal) cursorSave() {
 	t.savedCur = t.cur.Copy()
 	t.savedF = t.curF
+	t.savedHL = t.hl
 	t.savedCS = t.cs.copy()
 }
 
@@ -525,6 +532,7 @@ func (t *Terminal) cursorSave() {
 func (t *Terminal) cursorRestore() {
 	t.cur = t.savedCur.Copy()
 	t.curF = t.savedF
+	t.hl = t.savedHL
 	t.cs = t.savedCS.copy()
 }
 
@@ -562,6 +570,17 @@ func (t *Terminal) handleOSC(act pAction, cmd rune) {
 				t.icon = parts[1]
 			case OSC_TITLE:
 				t.title = t.titlePfx + parts[1]
+			case OSC_HYPERLINK:
+				switch len(parts) {
+				case 3:
+					if data == "8;;" {
+						t.hl = defOSC8
+					} else {
+						t.hl = newHyperlink(data)
+					}
+				default:
+					slog.Debug("invalid osc8 data", "data", data)
+				}
 			case OSC_SETSIZE: // a Gosh convention
 				if len(parts) == 3 {
 					for {
@@ -621,6 +640,7 @@ func (t *Terminal) softReset() {
 	t.horizMargin = margin{}
 	t.savedCur = cursor{}
 	t.curF = defFmt
+	t.hl = defOSC8
 }
 
 func (t *Terminal) reset() {
@@ -640,6 +660,7 @@ func (t *Terminal) reset() {
 	t.savedCur = cursor{0, 0}
 	t.tabs = makeTabs(cols)
 	t.cs = &charset{}
+	t.hl = defOSC8
 }
 
 func (t *Terminal) isModeSet(name string) bool {
@@ -732,10 +753,10 @@ func (t *Terminal) print(r rune) {
 		}
 
 		t.clearFrags(row, col)
-		nc := newCell(ar, t.curF)
+		nc := newCell(ar, t.curF, t.hl)
 		if rw > 1 {
 			// Clear adjacent cells and note fragments
-			t.fb.setCell(row, col+1, fragCell(0, t.curF, FRAG_SECONDARY))
+			t.fb.setCell(row, col+1, fragCell(0, t.curF, t.hl, FRAG_SECONDARY))
 			nc.frag = FRAG_PRIMARY
 		}
 
@@ -809,7 +830,7 @@ func (t *Terminal) handleCSI(params *parameters, data string, cmd rune) {
 			l = lastCol
 		}
 		row := t.row()
-		t.fb.setCells(row, row, t.col(), l, newCell(' ', t.curF))
+		t.fb.setCells(row, row, t.col(), l, newCell(' ', t.curF, t.hl))
 	case CSI_MODE_SET, CSI_MODE_RESET:
 		for i := 0; i < params.numItems(); i++ {
 			t.setMode(params.item(i, 0), data, cmd)
@@ -970,10 +991,11 @@ func (t *Terminal) handleDSR(n int, data string) {
 
 func (t *Terminal) doDECALN() {
 	t.curF = defFmt
+	t.hl = defOSC8
 	t.horizMargin = margin{}
 	t.vertMargin = margin{}
 	t.cursorMoveAbs(0, 0)
-	t.fb.fill(newCell('E', t.curF))
+	t.fb.fill(newCell('E', t.curF, t.hl))
 }
 
 func (t *Terminal) replyDeviceAttributes(data string) {

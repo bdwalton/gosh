@@ -28,6 +28,7 @@ type cell struct {
 	set bool // true if non-default
 	r   rune
 	f   format
+	hl  *osc8
 	// when non-zero, indicates this cell participates in width 2 character
 	// 1 = primary rune
 	// 2 = spare/empty cell next to primary
@@ -47,31 +48,35 @@ func (c cell) isSecondaryFrag() bool {
 }
 
 func defaultCell() cell {
-	return cell{r: ' '} // set == false, so our placeholder rune is a space
+	return cell{r: ' ', hl: defOSC8} // set == false, so our placeholder rune is a space
 }
 
 // fragCell returns a cell tagged as a fragment (number = fn), with
 // content and format as specified.
-func fragCell(r rune, f format, fn int) cell {
-	c := newCell(r, f)
+func fragCell(r rune, f format, hl *osc8, fn int) cell {
+	c := newCell(r, f, hl)
 	c.frag = fn
 	return c
 }
 
-func newCell(r rune, f format) cell {
-	return cell{set: true, r: r, f: f}
+func newCell(r rune, f format, hl *osc8) cell {
+	return cell{set: true, r: r, f: f, hl: hl}
 }
 
 func (c cell) copy() cell {
-	return cell{r: c.r, set: c.set, f: c.f, frag: c.frag}
+	return cell{r: c.r, set: c.set, f: c.f, frag: c.frag, hl: c.hl}
 }
 
 func (c cell) format() format {
 	return c.f
 }
 
+func (c cell) hyperlink() *osc8 {
+	return c.hl
+}
+
 func (c cell) equal(other cell) bool {
-	return c.set == other.set && c.r == other.r && c.frag == other.frag && c.format().equal(other.format())
+	return c.set == other.set && c.r == other.r && c.frag == other.frag && c.format().equal(other.format()) && c.hl.equal(other.hl)
 }
 
 func (c cell) diff(dest cell) []byte {
@@ -91,25 +96,31 @@ func (c cell) diff(dest cell) []byte {
 		sb.Write(cf.diff(df))
 	}
 
+	hle := c.hl.equal(dest.hl)
+	if !hle {
+		sb.WriteString(dest.hl.ansiString())
+	}
+
 	// When computing cell difference, rewrite the rune if it's
 	// different _or_ if the format is different. If we only
 	// rewrite the format, the pen color will change, but the cell
 	// wouldn't actually be updated.
-	if dest.set != c.set || dest.r != c.r || !fe {
+	if dest.set != c.set || dest.r != c.r || !fe || !hle {
 		sb.WriteRune(dest.r)
 	}
 
 	return []byte(sb.String())
 }
 
-func (c cell) efficientDiff(dest cell, f format) []byte {
+func (c cell) efficientDiff(dest cell, f format, hl *osc8) []byte {
 	nc := c.copy()
 	nc.f = f
+	nc.hl = hl
 	return nc.diff(dest)
 }
 
 func (c cell) String() string {
-	return fmt.Sprintf("%s (f:%d) (%s)", string(c.r), c.frag, c.f.String())
+	return fmt.Sprintf("%s (f:%d) (%s; %q)", string(c.r), c.frag, c.f.String(), c.hl.data)
 }
 
 type framebuffer struct {
@@ -134,6 +145,7 @@ func (src *framebuffer) diff(dest *framebuffer) []byte {
 	var sb strings.Builder
 
 	lastF := defFmt
+	lastHL := defOSC8
 	lastCur := cursor{-1, -1}
 
 	sz := dest.ansiOSCSize()
@@ -154,12 +166,13 @@ func (src *framebuffer) diff(dest *framebuffer) []byte {
 					sb.WriteString(cur.ansiString())
 				}
 
-				d := srcCell.efficientDiff(destCell, lastF)
+				d := srcCell.efficientDiff(destCell, lastF, lastHL)
 				if len(d) == 0 {
 					d = []byte(fmt.Sprintf("%c", destCell.r))
 				}
 				sb.Write(d)
 				lastF = destCell.format()
+				lastHL = destCell.hyperlink()
 				lastCur = cur
 			}
 		}
