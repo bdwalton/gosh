@@ -112,18 +112,16 @@ func TestCellEquality(t *testing.T) {
 		c1, c2 cell
 		want   bool
 	}{
-		{cell{}, cell{}, true},
-		{cell{frag: 1}, cell{}, false},
-		{cell{f: defFmt}, cell{f: defFmt}, true},
-		{cell{f: defFmt}, cell{f: defFmt, frag: 2}, false},
-		{cell{r: 'a', f: defFmt}, cell{r: 'a', f: defFmt}, true},
-		{cell{r: 'a', f: format{attrs: UNDERLINE}}, cell{r: 'a', f: format{attrs: UNDERLINE}}, true},
-		{cell{f: defFmt}, cell{r: 'a', f: defFmt}, false},
-		{cell{r: 'a'}, cell{r: 'a', f: defFmt}, true},
-		{cell{r: 'a', frag: 1}, cell{r: 'a', f: defFmt}, false},
-		{cell{r: 'a'}, cell{r: 'b'}, false},
-		{cell{r: 'a', f: defFmt}, cell{r: 'a'}, true},
-		{cell{r: 'a', f: format{attrs: UNDERLINE}}, cell{r: 'a'}, false},
+		{defaultCell(), defaultCell(), true},
+		{fragCell('r', defFmt, 1), defaultCell(), false},
+		{fragCell('r', defFmt, 1), fragCell('r', defFmt, 2), false},
+		{newCell('r', defFmt), newCell('r', defFmt), true},
+		{defaultCell(), fragCell('r', defFmt, 2), false},
+		{newCell('a', defFmt), newCell('a', defFmt), true},
+		{newCell('a', format{attrs: UNDERLINE}), newCell('a', format{attrs: UNDERLINE}), true},
+		{defaultCell(), newCell('a', defFmt), false},
+		{fragCell('a', defFmt, 1), newCell('a', defFmt), false},
+		{newCell('a', format{attrs: UNDERLINE}), newCell('a', defFmt), false},
 	}
 
 	for i, c := range cases {
