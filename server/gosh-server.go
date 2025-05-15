@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime/pprof"
 	"strings"
 	"syscall"
 
@@ -27,6 +28,7 @@ var (
 	initCols     = flag.Int("initial_cols", vt.DEF_COLS, "Numer of columns to start the terminal with")
 	initRows     = flag.Int("initial_rows", vt.DEF_ROWS, "Numer of rows to start the terminal with")
 	portRange    = flag.String("port_range", "60000:61000", "Port range")
+	pprofFile    = flag.String("pprof_file", "", "If set, enable pprof capture to the provided file.")
 	logfile      = flag.String("logfile", "", "If set, logs will be written to this file.")
 )
 
@@ -55,6 +57,20 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
+	}
+
+	if *pprofFile != "" {
+		cp, err := os.Create(*pprofFile)
+		if err != nil {
+			slog.Error("couldn't create pprof file", "err", err)
+		} else {
+			defer cp.Close()
+			if err = pprof.StartCPUProfile(cp); err != nil {
+				slog.Error("couldn't start profiling", "err", err)
+			} else {
+				defer pprof.StopCPUProfile()
+			}
+		}
 	}
 
 	gc, err := network.NewServer(getIP(*bindServer), *portRange)
