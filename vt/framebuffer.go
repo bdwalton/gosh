@@ -47,39 +47,39 @@ func (c cell) isSecondaryFrag() bool {
 	return c.frag == FRAG_SECONDARY
 }
 
-func defaultCell() cell {
-	return cell{r: ' ', hl: defOSC8} // set == false, so our placeholder rune is a space
+func defaultCell() *cell {
+	return &cell{r: ' ', hl: defOSC8} // set == false, so our placeholder rune is a space
 }
 
 // fragCell returns a cell tagged as a fragment (number = fn), with
 // content and format as specified.
-func fragCell(r rune, f format, hl *osc8, fn int) cell {
+func fragCell(r rune, f format, hl *osc8, fn int) *cell {
 	c := newCell(r, f, hl)
 	c.frag = fn
 	return c
 }
 
-func newCell(r rune, f format, hl *osc8) cell {
-	return cell{set: true, r: r, f: f, hl: hl}
+func newCell(r rune, f format, hl *osc8) *cell {
+	return &cell{set: true, r: r, f: f, hl: hl}
 }
 
-func (c cell) copy() cell {
-	return cell{r: c.r, set: c.set, f: c.f, frag: c.frag, hl: c.hl}
+func (c *cell) copy() *cell {
+	return &cell{r: c.r, set: c.set, f: c.f, frag: c.frag, hl: c.hl}
 }
 
-func (c cell) format() format {
+func (c *cell) format() format {
 	return c.f
 }
 
-func (c cell) hyperlink() *osc8 {
+func (c *cell) hyperlink() *osc8 {
 	return c.hl
 }
 
-func (c cell) equal(other cell) bool {
+func (c *cell) equal(other *cell) bool {
 	return c.set == other.set && c.r == other.r && c.frag == other.frag && c.format().equal(other.format()) && c.hl.equal(other.hl)
 }
 
-func (c cell) diff(dest cell) []byte {
+func (c *cell) diff(dest *cell) []byte {
 	// Rely on consumer of the diff having accepted the
 	// FRAG_SECONDARY already and doing the right things with
 	// that.
@@ -112,10 +112,9 @@ func (c cell) diff(dest cell) []byte {
 	return []byte(sb.String())
 }
 
-func (c cell) efficientDiff(dest cell, f format, hl *osc8) []byte {
-	nc := c.copy()
-	nc.f = f
-	nc.hl = hl
+func (c *cell) efficientDiff(dest *cell, f format, hl *osc8) []byte {
+	nc := newCell(c.r, f, hl)
+	nc.set = c.set
 	return nc.diff(dest)
 }
 
@@ -124,11 +123,11 @@ func (c cell) String() string {
 }
 
 type framebuffer struct {
-	data [][]cell
+	data [][]*cell
 }
 
 func newFramebuffer(rows, cols int) *framebuffer {
-	d := make([][]cell, rows, rows)
+	d := make([][]*cell, rows, rows)
 	for r := 0; r < rows; r++ {
 		d[r] = newRow(cols)
 	}
@@ -186,11 +185,11 @@ func (f *framebuffer) copy() *framebuffer {
 	cols := f.cols()
 
 	nf := &framebuffer{
-		data: make([][]cell, rows, rows),
+		data: make([][]*cell, rows, rows),
 	}
 
 	for row := range f.data {
-		nf.data[row] = make([]cell, cols, cols)
+		nf.data[row] = make([]*cell, cols, cols)
 		copy(nf.data[row], f.row(row))
 	}
 
@@ -319,7 +318,7 @@ func (f *framebuffer) resetRows(from, to int) bool {
 	return true
 }
 
-func (f *framebuffer) setCells(rowFrom, rowTo, colFrom, colTo int, c cell) {
+func (f *framebuffer) setCells(rowFrom, rowTo, colFrom, colTo int, c *cell) {
 	fr, err := f.subRegion(rowFrom, rowTo, colFrom, colTo)
 	if err != nil {
 		slog.Debug("couldn't get region to set cells", "err", err)
@@ -329,8 +328,8 @@ func (f *framebuffer) setCells(rowFrom, rowTo, colFrom, colTo int, c cell) {
 	fr.fill(c)
 }
 
-func newRow(cols int) []cell {
-	row := make([]cell, cols, cols)
+func newRow(cols int) []*cell {
+	row := make([]*cell, cols, cols)
 	for i := 0; i < len(row); i++ {
 		row[i] = defaultCell()
 	}
@@ -352,13 +351,13 @@ func (f *framebuffer) validPoint(row, col int) bool {
 	return true
 }
 
-func (f *framebuffer) setCell(row, col int, c cell) {
+func (f *framebuffer) setCell(row, col int, c *cell) {
 	if f.validPoint(row, col) {
 		f.row(row)[col] = c
 	}
 }
 
-func (f *framebuffer) cell(row, col int) (cell, error) {
+func (f *framebuffer) cell(row, col int) (*cell, error) {
 	if f.validPoint(row, col) {
 		return f.row(row)[col], nil
 	}
@@ -366,7 +365,7 @@ func (f *framebuffer) cell(row, col int) (cell, error) {
 	return defaultCell(), fmt.Errorf("invalid coordinates (%d, %d): %w", col, row, fbInvalidCell)
 }
 
-func (f *framebuffer) row(row int) []cell {
+func (f *framebuffer) row(row int) []*cell {
 	return f.data[row]
 }
 
@@ -382,7 +381,7 @@ func (f *framebuffer) subRegion(t, b, l, r int) (*framebuffer, error) {
 
 	sz := b - t + 1
 	fb := &framebuffer{
-		data: make([][]cell, sz, sz),
+		data: make([][]*cell, sz, sz),
 	}
 
 	for i := 0; i < sz; i++ {
@@ -396,7 +395,7 @@ func (f *framebuffer) subRegion(t, b, l, r int) (*framebuffer, error) {
 	return fb, nil
 }
 
-func (f *framebuffer) fill(c cell) {
+func (f *framebuffer) fill(c *cell) {
 	for row := range f.data {
 		for col := range f.data[row] {
 			f.setCell(row, col, c)

@@ -25,7 +25,7 @@ func fillBuffer(fb *framebuffer) *framebuffer {
 
 func TestCellDiff(t *testing.T) {
 	cases := []struct {
-		src, dest cell
+		src, dest *cell
 		want      string
 	}{
 		{
@@ -79,7 +79,7 @@ func TestCellDiff(t *testing.T) {
 
 func TestCellEfficientDiff(t *testing.T) {
 	cases := []struct {
-		src, dest cell
+		src, dest *cell
 		f         format
 		hl        *osc8
 		want      string
@@ -138,7 +138,7 @@ func TestCellEfficientDiff(t *testing.T) {
 
 func TestCellEquality(t *testing.T) {
 	cases := []struct {
-		c1, c2 cell
+		c1, c2 *cell
 		want   bool
 	}{
 		{defaultCell(), defaultCell(), true},
@@ -252,7 +252,7 @@ func TestResetRows(t *testing.T) {
 func TestSetAndGetCell(t *testing.T) {
 	cases := []struct {
 		row, col int
-		c        cell
+		c        *cell
 		wantErr  error
 	}{
 		{5, 5, defaultCell(), nil},
