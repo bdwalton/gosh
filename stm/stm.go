@@ -238,7 +238,11 @@ func (s *stmObj) Run() {
 				// later.
 				//
 				// https://github.com/mobile-shell/mosh/issues/1087#issuecomment-641801909
-				nowT := s.term.Copy()
+				nowT, ok := s.term.CopyIfNewer(s.remState)
+				if !ok {
+					continue
+				}
+
 				ntm := nowT.LastChange()
 				s.smux.Lock()
 				if s.remState.Before(ntm) && s.shouldSend() {
@@ -544,7 +548,7 @@ func (s *stmObj) applyState(msg *goshpb.Payload) {
 	// happen because of a dropped ACK or because the
 	// server decides to make a diff to an older state
 	// instead of a more recent one, etc.
-	targT := srcT.Copy()
+	targT := srcT.ForceCopy()
 	n, err := targT.Write(diff)
 	if err != nil || n != len(diff) {
 		slog.Error("error applying diff", "err", err, "n", n)

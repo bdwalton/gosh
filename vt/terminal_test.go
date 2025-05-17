@@ -309,7 +309,7 @@ func TestCarriageReturn(t *testing.T) {
 }
 
 func testTerminalCopy(term *Terminal) *Terminal {
-	c := term.Copy()
+	c := term.copy()
 	c.lastChg = time.Now()
 	return c
 }
@@ -354,11 +354,11 @@ func TestTerminalDiff(t *testing.T) {
 	t19, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t19.Resize(10, 10)
 	t19.fb.setCell(0, 0, newCell('A', defFmt, defOSC8))
-	t20 := t19.Copy()
+	t20 := t19.copy()
 	t20.fb.setCell(0, 1, newCell('*', defFmt, defOSC8))
 	t20.lastChg = time.Now()
 	t21, _ := NewTerminal(DEF_ROWS, DEF_COLS)
-	t22 := t21.Copy()
+	t22 := t21.copy()
 	t22.lastChg = time.Now()
 	t22.cur = cursor{10, 10}
 	t23 := testTerminalCopy(t22)
@@ -644,7 +644,7 @@ func TestStepTabs(t *testing.T) {
 
 func TestIRM(t *testing.T) {
 	t1, _ := NewTerminal(DEF_ROWS, DEF_COLS)
-	want1 := t1.Copy()
+	want1 := t1.copy()
 	t1.print('a')
 	t1.print('b')
 	t1.setMode(IRM, "", CSI_MODE_SET)
@@ -657,7 +657,7 @@ func TestIRM(t *testing.T) {
 	want1.lastChg = time.Now()
 
 	t2, _ := NewTerminal(DEF_ROWS, DEF_COLS)
-	want2 := t2.Copy()
+	want2 := t2.copy()
 	want2.lastChg = time.Now()
 	t2.cursorMoveAbs(0, 79)
 	t2.print('b')
@@ -670,7 +670,7 @@ func TestIRM(t *testing.T) {
 
 	t3, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t3.setMode(DECAWM, "?", CSI_MODE_RESET)
-	want3 := t3.Copy()
+	want3 := t3.copy()
 	want3.lastChg = time.Now()
 	t3.setMode(IRM, "", CSI_MODE_SET)
 	t3.cursorMoveAbs(0, 78)
@@ -682,7 +682,7 @@ func TestIRM(t *testing.T) {
 	want3.cursorMoveAbs(0, 78) // because t3 has insert on
 
 	t4, _ := NewTerminal(DEF_ROWS, DEF_COLS)
-	want4 := t4.Copy()
+	want4 := t4.copy()
 	want4.lastChg = time.Now()
 	t4.print('x')
 	t4.cursorMoveAbs(0, 0)
@@ -741,7 +741,7 @@ func TestDeleteChars(t *testing.T) {
 		prtCmd{0, 1, ""},
 	}, nil)
 
-	t4 := t1.Copy()
+	t4 := t1.copy()
 	want4 := mt([]prtCmd{
 		prtCmd{0, 0, "a"},
 	}, nil)

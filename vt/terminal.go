@@ -204,9 +204,25 @@ func (t *Terminal) Write(p []byte) (int, error) {
 	return t.ptyF.Write(inp)
 }
 
-func (t *Terminal) Copy() *Terminal {
+func (t *Terminal) CopyIfNewer(ts time.Time) (*Terminal, bool) {
 	t.mux.Lock()
 	defer t.mux.Unlock()
+
+	if t.lastChg.After(ts) {
+		return t.copy(), true
+	}
+
+	return nil, false
+}
+
+func (t *Terminal) ForceCopy() *Terminal {
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
+	return t.copy()
+}
+
+func (t *Terminal) copy() *Terminal {
 
 	modes := make(map[string]*mode)
 	for name, m := range t.modes {
