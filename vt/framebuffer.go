@@ -27,7 +27,7 @@ const (
 type cell struct {
 	set bool // true if non-default
 	r   rune
-	f   format
+	f   *format
 	hl  *osc8
 	// when non-zero, indicates this cell participates in width 2 character
 	// 1 = primary rune
@@ -48,18 +48,18 @@ func (c cell) isSecondaryFrag() bool {
 }
 
 func defaultCell() *cell {
-	return &cell{r: ' ', hl: defOSC8} // set == false, so our placeholder rune is a space
+	return &cell{r: ' ', f: defFmt, hl: defOSC8} // set == false, so our placeholder rune is a space
 }
 
 // fragCell returns a cell tagged as a fragment (number = fn), with
 // content and format as specified.
-func fragCell(r rune, f format, hl *osc8, fn int) *cell {
+func fragCell(r rune, f *format, hl *osc8, fn int) *cell {
 	c := newCell(r, f, hl)
 	c.frag = fn
 	return c
 }
 
-func newCell(r rune, f format, hl *osc8) *cell {
+func newCell(r rune, f *format, hl *osc8) *cell {
 	return &cell{set: true, r: r, f: f, hl: hl}
 }
 
@@ -67,7 +67,7 @@ func (c *cell) copy() *cell {
 	return &cell{r: c.r, set: c.set, f: c.f, frag: c.frag, hl: c.hl}
 }
 
-func (c *cell) format() format {
+func (c *cell) format() *format {
 	return c.f
 }
 
@@ -112,13 +112,13 @@ func (c *cell) diff(dest *cell) []byte {
 	return []byte(sb.String())
 }
 
-func (c *cell) efficientDiff(dest *cell, f format, hl *osc8) []byte {
+func (c *cell) efficientDiff(dest *cell, f *format, hl *osc8) []byte {
 	nc := newCell(c.r, f, hl)
 	nc.set = c.set
 	return nc.diff(dest)
 }
 
-func (c cell) String() string {
+func (c *cell) String() string {
 	return fmt.Sprintf("%s (f:%d) (%s; %q)", string(c.r), c.frag, c.f.String(), c.hl.data)
 }
 

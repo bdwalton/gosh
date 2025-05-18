@@ -41,6 +41,10 @@ func (c color) ansiString(set int) string {
 	}
 }
 
+func newDefaultColor() color {
+	return color{colType: UNSET, data: []int{}}
+}
+
 func newColor(col int) color {
 	return color{colType: BASIC, data: []int{col}}
 }

@@ -109,36 +109,33 @@ func TestPrintCharsets(t *testing.T) {
 	csg0s := &charset{g: [2]bool{true, false}}
 	csg1s := &charset{set: 1, g: [2]bool{false, true}}
 
-	fb := newFramebuffer(10, 10)
-
-	fb1w := fb.copy()
+	fb1w := newFramebuffer(10, 10)
 	fb1w.setCell(0, 0, newCell('a', defFmt, defOSC8))
 
-	fb2w := fb.copy()
+	fb2w := newFramebuffer(10, 10)
 	fb2w.setCell(0, 0, newCell('a', defFmt, defOSC8))
 
-	fb3w := fb.copy()
+	fb3w := newFramebuffer(10, 10)
 	fb3w.setCell(0, 0, newCell('£', defFmt, defOSC8))
 
-	fb4w := fb.copy()
+	fb4w := newFramebuffer(10, 10)
 	fb4w.setCell(0, 0, newCell('┼', defFmt, defOSC8))
 
 	cases := []struct {
-		fb   *framebuffer
 		cs   *charset
 		r    rune
 		want *framebuffer
 	}{
-		{fb, cs1, 'a', fb1w},
-		{fb, csg1, 'a', fb2w},
-		{fb, csg0s, '}', fb3w},
-		{fb, csg1s, 'n', fb4w},
+		{cs1, 'a', fb1w},
+		{csg1, 'a', fb2w},
+		{csg0s, '}', fb3w},
+		{csg1s, 'n', fb4w},
 	}
 
 	for i, c := range cases {
-		term, _ := NewTerminal(DEF_ROWS, DEF_COLS)
-		term.fb = c.fb.copy()
+		term, _ := NewTerminal(10, 10)
 		term.cs = c.cs
+		term.curF = defFmt
 		term.print(c.r)
 		if !term.fb.equal(c.want) {
 			t.Errorf("%d: Got\n%v\nWanted:\n%v\n", i, term.fb.String(), c.want.String())
@@ -322,7 +319,7 @@ func TestTerminalDiff(t *testing.T) {
 	t3, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t3.Resize(20, 15)
 	t4 := testTerminalCopy(t3)
-	t4.fb.setCell(5, 7, newCell('a', format{fg: newColor(FG_RED)}, defOSC8))
+	t4.fb.setCell(5, 7, newCell('a', &format{fg: newColor(FG_RED)}, defOSC8))
 	t5 := testTerminalCopy(t4)
 	t5.title = "mytitle"
 	t6 := testTerminalCopy(t5)
@@ -345,9 +342,9 @@ func TestTerminalDiff(t *testing.T) {
 	t13.vertMargin = newMargin(1, 6)
 	t14, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t15 := testTerminalCopy(t14)
-	t15.curF = format{fg: newColor(FG_RED), attrs: UNDERLINE}
+	t15.curF = &format{fg: newColor(FG_RED), attrs: UNDERLINE}
 	t16 := testTerminalCopy(t15)
-	t16.curF = format{fg: newColor(FG_YELLOW), attrs: BOLD | UNDERLINE}
+	t16.curF = &format{fg: newColor(FG_YELLOW), attrs: BOLD | UNDERLINE}
 	t17 := testTerminalCopy(t1)
 	t17.setMode(DECOM, "?", CSI_MODE_SET) // no transport, no diff
 	t17.setMode(IRM, "", CSI_MODE_SET)    // no transport, no diff

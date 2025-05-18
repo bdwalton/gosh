@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var defFmt = format{}
+var defFmt = &format{fg: newDefaultColor(), bg: newDefaultColor()}
 
 const FMT_RESET = "\x1b[m"
 
@@ -48,11 +48,11 @@ func setAttr(orig, new uint16, val bool) uint16 {
 	return orig &^ new
 }
 
-func (f format) attrIsSet(attr uint16) bool {
+func (f *format) attrIsSet(attr uint16) bool {
 	return (f.attrs & attr) != 0
 }
 
-func (src format) diff(dest format) []byte {
+func (src *format) diff(dest *format) []byte {
 	if !dest.equal(src) && dest.equal(defFmt) {
 		return []byte(FMT_RESET)
 	}
@@ -89,7 +89,7 @@ func (f *format) String() string {
 	return fmt.Sprintf("fg: %s; bg: %s; bold: %t, underline: %t, blink: %t, reversed: %t, invisible: %t, strikeout: %t", f.fg.ansiString(SET_FG), f.fg.ansiString(SET_BG), f.attrIsSet(BOLD), f.attrIsSet(UNDERLINE), f.attrIsSet(BLINK), f.attrIsSet(REVERSED), f.attrIsSet(INVISIBLE), f.attrIsSet(STRIKEOUT))
 }
 
-func (f format) equal(other format) bool {
+func (f *format) equal(other *format) bool {
 	if !f.bg.equal(other.bg) {
 		return false
 	}
@@ -105,10 +105,10 @@ func (f format) equal(other format) bool {
 	return true
 }
 
-func formatFromParams(curF format, params *parameters) format {
-	f := curF
+func formatFromParams(curF *format, params *parameters) *format {
+	f := &format{bg: curF.bg, fg: curF.fg, attrs: curF.attrs}
 	if params.numItems() == 0 {
-		return format{}
+		return defFmt
 	}
 
 	for {
@@ -119,7 +119,7 @@ func formatFromParams(curF format, params *parameters) format {
 
 		switch {
 		case item == RESET:
-			f = format{}
+			f = &format{}
 		case item == INTENSITY_BOLD:
 			if f.attrIsSet(BOLD_FAINT) {
 				// already handled

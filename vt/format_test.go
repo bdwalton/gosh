@@ -7,36 +7,36 @@ import (
 
 func TestFormatEquality(t *testing.T) {
 	cases := []struct {
-		f1, f2 format
+		f1, f2 *format
 		want   bool
 	}{
 		{
-			format{bg: newColor(BG_RED), attrs: UNDERLINE},
-			format{bg: newColor(BG_RED), attrs: UNDERLINE},
+			&format{bg: newColor(BG_RED), attrs: UNDERLINE},
+			&format{bg: newColor(BG_RED), attrs: UNDERLINE},
 			true,
 		},
 		{
-			format{bg: newColor(BG_GREEN), attrs: UNDERLINE},
-			format{bg: newColor(BG_RED), attrs: UNDERLINE},
+			&format{bg: newColor(BG_GREEN), attrs: UNDERLINE},
+			&format{bg: newColor(BG_RED), attrs: UNDERLINE},
 			false,
 		},
 		{
-			format{bg: newColor(BG_RED), attrs: BOLD},
-			format{bg: newColor(BG_RED), attrs: BOLD},
+			&format{bg: newColor(BG_RED), attrs: BOLD},
+			&format{bg: newColor(BG_RED), attrs: BOLD},
 			true,
 		},
 		{
-			format{bg: newColor(BG_RED), fg: newColor(FG_YELLOW), attrs: BOLD},
-			format{bg: newColor(BG_RED), attrs: BOLD},
+			&format{bg: newColor(BG_RED), fg: newColor(FG_YELLOW), attrs: BOLD},
+			&format{bg: newColor(BG_RED), attrs: BOLD},
 			false,
 		},
 		{
-			format{fg: newColor(FG_RED), bg: newColor(BG_YELLOW), attrs: STRIKEOUT},
-			format{fg: newColor(FG_RED), attrs: STRIKEOUT},
+			&format{fg: newColor(FG_RED), bg: newColor(BG_YELLOW), attrs: STRIKEOUT},
+			&format{fg: newColor(FG_RED), attrs: STRIKEOUT},
 			false,
 		},
 		{
-			format{}, defFmt, true,
+			&format{}, defFmt, true,
 		},
 		{
 			defFmt, defFmt, true,
@@ -52,59 +52,59 @@ func TestFormatEquality(t *testing.T) {
 
 func TestFormatApplication(t *testing.T) {
 	cases := []struct {
-		initial format
+		initial *format
 		params  *parameters
-		want    format
+		want    *format
 	}{
 		{
-			format{bg: newColor(BG_BLUE), attrs: BOLD | UNDERLINE},
+			&format{bg: newColor(BG_BLUE), attrs: BOLD | UNDERLINE},
 			paramsFromInts([]int{}),
-			format{},
+			&format{},
 		},
 		{
-			format{bg: newColor(BG_BLUE), attrs: BOLD | UNDERLINE},
+			&format{bg: newColor(BG_BLUE), attrs: BOLD | UNDERLINE},
 			paramsFromInts([]int{BG_BLACK, UNDERLINE_ON, STRIKEOUT_ON}),
-			format{bg: newColor(BG_BLACK), attrs: BOLD | UNDERLINE | STRIKEOUT},
+			&format{bg: newColor(BG_BLACK), attrs: BOLD | UNDERLINE | STRIKEOUT},
 		},
 		{
-			format{},
+			&format{},
 			paramsFromInts([]int{FG_BRIGHT_RED}),
-			format{fg: newColor(FG_BRIGHT_RED)},
+			&format{fg: newColor(FG_BRIGHT_RED)},
 		},
 		{
-			format{},
+			&format{},
 			paramsFromInts([]int{FG_BRIGHT_RED, BG_BLACK, UNDERLINE_ON, STRIKEOUT_ON}),
-			format{fg: newColor(FG_BRIGHT_RED), bg: newColor(BG_BLACK), attrs: UNDERLINE | STRIKEOUT},
+			&format{fg: newColor(FG_BRIGHT_RED), bg: newColor(BG_BLACK), attrs: UNDERLINE | STRIKEOUT},
 		},
 		{
-			format{bg: newColor(BG_BLUE)},
+			&format{bg: newColor(BG_BLUE)},
 			paramsFromInts([]int{INTENSITY_BOLD, SET_FG, 2, 212, 219, 123, STRIKEOUT_ON, STRIKEOUT_OFF}),
-			format{fg: newRGBColor([]int{212, 219, 123}), bg: newColor(BG_BLUE), attrs: BOLD},
+			&format{fg: newRGBColor([]int{212, 219, 123}), bg: newColor(BG_BLUE), attrs: BOLD},
 		},
 		{
-			format{bg: newColor(BG_BLUE), attrs: BOLD | UNDERLINE},
+			&format{bg: newColor(BG_BLUE), attrs: BOLD | UNDERLINE},
 			paramsFromInts([]int{INTENSITY_FAINT}),
-			format{bg: newColor(BG_BLUE), attrs: BOLD_FAINT | UNDERLINE},
+			&format{bg: newColor(BG_BLUE), attrs: BOLD_FAINT | UNDERLINE},
 		},
 		{
-			format{bg: newColor(BG_BLUE), attrs: FAINT | UNDERLINE},
+			&format{bg: newColor(BG_BLUE), attrs: FAINT | UNDERLINE},
 			paramsFromInts([]int{INTENSITY_BOLD}),
-			format{bg: newColor(BG_BLUE), attrs: BOLD_FAINT | UNDERLINE},
+			&format{bg: newColor(BG_BLUE), attrs: BOLD_FAINT | UNDERLINE},
 		},
 		{
-			format{bg: newColor(BG_BLUE), attrs: BOLD_FAINT | UNDERLINE},
+			&format{bg: newColor(BG_BLUE), attrs: BOLD_FAINT | UNDERLINE},
 			paramsFromInts([]int{INTENSITY_NORMAL}),
-			format{bg: newColor(BG_BLUE), attrs: UNDERLINE},
+			&format{bg: newColor(BG_BLUE), attrs: UNDERLINE},
 		},
 		{
-			format{bg: newColor(BG_BLUE), attrs: BOLD | UNDERLINE},
+			&format{bg: newColor(BG_BLUE), attrs: BOLD | UNDERLINE},
 			paramsFromInts([]int{INTENSITY_NORMAL}),
-			format{bg: newColor(BG_BLUE), attrs: UNDERLINE},
+			&format{bg: newColor(BG_BLUE), attrs: UNDERLINE},
 		},
 		{
-			format{bg: newColor(BG_BLUE), attrs: FAINT | UNDERLINE},
+			&format{bg: newColor(BG_BLUE), attrs: FAINT | UNDERLINE},
 			paramsFromInts([]int{INTENSITY_NORMAL}),
-			format{bg: newColor(BG_BLUE), attrs: UNDERLINE},
+			&format{bg: newColor(BG_BLUE), attrs: UNDERLINE},
 		},
 	}
 
@@ -117,69 +117,69 @@ func TestFormatApplication(t *testing.T) {
 
 func TestFormatDiff(t *testing.T) {
 	cases := []struct {
-		srcF, destF format
+		srcF, destF *format
 		want        string
 	}{
 		{
-			format{fg: newColor(FG_WHITE), attrs: UNDERLINE},
-			format{fg: newColor(FG_WHITE), attrs: UNDERLINE},
+			&format{fg: newColor(FG_WHITE), attrs: UNDERLINE},
+			&format{fg: newColor(FG_WHITE), attrs: UNDERLINE},
 			"",
 		},
 		{
 			// Any diff against "dest == default" should just reset the pen
-			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
+			&format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
 			defFmt,
 			FMT_RESET,
 		},
 		{
-			format{fg: newRGBColor([]int{10, 20, 30})},
-			format{bg: newColor(BG_YELLOW)},
+			&format{fg: newRGBColor([]int{10, 20, 30})},
+			&format{bg: newColor(BG_YELLOW)},
 			fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, CSI, FG_DEF, CSI_SGR, ESC, CSI, BG_YELLOW, CSI_SGR),
 		},
 		{
 			defFmt,
-			format{fg: newColor(FG_WHITE), attrs: BOLD},
+			&format{fg: newColor(FG_WHITE), attrs: BOLD},
 			fmt.Sprintf("%c%c%dm%c%c%d%c", ESC, CSI, FG_WHITE, ESC, CSI, INTENSITY_BOLD, CSI_SGR),
 		},
 		{
-			format{fg: newColor(FG_WHITE), attrs: STRIKEOUT},
-			format{bg: newAnsiColor(243), attrs: REVERSED},
+			&format{fg: newColor(FG_WHITE), attrs: STRIKEOUT},
+			&format{bg: newAnsiColor(243), attrs: REVERSED},
 			fmt.Sprintf("%c%c%d%c%c%c%d;5;%d%c%c%c%d;%d%c", ESC, CSI, FG_DEF, CSI_SGR, ESC, CSI, SET_BG, 243, CSI_SGR, ESC, CSI, REVERSED_ON, STRIKEOUT_OFF, CSI_SGR),
 		},
 		{
-			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
-			format{fg: newRGBColor([]int{30, 20, 10}), bg: newRGBColor([]int{10, 20, 30})},
+			&format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
+			&format{fg: newRGBColor([]int{30, 20, 10}), bg: newRGBColor([]int{10, 20, 30})},
 			fmt.Sprintf("%c%c%d:2:%d:%d:%d%c%c%c%d:2:%d:%d:%d%c", ESC, CSI, SET_FG, 30, 20, 10, CSI_SGR, ESC, CSI, SET_BG, 10, 20, 30, CSI_SGR),
 		},
 		{
-			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
-			format{fg: newColor(FG_BLUE), bg: newAnsiColor(124)},
+			&format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
+			&format{fg: newColor(FG_BLUE), bg: newAnsiColor(124)},
 			fmt.Sprintf("%c%c%d%c%c%c%d;5;%d%c", ESC, CSI, FG_BLUE, CSI_SGR, ESC, CSI, SET_BG, 124, CSI_SGR),
 		},
 
 		{
-			format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
-			format{fg: newRGBColor([]int{10, 20, 30}), bg: newAnsiColor(124)},
+			&format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
+			&format{fg: newRGBColor([]int{10, 20, 30}), bg: newAnsiColor(124)},
 			fmt.Sprintf("%c%c%d;5;%d%c", ESC, CSI, SET_BG, 124, CSI_SGR),
 		},
 		{
 			defFmt,
-			format{attrs: UNDERLINE},
+			&format{attrs: UNDERLINE},
 			fmt.Sprintf("%c%c%d%c", ESC, CSI, UNDERLINE_ON, CSI_SGR),
 		},
 		{
 			defFmt,
-			format{attrs: BOLD_FAINT},
+			&format{attrs: BOLD_FAINT},
 			fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, INTENSITY_BOLD, INTENSITY_FAINT, CSI_SGR),
 		},
 		{
-			format{attrs: BOLD_FAINT},
-			format{attrs: BOLD},
+			&format{attrs: BOLD_FAINT},
+			&format{attrs: BOLD},
 			fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, INTENSITY_NORMAL, INTENSITY_BOLD, CSI_SGR),
 		},
 		{
-			format{attrs: BOLD_FAINT},
-			format{attrs: FAINT},
+			&format{attrs: BOLD_FAINT},
+			&format{attrs: FAINT},
 			fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, INTENSITY_NORMAL, INTENSITY_FAINT, CSI_SGR),
 		},
 	}

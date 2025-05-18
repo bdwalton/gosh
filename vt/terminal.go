@@ -42,7 +42,7 @@ type Terminal struct {
 	titlePfx              string
 	savedTitle, savedIcon string
 	cur, savedCur         cursor
-	curF, savedF          format
+	curF, savedF          *format
 	hl, savedHL           *osc8
 	tabs                  []bool
 
@@ -79,6 +79,8 @@ func NewTerminal(rows, cols int) (*Terminal, error) {
 		p:       newParser(),
 		wait:    func() {},
 		stop:    func() {},
+		curF:    defFmt,
+		savedF:  defFmt,
 		cs:      &charset{},
 		hl:      defOSC8,
 	}, nil
@@ -656,6 +658,7 @@ func (t *Terminal) softReset() {
 	t.horizMargin = margin{}
 	t.savedCur = cursor{}
 	t.curF = defFmt
+	t.savedF = defFmt
 	t.hl = defOSC8
 }
 
