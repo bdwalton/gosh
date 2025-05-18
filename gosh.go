@@ -21,6 +21,7 @@ var (
 	goshSrv      = flag.String("gosh_server", "gosh-server", "The path to the gosh-server executable on the remote system.")
 	logfile      = flag.String("logfile", "", "If set, client logs will be written to this file.")
 	dest         = flag.String("dest", "localhost", "The {username@}localhost to connect to.")
+	pprofFile    = flag.String("pprof_file", "", "If set, enable pprof capture to the provided file.")
 	remLog       = flag.String("remote_logfile", "", "If set, the remote gosh-server will be asked to log to this file.")
 	useSystemd   = flag.Bool("use_systemd", true, "If true, execute the remote server under systemd so the detached process outlives the ssh connection.")
 )
@@ -68,6 +69,10 @@ func runServer() (*connectData, error) {
 
 	if *agentForward {
 		args = append(args, "--ssh_agent_forwarding")
+	}
+
+	if *pprofFile != "" {
+		args = append(args, fmt.Sprintf("--pprof_file=%q", *pprofFile))
 	}
 
 	args = append(args, "--bind_server", *bindServer)
