@@ -40,12 +40,12 @@ type format struct {
 	attrs  uint16 // a bitmap of which of the attrs (^ above) are enabled
 }
 
-func setAttr(orig, new uint16, val bool) uint16 {
+func (f *format) setAttr(attr uint16, val bool) {
 	if val {
-		return orig | new
+		f.attrs |= attr
+	} else {
+		f.attrs &^= attr
 	}
-
-	return orig &^ new
 }
 
 func (f *format) attrIsSet(attr uint16) bool {
@@ -105,11 +105,11 @@ func (f *format) equal(other *format) bool {
 	return true
 }
 
-	f := &format{bg: curF.bg, fg: curF.fg, attrs: curF.attrs}
 func applyFormat(curF *format, params *parameters) *format {
 	if params.numItems() == 0 {
 		return defFmt
 	}
+	f := &format{bg: curF.bg, fg: curF.fg, attrs: curF.attrs}
 
 	for {
 		item, ok := params.consumeItem()
@@ -119,16 +119,16 @@ func applyFormat(curF *format, params *parameters) *format {
 
 		switch {
 		case item == RESET:
-			f = &format{}
+			f = defFmt
 		case item == INTENSITY_BOLD:
 			if f.attrIsSet(BOLD_FAINT) {
 				// already handled
 			} else {
 				if f.attrIsSet(FAINT) {
-					f.attrs = setAttr(f.attrs, FAINT, false)
-					f.attrs = setAttr(f.attrs, BOLD_FAINT, true)
+					f.setAttr(FAINT, false)
+					f.setAttr(BOLD_FAINT, true)
 				} else {
-					f.attrs = setAttr(f.attrs, BOLD, true)
+					f.setAttr(BOLD, true)
 				}
 			}
 		case item == INTENSITY_FAINT:
@@ -136,26 +136,26 @@ func applyFormat(curF *format, params *parameters) *format {
 				// already handled
 			} else {
 				if f.attrIsSet(BOLD) {
-					f.attrs = setAttr(f.attrs, BOLD, false)
-					f.attrs = setAttr(f.attrs, BOLD_FAINT, true)
+					f.setAttr(BOLD, false)
+					f.setAttr(BOLD_FAINT, true)
 				} else {
-					f.attrs = setAttr(f.attrs, FAINT, true)
+					f.setAttr(FAINT, true)
 				}
 			}
 		case item == INTENSITY_NORMAL:
-			f.attrs = setAttr(f.attrs, BOLD|FAINT|BOLD_FAINT, false)
+			f.setAttr(BOLD|FAINT|BOLD_FAINT, false)
 		case item == UNDERLINE_ON || item == UNDERLINE_OFF:
-			f.attrs = setAttr(f.attrs, UNDERLINE, (item < 10))
+			f.setAttr(UNDERLINE, item < 10)
 		case item == ITALIC_ON || item == ITALIC_OFF:
-			f.attrs = setAttr(f.attrs, ITALIC, (item < 10))
+			f.setAttr(ITALIC, item < 10)
 		case item == BLINK_ON || item == BLINK_OFF:
-			f.attrs = setAttr(f.attrs, BLINK, (item < 10))
+			f.setAttr(BLINK, item < 10)
 		case item == REVERSED_ON || item == REVERSED_OFF:
-			f.attrs = setAttr(f.attrs, REVERSED, (item < 10))
+			f.setAttr(REVERSED, item < 10)
 		case item == INVISIBLE_ON || item == INVISIBLE_OFF:
-			f.attrs = setAttr(f.attrs, INVISIBLE, (item < 10))
+			f.setAttr(INVISIBLE, item < 10)
 		case item == STRIKEOUT_ON || item == STRIKEOUT_OFF:
-			f.attrs = setAttr(f.attrs, STRIKEOUT, (item < 10))
+			f.setAttr(STRIKEOUT, item < 10)
 		case (item >= 30 && item <= 37) || (item >= 90 && item <= 97) || item == 39:
 			// item == 39 is foreground
 			// default. we treat that as a regular
