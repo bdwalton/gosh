@@ -62,6 +62,7 @@ type Terminal struct {
 }
 
 func NewTerminal(rows, cols int) (*Terminal, error) {
+	slog.Debug("creating new terminal", "rows", rows, "cols", cols)
 	// On the client end, we don't need a file as we back Write()
 	// with direct parser input instead of routing it via the pty
 	// to the program we're running.
@@ -133,7 +134,7 @@ func (t *Terminal) motd() {
 		}
 
 		if err := t.doParse(bufio.NewReader(bytes.NewReader(mfd))); err != nil {
-			slog.Debug("motd doParse error", "err", err)
+			slog.Debug("motd doParse error", "f", motdF, "err", err)
 		}
 	}
 }
