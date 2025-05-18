@@ -876,7 +876,7 @@ func (t *Terminal) handleCSI(params *parameters, data string, cmd rune) {
 		if data != "" {
 			slog.Debug("swallowing xterm specific key modifier set/reset or query", "params", params, "data", data)
 		} else {
-			t.curF = formatFromParams(t.curF, params)
+			t.curF = applyFormat(t.curF, params)
 		}
 	case CSI_DECST8C:
 		t.resetTabs(params, data)

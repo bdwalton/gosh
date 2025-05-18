@@ -109,7 +109,7 @@ func TestFormatApplication(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		if got := formatFromParams(c.initial, c.params); !c.want.equal(got) {
+		if got := applyFormat(c.initial, c.params); !c.want.equal(got) {
 			t.Errorf("%d: Got\n\t%s, wanted\n\t%s after applying %v to %s", i, got.String(), c.want.String(), c.params, c.initial.String())
 		}
 	}

@@ -105,8 +105,8 @@ func (f *format) equal(other *format) bool {
 	return true
 }
 
-func formatFromParams(curF *format, params *parameters) *format {
 	f := &format{bg: curF.bg, fg: curF.fg, attrs: curF.attrs}
+func applyFormat(curF *format, params *parameters) *format {
 	if params.numItems() == 0 {
 		return defFmt
 	}
