@@ -71,6 +71,7 @@ func main() {
 				defer pprof.StopCPUProfile()
 			}
 		}
+		slog.Debug("enabled cpu profiling", "output", *pprofFile)
 	}
 
 	gc, err := network.NewServer(getIP(*bindServer), *portRange)
