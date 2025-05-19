@@ -136,6 +136,10 @@ func (gc *GConn) LocalPort() int {
 	return gc.c.LocalAddr().(*net.UDPAddr).Port
 }
 
+func (gc *GConn) RemoteAddr() string {
+	return gc.c.RemoteAddr().String()
+}
+
 func (gc *GConn) Close() error {
 	return gc.c.Close()
 }

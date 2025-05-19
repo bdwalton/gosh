@@ -45,6 +45,7 @@ type stmObj struct {
 	shutdown bool
 	wg       sync.WaitGroup
 
+	remHost     string
 	remoteAgent net.Listener
 	localAgent  net.Conn
 	socketPath  string
@@ -81,8 +82,9 @@ func new(remote io.ReadWriter, t *vt.Terminal, st uint8) *stmObj {
 	return s
 }
 
-func NewClient(remote io.ReadWriter, t *vt.Terminal, sock net.Conn) *stmObj {
+func NewClient(remHost string, remote io.ReadWriter, t *vt.Terminal, sock net.Conn) *stmObj {
 	s := new(remote, t, CLIENT)
+	s.remHost = remHost
 	s.localAgent = sock
 	s.socketPath = sock.RemoteAddr().String()
 	return s
@@ -97,7 +99,7 @@ func NewServer(remote io.ReadWriter, t *vt.Terminal, sock net.Listener) *stmObj 
 
 func (s *stmObj) heartbeat() {
 	secs := 1
-	msg := "Remote last seen %s. 'Ctrl-^ .' to exit."
+	msg := fmt.Sprintf("%s last seen %%s. 'Ctrl-^ .' to exit.", s.remHost)
 
 	for {
 		select {

@@ -80,7 +80,7 @@ func main() {
 		}
 		defer sock.Close()
 	}
-	c := stm.NewClient(gc, t, sock)
+	c := stm.NewClient(gc.RemoteAddr(), gc, t, sock)
 	c.Run()
 
 	slog.Info("Shutting down")
