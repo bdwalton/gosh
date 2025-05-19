@@ -36,7 +36,7 @@ func main() {
 
 	connectData, err := runServer()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error running server: %v", err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
@@ -84,7 +84,7 @@ func runServer() (*connectData, error) {
 	cmd := exec.Command("ssh", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", cmd, err)
+		return nil, fmt.Errorf("failed to run %q: %w\n%s", cmd, err, out)
 	}
 
 	re := regexp.MustCompile("GOSH CONNECT (\\d+) ([^\\s]+).*")
