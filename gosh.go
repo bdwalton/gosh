@@ -34,13 +34,14 @@ type connectData struct {
 func main() {
 	flag.Parse()
 
-	connectData, err := runServer()
+	rows, cols := initialSize()
+	connectData, err := runServer(rows, cols)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	runClient(connectData)
+	runClient(connectData, rows, cols)
 }
 
 // runServer will ssh to the remote machine and setup a gosh-server
@@ -48,7 +49,7 @@ func main() {
 // the session key for the encryption. It will return an error if it
 // can't run the remote process or if the remote process doesn't
 // return viable connection data.
-func runServer() (*connectData, error) {
+func runServer(rows, cols int) (*connectData, error) {
 	// dest is {username@}host, with username@ optional. feed this
 	// to ssh as its natural target argument.
 	args := []string{*dest}
@@ -76,8 +77,6 @@ func runServer() (*connectData, error) {
 	}
 
 	args = append(args, "--bind_server", *bindServer)
-
-	rows, cols := initialSize()
 	args = append(args, fmt.Sprintf("--initial_rows=%d", rows))
 	args = append(args, fmt.Sprintf("--initial_cols=%d", cols))
 
@@ -98,7 +97,7 @@ func runServer() (*connectData, error) {
 
 // runClient never returns. It execs gosh-client with the right args
 // and environment.
-func runClient(connD *connectData) {
+func runClient(connD *connectData, rows, cols int) {
 	args := []string{*goshClient, "--remote_port", connD.port, "--remote_host", hostFromDest(*dest)}
 	if *logfile != "" {
 		args = append(args, "--logfile", *logfile)
@@ -111,6 +110,9 @@ func runClient(connD *connectData) {
 	if *agentForward {
 		args = append(args, "--ssh_agent_forwarding")
 	}
+
+	args = append(args, fmt.Sprintf("--initial_rows=%d", rows))
+	args = append(args, fmt.Sprintf("--initial_cols=%d", cols))
 
 	envv := append(os.Environ(), fmt.Sprintf("GOSH_KEY=%s", connD.key))
 	syscall.Exec(*goshClient, args, envv)
