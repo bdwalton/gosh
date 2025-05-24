@@ -17,6 +17,10 @@ func newHyperlink(data string) *osc8 {
 	return &osc8{data: data}
 }
 
+func (o *osc8) copy() *osc8 {
+	return &osc8{data: o.data}
+}
+
 func (o *osc8) equal(other *osc8) bool {
 	return o.data == other.data
 }

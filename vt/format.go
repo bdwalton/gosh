@@ -40,6 +40,10 @@ type format struct {
 	attrs  uint16 // a bitmap of which of the attrs (^ above) are enabled
 }
 
+func (f *format) copy() *format {
+	return &format{fg: f.fg, bg: f.bg, attrs: f.attrs}
+}
+
 func (f *format) setAttr(attr uint16, val bool) {
 	if val {
 		f.attrs |= attr

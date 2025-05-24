@@ -542,16 +542,16 @@ func (t *Terminal) handleESC(params *parameters, data string, cmd rune) {
 // set state are all snapshotted.
 func (t *Terminal) cursorSave() {
 	t.savedCur = t.cur.Copy()
-	t.savedF = t.curF
-	t.savedHL = t.hl
+	t.savedF = t.curF.copy()
+	t.savedHL = t.hl.copy()
 	t.savedCS = t.cs.copy()
 }
 
 // Restore the cursor position, pen format and charset state.
 func (t *Terminal) cursorRestore() {
 	t.cur = t.savedCur.Copy()
-	t.curF = t.savedF
-	t.hl = t.savedHL
+	t.curF = t.savedF.copy()
+	t.hl = t.savedHL.copy()
 	t.cs = t.savedCS.copy()
 }
 
@@ -1079,7 +1079,7 @@ func (t *Terminal) setMode(mode int, data string, state rune) {
 		if state == CSI_MODE_SET {
 			t.cursorSave()
 			t.homeCursor()
-			t.curF = defFmt
+			t.curF = defFmt.copy()
 			t.cs = &charset{}
 		} else {
 			t.cursorRestore()
