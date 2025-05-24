@@ -64,8 +64,7 @@ func main() {
 		}
 	}()
 
-	undoAlt := maybeAltScreen()
-	defer undoAlt()
+	defer maybeAltScreen()()
 
 	t, err := vt.NewTerminal(*initRows, *initCols)
 	if err != nil {
