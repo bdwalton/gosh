@@ -25,7 +25,7 @@ func Setup(logfile string, debug bool) error {
 	if logfile != "" {
 		f, err := os.OpenFile(logfile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 		if err != nil {
-			return fmt.Errorf("couldn't open logfile %q: %v", logfile, err)
+			return fmt.Errorf("couldn't open logfile %q: %w", logfile, err)
 		}
 
 		opts := &slog.HandlerOptions{}
