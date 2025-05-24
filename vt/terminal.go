@@ -80,10 +80,10 @@ func NewTerminal(rows, cols int) (*Terminal, error) {
 		p:       newParser(),
 		wait:    func() {},
 		stop:    func() {},
-		curF:    defFmt,
-		savedF:  defFmt,
+		curF:    defFmt.copy(),
+		savedF:  defFmt.copy(),
 		cs:      &charset{},
-		hl:      defOSC8,
+		hl:      defOSC8.copy(),
 	}, nil
 }
 
@@ -176,7 +176,7 @@ func (t *Terminal) FirstRow() []byte {
 		return []byte{}
 	}
 	fbe := fb.copy()
-	fbe.fill(newCell(' ', defFmt, defOSC8))
+	fbe.fill(newCell(' ', defFmt.copy(), defOSC8.copy()))
 
 	var sb strings.Builder
 	sb.WriteString(("\x1b7\x1b[H\x1b[2K"))
@@ -658,9 +658,9 @@ func (t *Terminal) softReset() {
 	t.vertMargin = margin{}
 	t.horizMargin = margin{}
 	t.savedCur = cursor{}
-	t.curF = defFmt
-	t.savedF = defFmt
-	t.hl = defOSC8
+	t.curF = defFmt.copy()
+	t.savedF = defFmt.copy()
+	t.hl = defOSC8.copy()
 }
 
 func (t *Terminal) reset() {
@@ -680,7 +680,7 @@ func (t *Terminal) reset() {
 	t.savedCur = cursor{0, 0}
 	t.tabs = makeTabs(cols)
 	t.cs = &charset{}
-	t.hl = defOSC8
+	t.hl = defOSC8.copy()
 }
 
 func (t *Terminal) isModeSet(name string) bool {
@@ -1022,8 +1022,8 @@ func (t *Terminal) handleDSR(n int, data string) {
 }
 
 func (t *Terminal) doDECALN() {
-	t.curF = defFmt
-	t.hl = defOSC8
+	t.curF = defFmt.copy()
+	t.hl = defOSC8.copy()
 	t.horizMargin = margin{}
 	t.vertMargin = margin{}
 	t.cursorMoveAbs(0, 0)

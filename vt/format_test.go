@@ -36,10 +36,10 @@ func TestFormatEquality(t *testing.T) {
 			false,
 		},
 		{
-			&format{}, defFmt, true,
+			&format{}, defFmt.copy(), true,
 		},
 		{
-			defFmt, defFmt, true,
+			defFmt.copy(), defFmt.copy(), true,
 		},
 	}
 
@@ -128,7 +128,7 @@ func TestFormatDiff(t *testing.T) {
 		{
 			// Any diff against "dest == default" should just reset the pen
 			&format{fg: newRGBColor([]int{10, 20, 30}), bg: newRGBColor([]int{30, 20, 10})},
-			defFmt,
+			defFmt.copy(),
 			FMT_RESET,
 		},
 		{
@@ -137,7 +137,7 @@ func TestFormatDiff(t *testing.T) {
 			fmt.Sprintf("%c%c%d%c%c%c%d%c", ESC, CSI, FG_DEF, CSI_SGR, ESC, CSI, BG_YELLOW, CSI_SGR),
 		},
 		{
-			defFmt,
+			defFmt.copy(),
 			&format{fg: newColor(FG_WHITE), attrs: BOLD},
 			fmt.Sprintf("%c%c%dm%c%c%d%c", ESC, CSI, FG_WHITE, ESC, CSI, INTENSITY_BOLD, CSI_SGR),
 		},
@@ -163,12 +163,12 @@ func TestFormatDiff(t *testing.T) {
 			fmt.Sprintf("%c%c%d;5;%d%c", ESC, CSI, SET_BG, 124, CSI_SGR),
 		},
 		{
-			defFmt,
+			defFmt.copy(),
 			&format{attrs: UNDERLINE},
 			fmt.Sprintf("%c%c%d%c", ESC, CSI, UNDERLINE_ON, CSI_SGR),
 		},
 		{
-			defFmt,
+			defFmt.copy(),
 			&format{attrs: BOLD_FAINT},
 			fmt.Sprintf("%c%c%d;%d%c", ESC, CSI, INTENSITY_BOLD, INTENSITY_FAINT, CSI_SGR),
 		},

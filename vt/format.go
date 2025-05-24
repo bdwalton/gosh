@@ -6,10 +6,6 @@ import (
 	"strings"
 )
 
-var defFmt = &format{fg: newDefaultColor(), bg: newDefaultColor()}
-
-const FMT_RESET = "\x1b[m"
-
 const (
 	BOLD       = 1 << 0
 	FAINT      = 1 << 1
@@ -21,6 +17,10 @@ const (
 	INVISIBLE  = 1 << 7
 	STRIKEOUT  = 1 << 8
 )
+
+const FMT_RESET = "\x1b[m"
+
+var defFmt = &format{}
 
 var attrs = []uint16{BOLD_FAINT, BOLD, FAINT, ITALIC, UNDERLINE, BLINK, REVERSED, INVISIBLE, STRIKEOUT}
 var attrToggle = map[uint16]map[bool]string{
@@ -57,7 +57,7 @@ func (f *format) attrIsSet(attr uint16) bool {
 }
 
 func (src *format) diff(dest *format) []byte {
-	if !dest.equal(src) && dest.equal(defFmt) {
+	if !dest.equal(src) && dest.equal(defFmt.copy()) {
 		return []byte(FMT_RESET)
 	}
 
@@ -111,7 +111,7 @@ func (f *format) equal(other *format) bool {
 
 func applyFormat(curF *format, params *parameters) *format {
 	if params.numItems() == 0 {
-		return defFmt
+		return defFmt.copy()
 	}
 	f := &format{bg: curF.bg, fg: curF.fg, attrs: curF.attrs}
 
@@ -123,7 +123,7 @@ func applyFormat(curF *format, params *parameters) *format {
 
 		switch {
 		case item == RESET:
-			f = defFmt
+			f = defFmt.copy()
 		case item == INTENSITY_BOLD:
 			if f.attrIsSet(BOLD_FAINT) {
 				// already handled

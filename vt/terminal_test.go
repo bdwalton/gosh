@@ -29,7 +29,7 @@ func TestCursorInScrollingRegion(t *testing.T) {
 }
 
 func TestLineFeed(t *testing.T) {
-	xc := newCell('x', defFmt, defOSC8)
+	xc := newCell('x', defFmt.copy(), defOSC8.copy())
 	defTerm := func() *Terminal {
 		t := &Terminal{fb: newFramebuffer(10, 10)}
 		t.fb.setCell(9, 5, xc)
@@ -110,16 +110,16 @@ func TestPrintCharsets(t *testing.T) {
 	csg1s := &charset{set: 1, g: [2]bool{false, true}}
 
 	fb1w := newFramebuffer(10, 10)
-	fb1w.setCell(0, 0, newCell('a', defFmt, defOSC8))
+	fb1w.setCell(0, 0, newCell('a', defFmt.copy(), defOSC8.copy()))
 
 	fb2w := newFramebuffer(10, 10)
-	fb2w.setCell(0, 0, newCell('a', defFmt, defOSC8))
+	fb2w.setCell(0, 0, newCell('a', defFmt.copy(), defOSC8.copy()))
 
 	fb3w := newFramebuffer(10, 10)
-	fb3w.setCell(0, 0, newCell('£', defFmt, defOSC8))
+	fb3w.setCell(0, 0, newCell('£', defFmt.copy(), defOSC8.copy()))
 
 	fb4w := newFramebuffer(10, 10)
-	fb4w.setCell(0, 0, newCell('┼', defFmt, defOSC8))
+	fb4w.setCell(0, 0, newCell('┼', defFmt.copy(), defOSC8.copy()))
 
 	cases := []struct {
 		cs   *charset
@@ -149,45 +149,45 @@ func TestPrint(t *testing.T) {
 	}
 
 	wfb1 := newFramebuffer(10, 10)
-	wfb1.setCell(0, 0, newCell('a', defFmt, defOSC8))
+	wfb1.setCell(0, 0, newCell('a', defFmt.copy(), defOSC8.copy()))
 	wfb1_irm := newFramebuffer(10, 10)
-	wfb1_irm.setCell(0, 0, newCell('b', defFmt, defOSC8))
-	wfb1_irm.setCell(0, 1, newCell('a', defFmt, defOSC8))
+	wfb1_irm.setCell(0, 0, newCell('b', defFmt.copy(), defOSC8.copy()))
+	wfb1_irm.setCell(0, 1, newCell('a', defFmt.copy(), defOSC8.copy()))
 
 	wfb2 := newFramebuffer(10, 10)
-	wfb2.setCell(0, 0, newCell('a', defFmt, defOSC8))
-	wfb2.setCell(0, 1, newCell('b', defFmt, defOSC8))
+	wfb2.setCell(0, 0, newCell('a', defFmt.copy(), defOSC8.copy()))
+	wfb2.setCell(0, 1, newCell('b', defFmt.copy(), defOSC8.copy()))
 
 	wfb3 := newFramebuffer(10, 10)
-	wfb3.setCell(0, 0, newCell('ü', defFmt, defOSC8))
+	wfb3.setCell(0, 0, newCell('ü', defFmt.copy(), defOSC8.copy()))
 	wfb3_irm := newFramebuffer(10, 10)
-	wfb3_irm.setCell(0, 0, newCell('x', defFmt, defOSC8))
-	wfb3_irm.setCell(0, 1, newCell('ü', defFmt, defOSC8))
+	wfb3_irm.setCell(0, 0, newCell('x', defFmt.copy(), defOSC8.copy()))
+	wfb3_irm.setCell(0, 1, newCell('ü', defFmt.copy(), defOSC8.copy()))
 
 	wfb4 := newFramebuffer(10, 10)
-	wfb4.setCell(0, 9, newCell('ü', defFmt, defOSC8))
+	wfb4.setCell(0, 9, newCell('ü', defFmt.copy(), defOSC8.copy()))
 
 	wfb5 := newFramebuffer(10, 10)
-	wfb5.setCell(0, 9, newCell('z', defFmt, defOSC8))
+	wfb5.setCell(0, 9, newCell('z', defFmt.copy(), defOSC8.copy()))
 
 	wfb6 := newFramebuffer(10, 10)
-	wfb6.setCell(1, 0, newCell('z', defFmt, defOSC8))
+	wfb6.setCell(1, 0, newCell('z', defFmt.copy(), defOSC8.copy()))
 
 	wfb7 := newFramebuffer(10, 10)
-	wfb7.setCell(0, 8, fragCell('世', defFmt, defOSC8, FRAG_PRIMARY))
-	wfb7.setCell(0, 9, fragCell(0, defFmt, defOSC8, FRAG_SECONDARY))
+	wfb7.setCell(0, 8, fragCell('世', defFmt.copy(), defOSC8.copy(), FRAG_PRIMARY))
+	wfb7.setCell(0, 9, fragCell(0, defFmt.copy(), defOSC8.copy(), FRAG_SECONDARY))
 
 	wfb8 := newFramebuffer(10, 10)
-	wfb8.setCell(1, 0, fragCell('世', defFmt, defOSC8, FRAG_PRIMARY))
-	wfb8.setCell(1, 1, fragCell(0, defFmt, defOSC8, FRAG_SECONDARY))
+	wfb8.setCell(1, 0, fragCell('世', defFmt.copy(), defOSC8.copy(), FRAG_PRIMARY))
+	wfb8.setCell(1, 1, fragCell(0, defFmt.copy(), defOSC8.copy(), FRAG_SECONDARY))
 
 	wfb9 := newFramebuffer(10, 10)
-	wfb9.setCell(0, 5, fragCell('世', defFmt, defOSC8, FRAG_PRIMARY))
-	wfb9.setCell(0, 6, fragCell(0, defFmt, defOSC8, FRAG_SECONDARY))
+	wfb9.setCell(0, 5, fragCell('世', defFmt.copy(), defOSC8.copy(), FRAG_PRIMARY))
+	wfb9.setCell(0, 6, fragCell(0, defFmt.copy(), defOSC8.copy(), FRAG_SECONDARY))
 
 	ffb := newFramebuffer(10, 10)
-	ffb.setCell(5, 5, fragCell('世', defFmt, defOSC8, FRAG_PRIMARY))
-	ffb.setCell(5, 6, fragCell(0, defFmt, defOSC8, FRAG_SECONDARY))
+	ffb.setCell(5, 5, fragCell('世', defFmt.copy(), defOSC8.copy(), FRAG_PRIMARY))
+	ffb.setCell(5, 6, fragCell(0, defFmt.copy(), defOSC8.copy(), FRAG_SECONDARY))
 
 	// We'll write a combining character at 5,6, which is the
 	// fragmented second half of the wide cell in 5,5 (from
@@ -195,43 +195,43 @@ func TestPrint(t *testing.T) {
 	// a complex case.
 	wffb := newFramebuffer(10, 10)
 	wffb.setCell(5, 5, defaultCell())
-	wffb.setCell(5, 6, newCell('ü', defFmt, defOSC8))
+	wffb.setCell(5, 6, newCell('ü', defFmt.copy(), defOSC8.copy()))
 
 	ffb2 := newFramebuffer(10, 10)
-	ffb2.setCell(5, 5, fragCell('世', defFmt, defOSC8, FRAG_PRIMARY))
-	ffb2.setCell(5, 6, fragCell(0, defFmt, defOSC8, FRAG_SECONDARY))
+	ffb2.setCell(5, 5, fragCell('世', defFmt.copy(), defOSC8.copy(), FRAG_PRIMARY))
+	ffb2.setCell(5, 6, fragCell(0, defFmt.copy(), defOSC8.copy(), FRAG_SECONDARY))
 
 	// We'll write a combining character at 5,5, which is the
 	// fragmented second half of the wide cell in 5,5 (from
 	// ffb2). That should demonstrate overwritting a frag cell with
 	// a complex case.
 	wffb2 := newFramebuffer(10, 10)
-	wffb2.setCell(5, 6, newCell('ü', defFmt, defOSC8))
+	wffb2.setCell(5, 6, newCell('ü', defFmt.copy(), defOSC8.copy()))
 
 	sfb := newFramebuffer(10, 10)
-	sfb.setCell(8, 9, newCell('b', defFmt, defOSC8))
-	sfb.setCell(9, 0, newCell('a', defFmt, defOSC8))
+	sfb.setCell(8, 9, newCell('b', defFmt.copy(), defOSC8.copy()))
+	sfb.setCell(9, 0, newCell('a', defFmt.copy(), defOSC8.copy()))
 
 	wsfb := newFramebuffer(10, 10)
-	wsfb.setCell(7, 9, newCell('b', defFmt, defOSC8))
-	wsfb.setCell(8, 0, newCell('a', defFmt, defOSC8))
-	wsfb.setCell(9, 0, newCell('ü', defFmt, defOSC8))
+	wsfb.setCell(7, 9, newCell('b', defFmt.copy(), defOSC8.copy()))
+	wsfb.setCell(8, 0, newCell('a', defFmt.copy(), defOSC8.copy()))
+	wsfb.setCell(9, 0, newCell('ü', defFmt.copy(), defOSC8.copy()))
 
 	wfb10 := newFramebuffer(10, 10)
-	wfb10.setCell(9, 9, newCell('ü', defFmt, defOSC8))
+	wfb10.setCell(9, 9, newCell('ü', defFmt.copy(), defOSC8.copy()))
 
 	fb13 := dfb()
-	fb13.setCell(5, 5, fragCell('世', defFmt, defOSC8, FRAG_PRIMARY))
-	fb13.setCell(5, 6, fragCell(0, defFmt, defOSC8, FRAG_SECONDARY))
+	fb13.setCell(5, 5, fragCell('世', defFmt.copy(), defOSC8.copy(), FRAG_PRIMARY))
+	fb13.setCell(5, 6, fragCell(0, defFmt.copy(), defOSC8.copy(), FRAG_SECONDARY))
 	wfb13 := dfb()
-	wfb13.setCell(5, 5, newCell('a', defFmt, defOSC8))
+	wfb13.setCell(5, 5, newCell('a', defFmt.copy(), defOSC8.copy()))
 
 	combFb := dfb()
-	combFb.setCell(1, 0, newCell('a', defFmt, defOSC8))
-	combFb.setCell(1, 1, newCell('b', defFmt, defOSC8))
-	combFb.setCell(1, 2, newCell('u', defFmt, defOSC8))
+	combFb.setCell(1, 0, newCell('a', defFmt.copy(), defOSC8.copy()))
+	combFb.setCell(1, 1, newCell('b', defFmt.copy(), defOSC8.copy()))
+	combFb.setCell(1, 2, newCell('u', defFmt.copy(), defOSC8.copy()))
 	wfb_comb := combFb.copy()
-	wfb_comb.setCell(1, 2, newCell('ü', defFmt, defOSC8))
+	wfb_comb.setCell(1, 2, newCell('ü', defFmt.copy(), defOSC8.copy()))
 
 	// wrap == CSI_MODE_{RE,}SET
 	dterm := func(c cursor, fb *framebuffer, wrap, irm rune) *Terminal {
@@ -319,7 +319,7 @@ func TestTerminalDiff(t *testing.T) {
 	t3, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t3.Resize(20, 15)
 	t4 := testTerminalCopy(t3)
-	t4.fb.setCell(5, 7, newCell('a', &format{fg: newColor(FG_RED)}, defOSC8))
+	t4.fb.setCell(5, 7, newCell('a', &format{fg: newColor(FG_RED)}, defOSC8.copy()))
 	t5 := testTerminalCopy(t4)
 	t5.title = "mytitle"
 	t6 := testTerminalCopy(t5)
@@ -350,9 +350,9 @@ func TestTerminalDiff(t *testing.T) {
 	t17.setMode(IRM, "", CSI_MODE_SET)    // no transport, no diff
 	t19, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t19.Resize(10, 10)
-	t19.fb.setCell(0, 0, newCell('A', defFmt, defOSC8))
+	t19.fb.setCell(0, 0, newCell('A', defFmt.copy(), defOSC8.copy()))
 	t20 := t19.copy()
-	t20.fb.setCell(0, 1, newCell('*', defFmt, defOSC8))
+	t20.fb.setCell(0, 1, newCell('*', defFmt.copy(), defOSC8.copy()))
 	t20.lastChg = time.Now()
 	t21, _ := NewTerminal(DEF_ROWS, DEF_COLS)
 	t22 := t21.copy()

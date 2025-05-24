@@ -35,37 +35,37 @@ func TestCellDiff(t *testing.T) {
 		},
 		{
 			defaultCell(),
-			fragCell('世', defFmt, defOSC8, FRAG_SECONDARY),
+			fragCell('世', defFmt.copy(), defOSC8.copy(), FRAG_SECONDARY),
 			"",
 		},
 		{
-			newCell('a', defFmt, defOSC8),
-			newCell(' ', defFmt, defOSC8),
+			newCell('a', defFmt.copy(), defOSC8.copy()),
+			newCell(' ', defFmt.copy(), defOSC8.copy()),
 			" ",
 		},
 		{
-			newCell('b', &format{fg: newColor(FG_BLUE)}, defOSC8),
-			newCell(' ', defFmt, defOSC8),
+			newCell('b', &format{fg: newColor(FG_BLUE)}, defOSC8.copy()),
+			newCell(' ', defFmt.copy(), defOSC8.copy()),
 			"\x1b[m ",
 		},
 		{
-			newCell('b', &format{attrs: UNDERLINE}, defOSC8),
-			newCell('b', defFmt, defOSC8),
+			newCell('b', &format{attrs: UNDERLINE}, defOSC8.copy()),
+			newCell('b', defFmt.copy(), defOSC8.copy()),
 			"\x1b[mb",
 		},
 		{
-			newCell('b', defFmt, defOSC8),
-			newCell('b', &format{attrs: UNDERLINE}, defOSC8),
+			newCell('b', defFmt.copy(), defOSC8.copy()),
+			newCell('b', &format{attrs: UNDERLINE}, defOSC8.copy()),
 			fmt.Sprintf("%c%c%d%c%c", ESC, CSI, UNDERLINE_ON, CSI_SGR, 'b'),
 		},
 		{
-			newCell('a', defFmt, defOSC8),
-			newCell('a', defFmt, newHyperlink("8;id=0;http://foo.com")),
+			newCell('a', defFmt.copy(), defOSC8.copy()),
+			newCell('a', defFmt.copy(), newHyperlink("8;id=0;http://foo.com")),
 			fmt.Sprintf("%c%c%s%c%c%c", ESC, OSC, "8;id=0;http://foo.com", ESC, ST, 'a'),
 		},
 		{
-			newCell('a', defFmt, newHyperlink("8;id=0;http://foo.com")),
-			newCell('a', defFmt, defOSC8),
+			newCell('a', defFmt.copy(), newHyperlink("8;id=0;http://foo.com")),
+			newCell('a', defFmt.copy(), defOSC8.copy()),
 			fmt.Sprintf("%c%c%s%c%c%c", ESC, OSC, "8;;", ESC, ST, 'a'),
 		},
 	}
@@ -87,42 +87,42 @@ func TestCellEfficientDiff(t *testing.T) {
 		{
 			defaultCell(),
 			defaultCell(),
-			defFmt,
-			defOSC8,
+			defFmt.copy(),
+			defOSC8.copy(),
 			"",
 		},
 		{
-			newCell('a', &format{fg: newColor(FG_RED)}, defOSC8),
-			newCell('a', &format{fg: newColor(FG_RED)}, defOSC8),
+			newCell('a', &format{fg: newColor(FG_RED)}, defOSC8.copy()),
+			newCell('a', &format{fg: newColor(FG_RED)}, defOSC8.copy()),
 			&format{fg: newColor(FG_RED)},
-			defOSC8,
+			defOSC8.copy(),
 			"",
 		},
 		{
-			newCell('a', &format{fg: newColor(FG_RED)}, defOSC8),
-			newCell('a', &format{fg: newColor(FG_RED)}, defOSC8),
-			defFmt,
-			defOSC8,
+			newCell('a', &format{fg: newColor(FG_RED)}, defOSC8.copy()),
+			newCell('a', &format{fg: newColor(FG_RED)}, defOSC8.copy()),
+			defFmt.copy(),
+			defOSC8.copy(),
 			fmt.Sprintf("%c%c%d%c%c", ESC, CSI, FG_RED, CSI_SGR, 'a'),
 		},
 		{
-			newCell('a', &format{fg: newColor(FG_RED)}, defOSC8),
-			newCell('a', &format{bg: newColor(BG_RED)}, defOSC8),
-			defFmt,
-			defOSC8,
+			newCell('a', &format{fg: newColor(FG_RED)}, defOSC8.copy()),
+			newCell('a', &format{bg: newColor(BG_RED)}, defOSC8.copy()),
+			defFmt.copy(),
+			defOSC8.copy(),
 			fmt.Sprintf("%c%c%d%c%c", ESC, CSI, BG_RED, CSI_SGR, 'a'),
 		},
 		{
-			newCell('a', defFmt, newHyperlink("8;;file:///foo/bar")),
-			newCell('a', defFmt, newHyperlink("8;;file:///foo/bar")),
-			defFmt,
-			defOSC8,
+			newCell('a', defFmt.copy(), newHyperlink("8;;file:///foo/bar")),
+			newCell('a', defFmt.copy(), newHyperlink("8;;file:///foo/bar")),
+			defFmt.copy(),
+			defOSC8.copy(),
 			fmt.Sprintf("%c%c%s%c%c%c", ESC, OSC, "8;;file:///foo/bar", ESC, ST, 'a'),
 		},
 		{
-			newCell('a', defFmt, defOSC8),
-			newCell('a', defFmt, defOSC8),
-			defFmt,
+			newCell('a', defFmt.copy(), defOSC8.copy()),
+			newCell('a', defFmt.copy(), defOSC8.copy()),
+			defFmt.copy(),
 			newHyperlink("8;;file:///foo/bar"),
 
 			fmt.Sprintf("%c%c%s%c%c%c", ESC, OSC, "8;;", ESC, ST, 'a'),
@@ -142,19 +142,19 @@ func TestCellEquality(t *testing.T) {
 		want   bool
 	}{
 		{defaultCell(), defaultCell(), true},
-		{fragCell('r', defFmt, defOSC8, 1), defaultCell(), false},
-		{fragCell('r', defFmt, defOSC8, 1), fragCell('r', defFmt, defOSC8, 2), false},
-		{newCell('r', defFmt, defOSC8), newCell('r', defFmt, defOSC8), true},
-		{defaultCell(), fragCell('r', defFmt, defOSC8, 2), false},
-		{newCell('a', defFmt, defOSC8), newCell('a', defFmt, defOSC8), true},
-		{newCell('a', &format{attrs: UNDERLINE}, defOSC8), newCell('a', &format{attrs: UNDERLINE}, defOSC8), true},
-		{defaultCell(), newCell('a', defFmt, defOSC8), false},
-		{fragCell('a', defFmt, defOSC8, 1), newCell('a', defFmt, defOSC8), false},
-		{newCell('a', &format{attrs: UNDERLINE}, defOSC8), newCell('a', defFmt, defOSC8), false},
-		{newCell('a', defFmt, newHyperlink("8;;http://foo.com")), newCell('a', defFmt, newHyperlink("8;;http://foo.com")), true},
-		{newCell('a', defFmt, newHyperlink("8;;http://foo.com")), newCell('a', defFmt, newHyperlink("8;;http://bar.com")), false},
-		{newCell('a', defFmt, newHyperlink("8;;")), newCell('a', defFmt, newHyperlink("8;;http://bar.com")), false},
-		{newCell('a', defFmt, newHyperlink("8;;")), newCell('a', defFmt, defOSC8), true},
+		{fragCell('r', defFmt.copy(), defOSC8.copy(), 1), defaultCell(), false},
+		{fragCell('r', defFmt.copy(), defOSC8.copy(), 1), fragCell('r', defFmt.copy(), defOSC8.copy(), 2), false},
+		{newCell('r', defFmt.copy(), defOSC8.copy()), newCell('r', defFmt.copy(), defOSC8.copy()), true},
+		{defaultCell(), fragCell('r', defFmt.copy(), defOSC8.copy(), 2), false},
+		{newCell('a', defFmt.copy(), defOSC8.copy()), newCell('a', defFmt.copy(), defOSC8.copy()), true},
+		{newCell('a', &format{attrs: UNDERLINE}, defOSC8.copy()), newCell('a', &format{attrs: UNDERLINE}, defOSC8.copy()), true},
+		{defaultCell(), newCell('a', defFmt.copy(), defOSC8.copy()), false},
+		{fragCell('a', defFmt.copy(), defOSC8.copy(), 1), newCell('a', defFmt.copy(), defOSC8.copy()), false},
+		{newCell('a', &format{attrs: UNDERLINE}, defOSC8.copy()), newCell('a', defFmt.copy(), defOSC8.copy()), false},
+		{newCell('a', defFmt.copy(), newHyperlink("8;;http://foo.com")), newCell('a', defFmt.copy(), newHyperlink("8;;http://foo.com")), true},
+		{newCell('a', defFmt.copy(), newHyperlink("8;;http://foo.com")), newCell('a', defFmt.copy(), newHyperlink("8;;http://bar.com")), false},
+		{newCell('a', defFmt.copy(), newHyperlink("8;;")), newCell('a', defFmt.copy(), newHyperlink("8;;http://bar.com")), false},
+		{newCell('a', defFmt.copy(), newHyperlink("8;;")), newCell('a', defFmt.copy(), defOSC8.copy()), true},
 	}
 
 	for i, c := range cases {
@@ -170,12 +170,12 @@ func TestSetCells(t *testing.T) {
 		t, b, l, r int
 		fm         *format
 	}{
-		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 0, 5, defFmt},
-		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 5, 9, defFmt},
-		{fillBuffer(newFramebuffer(10, 10)), -1, -1, 5, 9, defFmt},
-		{fillBuffer(newFramebuffer(10, 10)), 10, 10, 5, 9, defFmt},
-		{fillBuffer(newFramebuffer(10, 10)), 5, 5, 9, 5, defFmt},
-		{fillBuffer(newFramebuffer(10, 10)), 5, 5, 9, 9, defFmt},
+		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 0, 5, defFmt.copy()},
+		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 5, 9, defFmt.copy()},
+		{fillBuffer(newFramebuffer(10, 10)), -1, -1, 5, 9, defFmt.copy()},
+		{fillBuffer(newFramebuffer(10, 10)), 10, 10, 5, 9, defFmt.copy()},
+		{fillBuffer(newFramebuffer(10, 10)), 5, 5, 9, 5, defFmt.copy()},
+		{fillBuffer(newFramebuffer(10, 10)), 5, 5, 9, 9, defFmt.copy()},
 		{fillBuffer(newFramebuffer(10, 10)), 0, 0, 0, 5, &format{bg: newColor(BG_BLUE)}},
 		{fillBuffer(newFramebuffer(10, 10)), 5, 5, 9, 9, &format{bg: newColor(BG_RED)}},
 	}
@@ -256,13 +256,13 @@ func TestSetAndGetCell(t *testing.T) {
 		wantErr  error
 	}{
 		{5, 5, defaultCell(), nil},
-		{1, 2, newCell('a', &format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}, defOSC8), nil},
-		{1, 2, newCell('b', &format{fg: newColor(FG_RED), attrs: STRIKEOUT}, defOSC8), nil},
-		{8, 3, newCell('b', &format{bg: newColor(BG_BLUE), attrs: REVERSED}, defOSC8), nil},
-		{10, 01, newCell('b', &format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}, defOSC8), fbInvalidCell},
-		{-1, 100, newCell('b', &format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}, defOSC8), fbInvalidCell},
-		{-1, 1, newCell('b', &format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}, defOSC8), fbInvalidCell},
-		{1, -1, newCell('b', &format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}, defOSC8), fbInvalidCell},
+		{1, 2, newCell('a', &format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}, defOSC8.copy()), nil},
+		{1, 2, newCell('b', &format{fg: newColor(FG_RED), attrs: STRIKEOUT}, defOSC8.copy()), nil},
+		{8, 3, newCell('b', &format{bg: newColor(BG_BLUE), attrs: REVERSED}, defOSC8.copy()), nil},
+		{10, 01, newCell('b', &format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}, defOSC8.copy()), fbInvalidCell},
+		{-1, 100, newCell('b', &format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}, defOSC8.copy()), fbInvalidCell},
+		{-1, 1, newCell('b', &format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}, defOSC8.copy()), fbInvalidCell},
+		{1, -1, newCell('b', &format{fg: newColor(FG_BRIGHT_BLACK), attrs: UNDERLINE}, defOSC8.copy()), fbInvalidCell},
 	}
 
 	fb := newFramebuffer(10, 10)
@@ -309,8 +309,8 @@ func TestResize(t *testing.T) {
 
 	// Separate test to ensure we never leave a split "fragmented" cell behind.
 	fb := newFramebuffer(10, 10)
-	fb.setCell(0, 8, fragCell('世', defFmt, defOSC8, FRAG_PRIMARY))
-	fb.setCell(0, 9, fragCell(0, defFmt, defOSC8, FRAG_SECONDARY))
+	fb.setCell(0, 8, fragCell('世', defFmt.copy(), defOSC8.copy(), FRAG_PRIMARY))
+	fb.setCell(0, 9, fragCell(0, defFmt.copy(), defOSC8.copy(), FRAG_SECONDARY))
 
 	// this should split the width 2 fragment we just added and
 	// force (0,8) to be cleared
@@ -345,7 +345,7 @@ func TestScrollRows(t *testing.T) {
 func TestFBEquality(t *testing.T) {
 	dfb := newFramebuffer(10, 10)
 	ofb := newFramebuffer(10, 10)
-	ofb.setCell(5, 5, newCell('z', &format{attrs: UNDERLINE}, defOSC8))
+	ofb.setCell(5, 5, newCell('z', &format{attrs: UNDERLINE}, defOSC8.copy()))
 
 	cases := []struct {
 		fb   *framebuffer
@@ -406,45 +406,45 @@ func TestFrameBufferDiff(t *testing.T) {
 	fb2 := newFramebuffer(10, 10)
 	fb3 := newFramebuffer(10, 10)
 	fb3.resize(10, 20)
-	fb3.setCell(5, 11, newCell('a', defFmt, defOSC8))
+	fb3.setCell(5, 11, newCell('a', defFmt.copy(), defOSC8.copy()))
 	fb4 := fb3.copy()
-	fb4.setCell(5, 12, newCell('b', defFmt, defOSC8))
+	fb4.setCell(5, 12, newCell('b', defFmt.copy(), defOSC8.copy()))
 	fb5 := fb4.copy()
-	fb5.setCell(5, 12, newCell('b', &format{fg: newColor(FG_GREEN)}, defOSC8))
-	fb5.setCell(5, 13, newCell('c', &format{fg: newColor(FG_GREEN)}, defOSC8))
+	fb5.setCell(5, 12, newCell('b', &format{fg: newColor(FG_GREEN)}, defOSC8.copy()))
+	fb5.setCell(5, 13, newCell('c', &format{fg: newColor(FG_GREEN)}, defOSC8.copy()))
 
 	fb6 := fb5.copy()
-	fb6.setCell(1, 0, newCell('X', &format{fg: newColor(FG_BLUE), bg: newColor(BG_RED)}, defOSC8))
-	fb6.setCell(5, 12, newCell('Y', &format{fg: newColor(FG_BLUE), bg: newColor(BG_RED)}, defOSC8))
-	fb6.setCell(5, 13, newCell('Z', &format{fg: newColor(FG_YELLOW), bg: newColor(BG_GREEN)}, defOSC8))
+	fb6.setCell(1, 0, newCell('X', &format{fg: newColor(FG_BLUE), bg: newColor(BG_RED)}, defOSC8.copy()))
+	fb6.setCell(5, 12, newCell('Y', &format{fg: newColor(FG_BLUE), bg: newColor(BG_RED)}, defOSC8.copy()))
+	fb6.setCell(5, 13, newCell('Z', &format{fg: newColor(FG_YELLOW), bg: newColor(BG_GREEN)}, defOSC8.copy()))
 	fb6.resize(10, 13)
 
 	fb7 := newFramebuffer(24, 80)
 	fb8 := fb7.copy()
 
-	fb8.setCell(0, 0, newCell(' ', defFmt, defOSC8))
-	fb8.setCell(0, 1, newCell('a', &format{bg: newColor(BG_BLACK)}, defOSC8))
-	fb8.setCell(0, 2, newCell('b', &format{bg: newColor(BG_BLACK)}, defOSC8))
-	fb8.setCell(0, 3, newCell('c', &format{bg: newColor(BG_BLACK)}, defOSC8))
-	fb8.setCell(0, 4, newCell(' ', &format{bg: newColor(BG_BLACK)}, defOSC8))
-	fb8.setCell(0, 5, newCell('\ue0b0', &format{fg: newColor(FG_BLACK), bg: newColor(BG_BLUE)}, defOSC8))
-	fb8.setCell(0, 6, newCell(' ', &format{fg: newColor(FG_BLACK), bg: newColor(BG_BLUE)}, defOSC8))
-	fb8.setCell(0, 7, newCell('~', &format{fg: newColor(FG_BLACK), bg: newColor(BG_BLUE)}, defOSC8))
-	fb8.setCell(0, 8, newCell(' ', &format{fg: newColor(FG_BLACK), bg: newColor(BG_BLUE)}, defOSC8))
-	fb8.setCell(0, 9, newCell('\ue0b0', &format{fg: newColor(FG_BLUE), bg: newColor(BG_DEF)}, defOSC8))
-	fb8.setCell(0, 10, newCell(' ', defFmt, defOSC8))
+	fb8.setCell(0, 0, newCell(' ', defFmt.copy(), defOSC8.copy()))
+	fb8.setCell(0, 1, newCell('a', &format{bg: newColor(BG_BLACK)}, defOSC8.copy()))
+	fb8.setCell(0, 2, newCell('b', &format{bg: newColor(BG_BLACK)}, defOSC8.copy()))
+	fb8.setCell(0, 3, newCell('c', &format{bg: newColor(BG_BLACK)}, defOSC8.copy()))
+	fb8.setCell(0, 4, newCell(' ', &format{bg: newColor(BG_BLACK)}, defOSC8.copy()))
+	fb8.setCell(0, 5, newCell('\ue0b0', &format{fg: newColor(FG_BLACK), bg: newColor(BG_BLUE)}, defOSC8.copy()))
+	fb8.setCell(0, 6, newCell(' ', &format{fg: newColor(FG_BLACK), bg: newColor(BG_BLUE)}, defOSC8.copy()))
+	fb8.setCell(0, 7, newCell('~', &format{fg: newColor(FG_BLACK), bg: newColor(BG_BLUE)}, defOSC8.copy()))
+	fb8.setCell(0, 8, newCell(' ', &format{fg: newColor(FG_BLACK), bg: newColor(BG_BLUE)}, defOSC8.copy()))
+	fb8.setCell(0, 9, newCell('\ue0b0', &format{fg: newColor(FG_BLUE), bg: newColor(BG_DEF)}, defOSC8.copy()))
+	fb8.setCell(0, 10, newCell(' ', defFmt.copy(), defOSC8.copy()))
 	fb9 := newFramebuffer(10, 10)
-	fb9.setCell(0, 0, newCell('A', defFmt, defOSC8))
+	fb9.setCell(0, 0, newCell('A', defFmt.copy(), defOSC8.copy()))
 	fb10 := fb9.copy()
-	fb10.setCell(0, 1, newCell('*', defFmt, defOSC8))
+	fb10.setCell(0, 1, newCell('*', defFmt.copy(), defOSC8.copy()))
 	fb11 := fb9.copy()
-	fb11.setCell(0, 0, newCell('B', defFmt, defOSC8))
+	fb11.setCell(0, 0, newCell('B', defFmt.copy(), defOSC8.copy()))
 
 	fb12 := newFramebuffer(24, 80)
-	fb12.setCell(0, 78, newCell('y', defFmt, defOSC8))
-	fb12.setCell(0, 79, newCell('y', defFmt, defOSC8))
+	fb12.setCell(0, 78, newCell('y', defFmt.copy(), defOSC8.copy()))
+	fb12.setCell(0, 79, newCell('y', defFmt.copy(), defOSC8.copy()))
 	fb13 := newFramebuffer(24, 80)
-	fb13.setCell(0, 78, newCell('y', defFmt, defOSC8))
+	fb13.setCell(0, 78, newCell('y', defFmt.copy(), defOSC8.copy()))
 
 	cases := []struct {
 		srcFB, destFB *framebuffer
@@ -492,7 +492,7 @@ func numberedFBForTest(start, rows, cols, defaultsStart, defaultsEnd int) *frame
 	for r := defaultsStart; r < rows-defaultsEnd; r++ {
 		row := fb.data[r]
 		for c := range row {
-			fb.setCell(r, c, newCell(rune(r+-defaultsStart+start+'0'), &format{fg: newColor(30 + start - defaultsStart + r), bg: newDefaultColor()}, defOSC8))
+			fb.setCell(r, c, newCell(rune(r+-defaultsStart+start+'0'), &format{fg: newColor(30 + start - defaultsStart + r), bg: newDefaultColor()}, defOSC8.copy()))
 		}
 	}
 
