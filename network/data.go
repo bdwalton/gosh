@@ -50,15 +50,17 @@ func initAEAD(key []byte) (cipher.AEAD, error) {
 }
 
 func NewClient(addr, key string) (*GConn, error) {
-	a, err := net.ResolveUDPAddr("udp", addr)
+	ra, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't resolve udp address %q: %v", addr, err)
+		return nil, fmt.Errorf("couldn't resolve remote udp address %q: %w", addr, err)
 	}
 
-	c, err := net.DialUDP("udp", nil, a)
+	c, err := net.DialUDP("udp", nil, ra)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't dial %q: %v", addr, err)
 	}
+
+	slog.Debug("client address", "addr", c.LocalAddr().String())
 
 	dkey, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
@@ -75,7 +77,7 @@ func NewClient(addr, key string) (*GConn, error) {
 		key:    dkey,
 		aead:   aead,
 		cType:  CLIENT,
-		remote: a,
+		remote: ra,
 		nce:    &nonce{},
 	}
 
