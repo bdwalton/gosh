@@ -55,12 +55,15 @@ func NewClient(addr, key string) (*GConn, error) {
 		return nil, fmt.Errorf("couldn't resolve remote udp address %q: %w", addr, err)
 	}
 
-	c, err := net.DialUDP("udp", nil, ra)
+	// We listen instead of dial so we can bind to "any" address
+	// locally. This is crucial so that as the client roams to
+	// different networks, the destination is always routed
+	// appropriately and not locked to whatever IP the client had
+	// at initial setup.
+	c, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.IPv4zero, Port: 0})
 	if err != nil {
-		return nil, fmt.Errorf("couldn't dial %q: %v", addr, err)
+		return nil, fmt.Errorf("couldn't listen on local socket: %w", err)
 	}
-
-	slog.Debug("client address", "addr", c.LocalAddr().String())
 
 	dkey, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
@@ -139,7 +142,7 @@ func (gc *GConn) LocalPort() int {
 }
 
 func (gc *GConn) RemoteAddr() string {
-	return gc.c.RemoteAddr().String()
+	return gc.remote.String()
 }
 
 func (gc *GConn) Close() error {
@@ -157,13 +160,7 @@ func (gc *GConn) Write(msg []byte) (int, error) {
 	var n int
 	var err error
 
-	switch gc.cType {
-	case CLIENT:
-		n, err = gc.c.Write(m)
-	case SERVER:
-		n, err = gc.c.WriteToUDP(m, gc.remote)
-	}
-
+	n, err = gc.c.WriteToUDP(m, gc.remote)
 	if n != len(m) || err != nil {
 		return 0, fmt.Errorf("wrote %d of %d bytes: %v", n, len(m), err)
 	}
