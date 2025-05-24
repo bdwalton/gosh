@@ -32,6 +32,11 @@ var (
 	logfile      = flag.String("logfile", "", "If set, logs will be written to this file.")
 )
 
+func die(msg string, args ...any) {
+	fmt.Fprintf(os.Stderr, msg, args...)
+	os.Exit(1)
+}
+
 func main() {
 	flag.Parse()
 
@@ -46,8 +51,7 @@ func main() {
 	// `systemd-run --user --scope /path/to/gosh-server arg1`
 	if !*detached {
 		if err := runDetached(); err != nil {
-			fmt.Println("Error detaching:", err)
-			os.Exit(1)
+			die("error detaching: %v", err)
 		}
 
 		os.Exit(0)
@@ -55,8 +59,7 @@ func main() {
 
 	err := logging.Setup(*logfile, *debug)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		die("failed to setup logging: %v", err)
 	}
 
 	if *pprofFile != "" {
@@ -76,8 +79,7 @@ func main() {
 
 	gc, err := network.NewServer(getIP(*bindServer), *portRange)
 	if err != nil {
-		slog.Error("Couldn't setup network connection", "err", err)
-		os.Exit(1)
+		die("couldn't setup network layer: %v", err)
 	}
 	defer func() {
 		if err := gc.Close(); err != nil {
@@ -89,8 +91,7 @@ func main() {
 	if *agentForward {
 		sock, err = openAuthSock()
 		if err != nil {
-			slog.Error("couldn't open auth socket", "err", err)
-			os.Exit(1)
+			die("couldn't open auth socket: %v", err)
 		}
 		defer sock.Close()
 		// Do this before we start the terminal and run the command
@@ -100,8 +101,7 @@ func main() {
 	cmd, cancel := getCmd()
 	t, err := vt.NewTerminalWithPty(*initRows, *initCols, cmd, cancel)
 	if err != nil {
-		slog.Error("Couldn't setup terminal", "err", err)
-		os.Exit(1)
+		die("couldn't setup terminal: %v", err)
 	}
 
 	s := stm.NewServer(gc, t, sock)

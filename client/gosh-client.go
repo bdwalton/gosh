@@ -27,19 +27,22 @@ var (
 	remoteHost   = flag.String("remote_host", "", "Remote host to dial")
 )
 
+func die(msg string, args ...any) {
+	fmt.Fprintf(os.Stderr, msg, args...)
+	os.Exit(1)
+}
+
 func main() {
 	flag.Parse()
 
 	err := logging.Setup(*logfile, *debug)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		die("failed to setup logging: %v", err)
 	}
 
 	orig, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
-		slog.Error("couldn't make terminal raw", "err", err)
-		os.Exit(1)
+		die("couldn't make terminal raw: %v", err)
 	}
 	defer func(orig *term.State) {
 		if err := term.Restore(int(os.Stdin.Fd()), orig); err != nil {
@@ -53,8 +56,7 @@ func main() {
 
 	gc, err := network.NewClient(*remoteHost+":"+*remotePort, os.Getenv("GOSH_KEY"))
 	if err != nil {
-		slog.Error("Couldn't setup network connection", "err", err)
-		os.Exit(1)
+		die("couldn't setup network layer: %v", err)
 	}
 	defer func() {
 		if err := gc.Close(); err != nil {
@@ -67,16 +69,14 @@ func main() {
 
 	t, err := vt.NewTerminal(*initRows, *initCols)
 	if err != nil {
-		slog.Error("Couldn't setup terminal", "err", err)
-		os.Exit(1)
+		die("couldn't setup terminal: %v", err)
 	}
 
 	var sock net.Conn
 	if *agentForward {
 		sock, err = openAuthSock()
 		if err != nil {
-			slog.Error("couldn't open auth socket", "err", err)
-			os.Exit(1)
+			die("couldn't open auth socket: %v", err)
 		}
 		defer sock.Close()
 	}
