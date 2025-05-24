@@ -25,14 +25,13 @@ const (
 )
 
 type GConn struct {
-	c        *net.UDPConn
-	remote   *net.UDPAddr
-	shutdown bool
-	key      []byte
-	aead     cipher.AEAD
-	nce      *nonce // Our local nonce generation
-	rnce     uint64 // Highest seen remote nonce value
-	cType    uint8
+	c      *net.UDPConn
+	remote *net.UDPAddr
+	key    []byte
+	aead   cipher.AEAD
+	nce    *nonce // Our local nonce generation
+	rnce   uint64 // Highest seen remote nonce value
+	cType  uint8
 }
 
 func initAEAD(key []byte) (cipher.AEAD, error) {
