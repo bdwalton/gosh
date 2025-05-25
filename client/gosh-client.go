@@ -44,15 +44,6 @@ func main() {
 	if err != nil {
 		die("couldn't make terminal raw: %v", err)
 	}
-	defer func(orig *term.State) {
-		if err := term.Restore(int(os.Stdin.Fd()), orig); err != nil {
-			slog.Error("couldn't restore terminal state", "err", err)
-		}
-
-		if err := os.Stdin.Close(); err != nil {
-			slog.Error("error closing stdin", "err", err)
-		}
-	}(orig)
 
 	gc, err := network.NewClient(*remoteHost+":"+*remotePort, os.Getenv("GOSH_KEY"))
 	if err != nil {
@@ -64,7 +55,7 @@ func main() {
 		}
 	}()
 
-	defer maybeAltScreen()()
+	undoAlt := maybeAltScreen()
 
 	t, err := vt.NewTerminal(*initRows, *initCols)
 	if err != nil {
@@ -84,6 +75,12 @@ func main() {
 
 	slog.Info("Shutting down")
 
+	undoAlt() // may be a no-op, depending on what maybeAltScreen() did
+	if err := term.Restore(int(os.Stdin.Fd()), orig); err != nil {
+		slog.Error("couldn't restore terminal state", "err", err)
+	}
+
+	fmt.Printf("gosh session to %q ended.\n", *remoteHost)
 }
 
 func maybeAltScreen() func() {
