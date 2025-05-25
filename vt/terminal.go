@@ -1207,6 +1207,10 @@ func (t *Terminal) stepTabs(steps int) {
 }
 
 func (t *Terminal) insertLines(n int) {
+	if !t.vertMargin.contains(t.row()) {
+		return
+	}
+
 	sr, err := t.fb.subRegion(t.row(), t.boundedMarginBottom(), t.boundedMarginLeft(), t.boundedMarginRight())
 	if err != nil {
 		slog.Error("invalid subregion request", "row", t.row(), "bottom", t.boundedMarginBottom(), "err", err)
@@ -1216,6 +1220,10 @@ func (t *Terminal) insertLines(n int) {
 }
 
 func (t *Terminal) deleteLines(n int) {
+	if !t.vertMargin.contains(t.row()) {
+		return
+	}
+
 	sr, err := t.fb.subRegion(t.row(), t.boundedMarginBottom(), t.boundedMarginLeft(), t.boundedMarginRight())
 	if err != nil {
 		slog.Error("invalid subregion request", "row", t.row(), "bottom", t.boundedMarginBottom(), "err", err)
