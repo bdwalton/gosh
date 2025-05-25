@@ -820,7 +820,7 @@ func makeCommand(params *parameters, data string, cmd rune) string {
 }
 
 func (t *Terminal) handleCSI(params *parameters, data string, cmd rune) {
-	slog.Debug("handling CSI command", "cmd", makeCommand(params, data, cmd))
+	slog.Debug("handling CSI command", "cmd", makeCommand(params, data, cmd), "cur", t.cur)
 	switch cmd {
 	case CSI_RIS:
 		if data == "!" {
