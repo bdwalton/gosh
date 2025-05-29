@@ -50,7 +50,7 @@ func (c *charset) setCS(s string, r rune) {
 }
 
 // This maps from the natural character set into the "B" character
-// set. We only support ESC {),()} {0,B} for alternate charset handling
+// set. We only support ESC {),(} {0,B} for alternate charset handling
 var acs = map[rune]rune{
 	'+': '→',
 	',': '←',
