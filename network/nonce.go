@@ -3,7 +3,7 @@ package network
 import (
 	"encoding/binary"
 	"log/slog"
-	"sync"
+	"sync/atomic"
 )
 
 const (
@@ -19,17 +19,11 @@ const (
 )
 
 type nonce struct {
-	v   uint64
-	mux sync.Mutex
+	v atomic.Uint64
 }
 
 func (n *nonce) nextVal() uint64 {
-	n.mux.Lock()
-	n.v += 1
-	ret := n.v
-	n.mux.Unlock()
-
-	return ret
+	return n.v.Add(1)
 }
 
 func (n *nonce) get(dir uint8) []byte {

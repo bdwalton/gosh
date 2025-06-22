@@ -3,6 +3,7 @@ package network
 import (
 	"math"
 	"slices"
+	"sync/atomic"
 	"testing"
 )
 
@@ -13,7 +14,9 @@ func TestNextGCMNonceDifferentServerClient(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		n1, n2 := &nonce{v: c}, &nonce{v: c}
+		var nc atomic.Uint64
+		nc.Store(c)
+		n1, n2 := &nonce{v: nc}, &nonce{v: nc}
 		s1, s2 := n1.get(CLIENT), n2.get(SERVER)
 		if slices.Equal(s1, s2) {
 			t.Errorf("%d: %v = %v", i, s1, s2)
@@ -35,7 +38,9 @@ func TestNextGCMNoncePanicClient(t *testing.T) {
 		}
 	}()
 
-	n := &nonce{v: MAX_NONCE_VAL - 1}
+	var nc atomic.Uint64
+	nc.Store(MAX_NONCE_VAL - 1)
+	n := &nonce{v: nc}
 	// Should panic
 	n.get(CLIENT)
 
@@ -64,7 +69,9 @@ func TestNextGCMNoncePanicServer(t *testing.T) {
 		}
 	}()
 
-	n := nonce{v: MAX_NONCE_VAL - 1}
+	var nc atomic.Uint64
+	nc.Store(MAX_NONCE_VAL - 1)
+	n := nonce{v: nc}
 	// Should panic
 	n.get(SERVER)
 	t.Errorf("nextGCMNonce() didn't panic when reaching max 64-bit int: %d", n.v)
@@ -102,19 +109,22 @@ func TestExtractNonce(t *testing.T) {
 }
 
 func TestNonceIncrement(t *testing.T) {
+	var v1, v2 atomic.Uint64
+	v1.Store(math.MaxUint64 - 2)
+	v2.Store(255)
 	cases := []struct {
 		n    *nonce
 		want []uint64
 	}{
 		{&nonce{}, []uint64{1, 2, 3}},
-		{&nonce{v: math.MaxUint64 - 2}, []uint64{math.MaxUint64 - 1}},
-		{&nonce{v: 255}, []uint64{256, 257}},
+		{&nonce{v: v1}, []uint64{math.MaxUint64 - 1}},
+		{&nonce{v: v2}, []uint64{256, 257}},
 	}
 
 	for i, c := range cases {
 		for j, n := range c.want {
 			c.n.get(CLIENT)
-			if c.n.v != n {
+			if got := c.n.v.Load(); got != n {
 				t.Errorf("%d/%d: Got %d, wanted %d", i, j, c.n, n)
 			}
 		}
