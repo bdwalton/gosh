@@ -86,14 +86,18 @@ func NewClient(remHost string, remote io.ReadWriter, t *vt.Terminal, sock net.Co
 	s := new(remote, t, CLIENT)
 	s.remHost = remHost
 	s.localAgent = sock
-	s.socketPath = sock.RemoteAddr().String()
+	if sock != nil {
+		s.socketPath = sock.RemoteAddr().String()
+	}
 	return s
 }
 
 func NewServer(remote io.ReadWriter, t *vt.Terminal, sock net.Listener) *stmObj {
 	s := new(remote, t, SERVER)
 	s.remoteAgent = sock
-	s.socketPath = sock.Addr().String()
+	if sock != nil {
+		s.socketPath = sock.Addr().String()
+	}
 	return s
 }
 
@@ -508,6 +512,10 @@ func (s *stmObj) consumePayload(id uint32) {
 		}
 	case goshpb.PayloadType_SSH_AGENT_REQUEST:
 		d := msg.GetData()
+		if s.socketPath == "" {
+			slog.Error("got remote ssh-agent data, but don't have local socket connection")
+			return
+		}
 		if _, err := s.localAgent.Write(d); err != nil {
 			slog.Debug("error writing to local auth sock", "err", err)
 			return
