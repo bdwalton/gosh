@@ -21,7 +21,7 @@ google.golang.org via:
 
 The protoc compiler, if not new enough your machine already, is
 available in binary form from
-https://github.com/protocolbuffers/protobuf
+https://github.com/protocolbuffers/protobuf/releases
 
 With the go, protoc and protoc-gen-go binaries in your PATH, a simple
 `make` should suffice to build the three primary binaries (gosh,
