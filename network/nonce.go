@@ -7,7 +7,14 @@ import (
 )
 
 const (
-	NONCE_BYTES   = 12
+	NONCE_BYTES = 12
+	// With GCM, we can safely use 64-bits of a counter because
+	// there is no chance of a collision. We're sending messages
+	// in both directions here, so give a very ample 2^62 messages
+	// per side. Client and server always distinguish themselves
+	// by adding a 0 or a 1 to the nonce value so even as they
+	// re-use this counter int, the actual nonce will always be
+	// distinct and thus still safe.
 	MAX_NONCE_VAL = 1 << 62
 )
 
