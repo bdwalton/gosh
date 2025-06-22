@@ -238,31 +238,31 @@ func (f *framebuffer) scrollRows(n int) {
 	nc := f.cols()
 	nr := f.rows()
 
-	if n < 0 {
-		// i starts at the bottom, backed up n (negative) so
-		// we can copy those rows down. iterate until i <= -n
-		// (meaning n rows above 0)
-		for i := nr + n - 1; i >= -n-1; i-- {
-			x := i - n
-			copy(f.data[x], f.data[i])
+	if -n > nr-1 {
+		f.resetRows(0, nr-1)
+		return
+	}
 
-		}
-		for i := 0; i < -n; i++ {
-			copy(f.data[i], newRow(nc))
+	rs, re := 0, -n
+
+	if n < 0 {
+		// i starts at the bottom so we can copy those rows
+		// down. iterate until i <= -n (meaning n rows above
+		// 0)
+		for i := nr - 1; i > -n-1; i-- {
+			x := i + n // n is negative here
+			copy(f.data[i], f.data[x])
 		}
 	} else {
+		rs, re = nr-n, nr
 		for i := 0; i < nr-n; i++ {
 			x := i + n
-			if x < nr {
-				copy(f.data[i], f.row(x))
-			} else {
-				copy(f.data[i], newRow(nc))
-			}
+			copy(f.data[i], f.row(x))
 		}
+	}
 
-		for i := nr - n; i < nr; i++ {
-			copy(f.data[i], newRow(nc))
-		}
+	for i := rs; i < re; i++ {
+		copy(f.data[i], newRow(nc))
 	}
 }
 
@@ -311,8 +311,7 @@ func (f *framebuffer) resetRows(from, to int) bool {
 
 	nc := len(f.data[0])
 	for i := from; i <= to; i++ {
-		row := newRow(nc)
-		f.data[i] = row
+		copy(f.data[i], newRow(nc))
 	}
 
 	return true

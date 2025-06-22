@@ -342,6 +342,56 @@ func TestScrollRows(t *testing.T) {
 	}
 }
 
+func TestComplexScrollRows(t *testing.T) {
+	// Emulate a sequence we found in emacs that broke us
+	// 1;51r cur="(44, 0)"
+	// 23;1H cur="(0, 0)"
+	// 8L cur="(22, 0)"
+	// 1;28r cur="(22, 0)"
+	// 1;1H cur="(0, 0)"
+	// 8L cur="(0, 0)"
+	// 1;60r cur="(0, 0)"
+	//
+	// IOW, set a margin (0,50), move back to the 23rd line,
+	// scroll 8 lines down in the region, set the margin again
+	// (0,27), move the cursor to the home row, scroll 8 lines
+	// down in the new region, reset margin to the full height of
+	// the terminal.
+	input := []byte("\x1b[1;51r\x1b[23;1H\x1b[8L\x1b[1;28r\x1b[1;1H\x1b[8L\x1b[1;60r\x1b[60;1H")
+
+	fb := newFramebuffer(60, 10)
+	for i, n := range []int{0, 7, 22, 30, 50, 51, 59} {
+		fbr, err := fb.subRegion(n, n, 0, 9)
+		if err != nil {
+			t.Errorf("couldn't pull subregion (%d): %v", n, err)
+			break
+		}
+		fbr.fill(newCell(rune('0'+i), defFmt.copy(), defOSC8.copy()))
+	}
+
+	fbw := newFramebuffer(60, 10)
+	nums := []int{0, 1, 2, 3, 5, 6}
+	for i, n := range []int{8, 15, 30, 38, 51, 59} {
+		fbr, err := fbw.subRegion(n, n, 0, 9)
+		if err != nil {
+			t.Errorf("couldn't pull subregion(%d): %v", n, err)
+			break
+		}
+		fbr.fill(newCell(rune('0'+nums[i]), defFmt.copy(), defOSC8.copy()))
+	}
+
+	t1, _ := NewTerminal(60, 10)
+	t1.fb = fb
+	t1.cur = cursor{44, 0}
+
+	t1.Write(input)
+
+	if !t1.fb.equal(fbw) {
+		t.Errorf("unexpected differences; Got:\n%v\nWanted:\n%v\n\n", t1.fb, fbw)
+	}
+
+}
+
 func TestFBEquality(t *testing.T) {
 	dfb := newFramebuffer(10, 10)
 	ofb := newFramebuffer(10, 10)
