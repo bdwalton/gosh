@@ -23,6 +23,7 @@ var (
 	logfile      = flag.String("logfile", "", "If set, client logs will be written to this file.")
 	pprofFile    = flag.String("pprof_file", "", "If set, enable pprof capture to the provided file.")
 	remLog       = flag.String("remote_logfile", "", "If set, the remote gosh-server will be asked to log to this file.")
+	titlePfx     = flag.String("title_prefix", "[gosh] ", "The prefix applied to the title. Set to '' to disable.")
 	useSystemd   = flag.Bool("use_systemd", true, "If true, execute the remote server under systemd so the detached process outlives the ssh connection.")
 )
 
@@ -79,6 +80,7 @@ func runServer(rows, cols int) (*connectData, error) {
 	args = append(args, "--bind_server", *bindServer)
 	args = append(args, fmt.Sprintf("--initial_rows=%d", rows))
 	args = append(args, fmt.Sprintf("--initial_cols=%d", cols))
+	args = append(args, fmt.Sprintf("--title_prefix=%q", *titlePfx))
 
 	cmd := exec.Command("ssh", args...)
 	out, err := cmd.CombinedOutput()

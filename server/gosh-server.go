@@ -30,6 +30,7 @@ var (
 	logfile      = flag.String("logfile", "", "If set, logs will be written to this file.")
 	portRange    = flag.String("port_range", "60000:61000", "Port range")
 	pprofFile    = flag.String("pprof_file", "", "If set, enable pprof capture to the provided file.")
+	titlePfx     = flag.String("title_prefix", "[gosh] ", "The prefix applied to the title. Set to '' to disable.")
 )
 
 func die(msg string, args ...any) {
@@ -103,6 +104,7 @@ func main() {
 	if err != nil {
 		die("couldn't setup terminal: %v", err)
 	}
+	t.SetTitlePrefix(*titlePfx)
 
 	s := stm.NewServer(gc, t, sock)
 

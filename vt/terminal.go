@@ -105,7 +105,6 @@ func NewTerminalWithPty(rows, cols int, cmd *exec.Cmd, cancel context.CancelFunc
 
 	t.wait = func() { cmd.Wait() }
 	t.stop = func() { cancel(); rmUtmp(ptmx) }
-	t.titlePfx = "[gosh] "
 
 	// Any use of Fd(), including indirectly via the Setsize call
 	// above, will set the descriptor non-blocking, so we need to
@@ -116,6 +115,10 @@ func NewTerminalWithPty(rows, cols int, cmd *exec.Cmd, cancel context.CancelFunc
 	}
 
 	return t, nil
+}
+
+func (t *Terminal) SetTitlePrefix(pfx string) {
+	t.titlePfx = pfx
 }
 
 func (t *Terminal) motd() {
