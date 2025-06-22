@@ -23,8 +23,8 @@ var (
 	initCols     = flag.Int("initial_cols", vt.DEF_COLS, "Numer of columns to start the terminal with")
 	initRows     = flag.Int("initial_rows", vt.DEF_ROWS, "Numer of rows to start the terminal with")
 	logfile      = flag.String("logfile", "", "If set, logs will be written to this file.")
-	remotePort   = flag.String("remote_port", "61000", "Port to dial on remote host")
 	remoteHost   = flag.String("remote_host", "", "Remote host to dial")
+	remotePort   = flag.String("remote_port", "61000", "Port to dial on remote host")
 )
 
 func die(msg string, args ...any) {

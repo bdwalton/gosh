@@ -27,9 +27,9 @@ var (
 	detached     = flag.Bool("detached", false, "For use gosh-server to setup a detached version")
 	initCols     = flag.Int("initial_cols", vt.DEF_COLS, "Numer of columns to start the terminal with")
 	initRows     = flag.Int("initial_rows", vt.DEF_ROWS, "Numer of rows to start the terminal with")
+	logfile      = flag.String("logfile", "", "If set, logs will be written to this file.")
 	portRange    = flag.String("port_range", "60000:61000", "Port range")
 	pprofFile    = flag.String("pprof_file", "", "If set, enable pprof capture to the provided file.")
-	logfile      = flag.String("logfile", "", "If set, logs will be written to this file.")
 )
 
 func die(msg string, args ...any) {
