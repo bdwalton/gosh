@@ -1,3 +1,5 @@
+// Copyright (c) 2025, Ben Walton
+// All rights reserved.
 package vt
 
 // Returned when as the version component of the DSC response when the

@@ -1,3 +1,5 @@
+// Copyright (c) 2025, Ben Walton
+// All rights reserved.
 edition = "2023";
 
 import "google/protobuf/go_features.proto";

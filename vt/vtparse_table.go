@@ -1,3 +1,5 @@
+// Copyright (c) 2025, Ben Walton
+// All rights reserved.
 package vt
 
 type pState uint8
